@@ -4,7 +4,6 @@ import ai.kilocode.client.plugin.KiloBundle
 import ai.kilocode.rpc.dto.RunConfigDto
 import ai.kilocode.rpc.dto.RunProcessState
 import ai.kilocode.rpc.dto.RunStateDto
-import com.intellij.execution.runners.ExecutionUtil
 import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.ProductIcons
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -58,7 +57,10 @@ internal object WorktreeRunPopup {
         }
         val running = states.map { it.id }.toSet()
         for (cfg in configs) {
-            val icon = if (cfg.id in running) ExecutionUtil.getLiveIndicator(AllIcons.Actions.Execute) else AllIcons.Actions.Execute
+            // Badged over the run action icon rather than WorktreeIcons.runIndicator's neutral triangle:
+            // every other row here is a green Execute glyph, so a started row reads as one of them
+            // wearing the live dot instead of a different icon altogether.
+            val icon = if (cfg.id in running) WorktreeIcons.live(AllIcons.Actions.Execute) else AllIcons.Actions.Execute
             val text = cfg.via?.let { KiloBundle.message("worktree.run.via", cfg.type, it) } ?: cfg.type
             group.add(action(cfg.name, icon, description = text) { run(cfg) })
         }
