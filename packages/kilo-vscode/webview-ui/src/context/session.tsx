@@ -137,6 +137,9 @@ export const SessionProvider: ParentComponent = (props) => {
 
   // Current session ID
   const [currentSessionID, setCurrentSessionID] = createSignal<string | undefined>()
+  // Pending "jump to latest" request from a notification-driven session open.
+  // Consumed once by MessageList's restore effect, then cleared.
+  const [scrollBottomID, setScrollBottomID] = createSignal<string>()
   const [agentProjectId, setAgentProjectId] = createSignal<string | undefined>()
 
   const trackAgentProject = (message: ExtensionMessage): boolean => {
@@ -2514,12 +2517,13 @@ export const SessionProvider: ParentComponent = (props) => {
   // selection time. Replayed by the reconnect effect below.
   let deferredFetch: { id: string; focus: boolean } | undefined
 
-  function selectSession(id: string, options: { focus?: boolean } = {}) {
+  function selectSession(id: string, options: { focus?: boolean; scrollToBottom?: boolean } = {}) {
     // Cloud preview sessions use a separate keyed path (selectCloudSession).
     if (id.startsWith("cloud:")) {
       console.warn("[Kilo New] Cannot select cloud preview session via selectSession")
       return
     }
+    if (options.scrollToBottom) setScrollBottomID(id)
     const ready = loaded().has(id)
     batch(() => {
       agentDrafts.prune(draftSessionID())
@@ -2542,6 +2546,13 @@ export const SessionProvider: ParentComponent = (props) => {
     }
     deferredFetch = undefined
     loadFocusedMessages(id, ready, focus)
+  }
+
+  /** One-shot consume: true only the first time it's checked for the pending id. */
+  function consumeScrollBottom(id: string): boolean {
+    if (scrollBottomID() !== id) return false
+    setScrollBottomID(undefined)
+    return true
   }
 
   function loadFocusedMessages(id: string, ready: boolean, focus = true) {
@@ -2950,6 +2961,7 @@ export const SessionProvider: ParentComponent = (props) => {
     loadSessions,
     loadOlderMessages,
     selectSession,
+    consumeScrollBottom,
     releaseSession: handleSessionDeleted,
     deleteSession,
     renameSession,

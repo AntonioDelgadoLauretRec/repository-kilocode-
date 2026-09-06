@@ -871,8 +871,12 @@ export const dict = {
     "VS Code-Benachrichtigungen anzeigen, wenn Kilo eine Aufgabe abschließt oder Ihre Eingabe erforderlich ist",
   "settings.notifications.os.title": "Betriebssystem-Benachrichtigungen aktivieren",
   "settings.notifications.os.description":
-    "Hinweise im Windows-Info-Center anzeigen, wenn Kilo eine Aufgabe abschließt oder Ihre Eingabe erforderlich ist, während VS Code nicht aktiv ist. macOS und Linux erfordern separate native Implementierungen.",
+    "Systemeigene Betriebssystem-Benachrichtigungen anzeigen, wenn Kilo eine Aufgabe abschließt oder Ihre Eingabe erforderlich ist, während VS Code nicht aktiv ist.",
   "settings.notifications.testSound": "Testen",
+  "settings.notifications.testOS": "Testen",
+  "settings.notifications.testOS.testing": "Testbenachrichtigung wird gesendet…",
+  "settings.notifications.testOS.success": "Testbenachrichtigung gesendet.",
+  "settings.notifications.testOS.error": "Testbenachrichtigung fehlgeschlagen",
   "settings.notifications.sound.default": "Standard",
   "settings.notifications.sound.system": "System",
   "settings.notifications.sound.description":

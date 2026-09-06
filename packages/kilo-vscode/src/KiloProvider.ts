@@ -14,7 +14,7 @@ import type {
 } from "@kilocode/sdk/v2/client"
 import { MaxCostNudge, type MaxCostChoice } from "@opencode-ai/core/kilocode/cost/max-cost-nudge"
 import { type KiloConnectionService, ServerStartupError } from "./services/cli-backend"
-import { previewSound } from "./services/attention"
+import { previewSound, testOSNotification } from "./services/attention"
 import type { EditorContext, IndexingStatus } from "./services/cli-backend/types"
 import { FileIgnoreController } from "./services/autocomplete/shims/FileIgnoreController"
 import { ChatTextAreaAutocomplete } from "./services/autocomplete/chat-autocomplete/ChatTextAreaAutocomplete"
@@ -1463,6 +1463,9 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
           break
         case "testNotification":
           previewSound(message.sound)
+          break
+        case "testOSNotification":
+          void this.handleTestOSNotification()
           break
         case "requestTimelineSetting":
           this.sendTimelineSetting()
@@ -3141,11 +3144,16 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
       settings: {
         attentionEnabled: attention.get<boolean>("enabled", false),
         attentionNotifications: attention.get<boolean>("notifications", false),
-        attentionWindowsNotifications: attention.get<boolean>("windowsNotifications", false),
+        attentionOSNotifications: attention.get<boolean>("OSNotifications", false),
         attentionSound: attention.get<string>("sound", "default"),
-        windowsNotificationsAvailable: process.platform === "win32",
+        osNotificationsAvailable: ["win32", "darwin", "linux"].includes(process.platform),
       },
     })
+  }
+
+  private async handleTestOSNotification(): Promise<void> {
+    const result = await testOSNotification()
+    this.postMessage({ type: "osNotificationTestResult", ...result })
   }
 
   private sendTimelineSetting(): void {

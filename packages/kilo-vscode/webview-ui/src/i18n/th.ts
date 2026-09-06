@@ -839,8 +839,12 @@ export const dict = {
     "แสดงการแจ้งเตือนของ VS Code เมื่อ Kilo ทำงานเสร็จหรือต้องการให้คุณป้อนข้อมูล",
   "settings.notifications.os.title": "เปิดใช้การแจ้งเตือนของระบบปฏิบัติการ",
   "settings.notifications.os.description":
-    "แสดงการแจ้งเตือนในศูนย์การแจ้งเตือนของ Windows เมื่อ Kilo ทำงานเสร็จหรือต้องการให้คุณป้อนข้อมูลขณะที่ VS Code ไม่ได้ใช้งานอยู่ macOS และ Linux ต้องมีการพัฒนาแบบเนทีฟแยกต่างหาก",
+    "แสดงการแจ้งเตือนแบบเนทีฟของระบบปฏิบัติการเมื่อ Kilo ทำงานเสร็จหรือต้องการให้คุณป้อนข้อมูลขณะที่ VS Code ไม่ได้ใช้งานอยู่",
   "settings.notifications.testSound": "ทดสอบ",
+  "settings.notifications.testOS": "ทดสอบ",
+  "settings.notifications.testOS.testing": "กำลังส่งการแจ้งเตือนทดสอบ…",
+  "settings.notifications.testOS.success": "ส่งการแจ้งเตือนทดสอบแล้ว",
+  "settings.notifications.testOS.error": "ส่งการแจ้งเตือนทดสอบไม่สำเร็จ",
   "settings.notifications.sound.default": "ค่าเริ่มต้น",
   "settings.notifications.sound.system": "ระบบ",
   "settings.notifications.sound.description":

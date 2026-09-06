@@ -11,10 +11,10 @@ function setup(
     approve?: () => boolean | Promise<boolean>
     details?: (sessionID: string, directory?: string) => Promise<Omit<AttentionNotice, "message"> | undefined>
     notifications?: boolean
-    windowsNotifications?: boolean
+    osNotifications?: boolean
     focused?: boolean | (() => boolean)
     visible?: boolean | ((sessionID: string) => boolean)
-    windows?: (notice: AttentionNotice) => void
+    os?: (notice: AttentionNotice) => void
     show?: (sessionID: string, directory?: string) => void
     action?: boolean
     capture?: boolean
@@ -24,7 +24,7 @@ function setup(
   const messages: Array<{ message: string; style: "error" | "info" | "warning" }> = []
   const events: Array<(event: SSEPayload, directory?: string) => void> = []
   const states: Array<(state: "connecting" | "connected" | "disconnected" | "error") => void> = []
-  const mocked = opts.notifications !== undefined || opts.windowsNotifications !== undefined
+  const mocked = opts.notifications !== undefined || opts.osNotifications !== undefined
   const original = mocked ? vscode.workspace.getConfiguration : undefined
   const info = mocked ? vscode.window.showInformationMessage : undefined
   const warning = mocked ? vscode.window.showWarningMessage : undefined
@@ -35,7 +35,7 @@ function setup(
         ({
           get: <T>(key: string, value?: T) => {
             if (key === "notifications") return opts.notifications as T
-            if (key === "windowsNotifications") return opts.windowsNotifications as T
+            if (key === "OSNotifications") return opts.osNotifications as T
             return value
           },
         }) as vscode.WorkspaceConfiguration
@@ -71,7 +71,7 @@ function setup(
     details: opts.details,
     focused: () => (typeof opts.focused === "function" ? opts.focused() : (opts.focused ?? true)),
     visible: (sessionID) => (typeof opts.visible === "function" ? opts.visible(sessionID) : (opts.visible ?? false)),
-    windows: opts.windows,
+    os: opts.os,
     show: opts.show,
   })
   if (opts.capture !== false) {
@@ -185,29 +185,33 @@ describe("AttentionService", () => {
     test.restore()
   })
 
-  it("shows a Windows notification while VS Code is unfocused", async () => {
+  it("fires both the OS and VS Code channels together while unfocused", async () => {
     const alerts: AttentionNotice[] = []
     const test = setup({
       notifications: true,
-      windowsNotifications: true,
+      osNotifications: true,
       focused: false,
-      windows: (notice) => alerts.push(notice),
+      os: (notice) => alerts.push(notice),
       details: async () => ({ workspace: "kilo-vscode", session: "Add notifications" }),
       capture: false,
     })
     test.event(event({ type: "question.asked", properties: { id: "q1", sessionID: "s1" } }), "C:\\repo")
     await Bun.sleep(0)
 
+    // The OS toast is a transient, informational ping; the VS Code notification
+    // persists as an actionable "Show" entry for when the user returns.
     expect(alerts).toEqual([
       { message: "Kilo needs your input.", workspace: "kilo-vscode", session: "Add notifications" },
     ])
-    expect(test.messages).toEqual([])
+    expect(test.messages).toEqual([
+      { message: "Kilo needs your input. Workspace: kilo-vscode | Session: Add notifications", style: "info" },
+    ])
     test.service.dispose()
     test.restore()
   })
 
   it("falls back to a VS Code notification when the OS channel is unavailable", () => {
-    const test = setup({ notifications: true, windowsNotifications: true, focused: false, capture: false })
+    const test = setup({ notifications: true, osNotifications: true, focused: false, capture: false })
     test.event(event({ type: "question.asked", properties: { id: "q1", sessionID: "s1" } }))
 
     expect(test.messages).toEqual([{ message: "Kilo needs your input.", style: "info" }])
@@ -239,10 +243,10 @@ describe("AttentionService", () => {
     let focused = false
     const test = setup({
       notifications: true,
-      windowsNotifications: true,
+      osNotifications: true,
       capture: false,
       focused: () => focused,
-      windows: (notice) => alerts.push(notice),
+      os: (notice) => alerts.push(notice),
       details: async () => {
         focused = true
         return { workspace: "kilo-vscode", session: "Add notifications" }
@@ -417,7 +421,7 @@ describe("attention defaults", () => {
 
     expect(properties["kilo-code.new.attention.enabled"]?.default).toBe(false)
     expect(properties["kilo-code.new.attention.notifications"]?.default).toBe(false)
-    expect(properties["kilo-code.new.attention.windowsNotifications"]?.default).toBe(false)
+    expect(properties["kilo-code.new.attention.OSNotifications"]?.default).toBe(false)
     expect(properties["kilo-code.new.attention.sound"]?.default).toBe("default")
     expect(properties["kilo-code.new.attention.sound"]?.enum).toEqual(["default", "system", ...CustomSoundIDs])
     expect(properties["kilo-code.new.sounds.agentEnabled"]).toBeUndefined()

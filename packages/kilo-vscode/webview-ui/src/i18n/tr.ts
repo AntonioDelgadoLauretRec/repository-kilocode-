@@ -842,8 +842,12 @@ export const dict = {
     "Kilo bir görevi tamamladığında veya sizden giriş beklendiğinde VS Code bildirimlerini göster",
   "settings.notifications.os.title": "İşletim sistemi bildirimlerini etkinleştir",
   "settings.notifications.os.description":
-    "VS Code etkin değilken Kilo bir görevi tamamladığında veya sizden giriş beklendiğinde Windows bildirim merkezinde uyarı göster. macOS ve Linux ayrı yerel uygulamalar gerektirir.",
+    "VS Code etkin değilken Kilo bir görevi tamamladığında veya sizden giriş beklendiğinde yerel işletim sistemi bildirim uyarılarını göster.",
   "settings.notifications.testSound": "Test et",
+  "settings.notifications.testOS": "Test et",
+  "settings.notifications.testOS.testing": "Test bildirimi gönderiliyor…",
+  "settings.notifications.testOS.success": "Test bildirimi gönderildi.",
+  "settings.notifications.testOS.error": "Test bildirimi gönderilemedi",
   "settings.notifications.sound.default": "Varsayılan",
   "settings.notifications.sound.system": "Sistem",
   "settings.notifications.sound.description":

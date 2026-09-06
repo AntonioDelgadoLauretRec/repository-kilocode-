@@ -853,8 +853,12 @@ export const dict = {
     "Vis VS Code-notifikationer, når Kilo fuldfører en opgave eller har brug for input fra dig",
   "settings.notifications.os.title": "Aktivér OS-notifikationer",
   "settings.notifications.os.description":
-    "Vis beskeder i Windows-meddelelsescenteret, når Kilo fuldfører en opgave eller har brug for input fra dig, mens VS Code ikke er aktiv. macOS og Linux kræver separate native implementeringer.",
+    "Vis oprindelige OS-notifikationsadvarsler, når Kilo fuldfører en opgave eller har brug for input fra dig, mens VS Code ikke er aktiv.",
   "settings.notifications.testSound": "Test",
+  "settings.notifications.testOS": "Test",
+  "settings.notifications.testOS.testing": "Sender testnotifikation…",
+  "settings.notifications.testOS.success": "Testnotifikation sendt.",
+  "settings.notifications.testOS.error": "Testnotifikation mislykkedes",
   "settings.notifications.sound.default": "Standard",
   "settings.notifications.sound.system": "System",
   "settings.notifications.sound.description":

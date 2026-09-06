@@ -617,6 +617,10 @@ export interface TestNotificationMessage {
   sound: string
 }
 
+export interface TestOSNotificationMessage {
+  type: "testOSNotification"
+}
+
 export interface ResetAllSettingsRequest {
   type: "resetAllSettings"
 }
@@ -1622,6 +1626,7 @@ export type WebviewMessage =
   | OpenSettingsTabRequest
   | RequestNotificationSettingsMessage
   | TestNotificationMessage
+  | TestOSNotificationMessage
   | ResetAllSettingsRequest
   | ResetReadNotificationsRequest
   | SettingsTabChangedMessage

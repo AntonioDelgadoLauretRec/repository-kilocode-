@@ -290,8 +290,8 @@ const AppContent: Component = () => {
   const open = (message: { type?: string; sessionID?: string }) => {
     if (message.type !== "openSession" || !message.sessionID) return
     console.log("[Kilo New] App: opening local session:", message.sessionID)
-    if (tabs) tabs.open(message.sessionID)
-    if (!tabs) session.selectSession(message.sessionID)
+    if (tabs) tabs.open(message.sessionID, { scrollToBottom: true })
+    if (!tabs) session.selectSession(message.sessionID, { scrollToBottom: true })
     setCurrentView("newTask")
   }
 

@@ -850,8 +850,12 @@ export const dict = {
     "VS Code-meldingen tonen wanneer Kilo een taak voltooit of uw invoer vereist",
   "settings.notifications.os.title": "Besturingssysteemmeldingen inschakelen",
   "settings.notifications.os.description":
-    "Meldingen in het Windows-meldingencentrum tonen wanneer Kilo een taak voltooit of uw invoer vereist terwijl VS Code niet actief is. macOS en Linux vereisen afzonderlijke native implementaties.",
+    "Systeemeigen meldingswaarschuwingen tonen wanneer Kilo een taak voltooit of uw invoer vereist terwijl VS Code niet actief is.",
   "settings.notifications.testSound": "Testen",
+  "settings.notifications.testOS": "Testen",
+  "settings.notifications.testOS.testing": "Testmelding wordt verzonden…",
+  "settings.notifications.testOS.success": "Testmelding verzonden.",
+  "settings.notifications.testOS.error": "Testmelding mislukt",
   "settings.notifications.sound.default": "Standaard",
   "settings.notifications.sound.system": "Systeem",
   "settings.notifications.sound.description":

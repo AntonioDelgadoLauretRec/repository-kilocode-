@@ -23,7 +23,7 @@ type Options = {
   details?: (sessionID: string, directory?: string) => Promise<Omit<AttentionNotice, "message"> | undefined>
   focused?: () => boolean
   visible?: (sessionID: string) => boolean
-  windows?: (notice: AttentionNotice) => void
+  os?: (notice: AttentionNotice) => void
   show?: (sessionID: string, directory?: string) => void | Promise<void>
 }
 
@@ -143,31 +143,35 @@ export class AttentionService implements vscode.Disposable {
     }
     const text = this.text(sound)
     if (!text) return
-    if (!this.channel(sessionID)) return
+    const initial = this.channels(sessionID)
+    if (!initial.os && !initial.vscode) return
     const send = (extra?: Omit<AttentionNotice, "message">) => {
-      // Re-read the channel: resolving details is async, so focus and the visible session may have changed.
-      const channel = this.channel(sessionID)
-      if (!channel) return
+      // Re-read the channels: resolving details is async, so focus and the visible session may have changed.
+      const channels = this.channels(sessionID)
+      if (!channels.os && !channels.vscode) return
       const notice = { message: text, ...extra }
-      if (channel === "os") {
-        this.opts.windows?.(notice)
-        return
-      }
-      this.message(sound, notice, sessionID, directory)
+      // Both can fire together: the OS toast is a transient, informational ping
+      // for when the user isn't looking at any window, while the VS Code
+      // notification persists as an actionable "Show" entry for whenever they
+      // return to the editor, regardless of whether the OS toast also fired.
+      if (channels.os) this.opts.os?.(notice)
+      if (channels.vscode) this.message(sound, notice, sessionID, directory)
     }
     const details = this.opts.details?.(sessionID, directory)
     if (!details) return send()
     void details.then(send, () => send())
   }
 
-  /** Picks the delivery channel, or undefined when the alert should stay silent. */
-  private channel(sessionID: string) {
+  /** Picks which delivery channels should fire; independently, both, one, or neither. */
+  private channels(sessionID: string) {
     const config = vscode.workspace.getConfiguration("kilo-code.new.attention")
     const focused = this.opts.focused?.() ?? vscode.window.state.focused
-    // `windows` is only wired up on hosts that can deliver an OS toast, so other platforms fall through.
-    if (this.opts.windows && config.get<boolean>("windowsNotifications", false) && !focused) return "os" as const
-    if (config.get<boolean>("notifications", false) && !this.opts.visible?.(sessionID)) return "vscode" as const
-    return undefined
+    // `os` is only wired up on hosts that can deliver a native notification, so other platforms fall through.
+    const os = Boolean(this.opts.os) && config.get<boolean>("OSNotifications", false) && !focused
+    // Independent of focus: this asks whether the exact session is already the
+    // one in view, not whether the window has OS focus.
+    const panel = config.get<boolean>("notifications", false) && !this.opts.visible?.(sessionID)
+    return { os, vscode: panel }
   }
 
   private text(sound: TuiAttentionSoundName) {

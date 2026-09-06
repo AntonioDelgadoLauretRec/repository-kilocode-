@@ -725,8 +725,12 @@ export const dict = {
     "Mostra notifiche di VS Code quando Kilo completa un'attività o richiede il tuo intervento",
   "settings.notifications.os.title": "Abilita le notifiche del sistema operativo",
   "settings.notifications.os.description":
-    "Mostra avvisi nel centro notifiche di Windows quando Kilo completa un'attività o richiede il tuo intervento mentre VS Code non è attivo. macOS e Linux richiedono implementazioni native separate.",
+    "Mostra avvisi di notifica nativi del sistema operativo quando Kilo completa un'attività o richiede il tuo intervento mentre VS Code non è attivo.",
   "settings.notifications.testSound": "Prova",
+  "settings.notifications.testOS": "Prova",
+  "settings.notifications.testOS.testing": "Invio della notifica di prova…",
+  "settings.notifications.testOS.success": "Notifica di prova inviata.",
+  "settings.notifications.testOS.error": "Invio della notifica di prova non riuscito",
   "settings.notifications.sound.default": "Predefinito",
   "settings.notifications.sound.system": "Sistema",
   "settings.notifications.sound.description":

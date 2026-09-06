@@ -759,10 +759,16 @@ export interface NotificationSettingsLoadedMessage {
   settings: {
     attentionEnabled: boolean
     attentionNotifications: boolean
-    attentionWindowsNotifications: boolean
+    attentionOSNotifications: boolean
     attentionSound: string
-    windowsNotificationsAvailable: boolean
+    osNotificationsAvailable: boolean
   }
+}
+
+export interface OSNotificationTestResultMessage {
+  type: "osNotificationTestResult"
+  ok: boolean
+  error?: string
 }
 
 export interface TimelineSettingLoadedMessage {
@@ -1584,6 +1590,7 @@ export type ExtensionMessage =
   | ConfigBindingExpiredMessage
   | GlobalConfigLoadedMessage
   | NotificationSettingsLoadedMessage
+  | OSNotificationTestResultMessage
   | TimelineSettingLoadedMessage
   | ThroughputSettingLoadedMessage
   | AutoApprovalReasonSettingLoadedMessage

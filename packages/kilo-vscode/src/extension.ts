@@ -17,8 +17,7 @@ import { KiloConnectionService } from "./services/cli-backend"
 import { registerAutocompleteProvider } from "./services/autocomplete"
 import { ensureBackendForAutocomplete } from "./services/autocomplete/ensure-backend"
 import { AutocompleteServiceManager } from "./services/autocomplete/AutocompleteServiceManager"
-import { AttentionService } from "./services/attention"
-import { showWindowsNotification } from "./services/attention/windows"
+import { AttentionService, showOSNotification } from "./services/attention"
 import { BrowserBroker } from "./services/browser-automation"
 import { TelemetryEventName, TelemetryProxy } from "./services/telemetry"
 import { registerCommitMessageService } from "./services/commit-message"
@@ -230,7 +229,7 @@ export async function activate(context: vscode.ExtensionContext) {
       (provider.isSidebarVisible() && provider.getCurrentSessionId() === sessionID) ||
       activeTabProvider()?.getCurrentSessionId() === sessionID ||
       (agentManagerProvider.isActive() && agentManagerProvider.getActiveSessionId() === sessionID),
-    windows: process.platform === "win32" ? showWindowsNotification : undefined,
+    os: showOSNotification,
     show: async (sessionID, directory) => {
       await vscode.commands.executeCommand("kilo-code.SidebarProvider.focus")
       await provider.openSession(sessionID, directory)

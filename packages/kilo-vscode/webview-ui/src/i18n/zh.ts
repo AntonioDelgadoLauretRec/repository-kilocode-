@@ -818,8 +818,12 @@ export const dict = {
   "settings.notifications.workbench.description": "在 Kilo 完成任务或需要你输入时显示 VS Code 通知",
   "settings.notifications.os.title": "启用操作系统通知",
   "settings.notifications.os.description":
-    "在 VS Code 未处于活动状态时，如果 Kilo 完成任务或需要你输入，则在 Windows 通知中心显示提醒。macOS 和 Linux 需要单独的原生实现。",
+    "在 VS Code 未处于活动状态时，如果 Kilo 完成任务或需要你输入，则显示原生操作系统通知提醒。",
   "settings.notifications.testSound": "测试",
+  "settings.notifications.testOS": "测试",
+  "settings.notifications.testOS.testing": "正在发送测试通知…",
+  "settings.notifications.testOS.success": "测试通知已发送。",
+  "settings.notifications.testOS.error": "测试通知发送失败",
   "settings.notifications.sound.default": "默认",
   "settings.notifications.sound.system": "系统",
   "settings.notifications.sound.description":

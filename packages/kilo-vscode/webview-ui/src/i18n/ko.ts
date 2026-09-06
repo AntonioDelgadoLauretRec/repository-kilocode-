@@ -844,8 +844,12 @@ export const dict = {
     "Kilo가 작업을 완료하거나 사용자 입력이 필요할 때 VS Code 알림을 표시합니다",
   "settings.notifications.os.title": "OS 알림 활성화",
   "settings.notifications.os.description":
-    "VS Code가 활성화되어 있지 않을 때 Kilo가 작업을 완료하거나 사용자 입력이 필요하면 Windows 알림 센터에 알림을 표시합니다. macOS와 Linux는 별도의 네이티브 구현이 필요합니다.",
+    "VS Code가 활성화되어 있지 않을 때 Kilo가 작업을 완료하거나 사용자 입력이 필요하면 기본 운영 체제 알림을 표시합니다.",
   "settings.notifications.testSound": "테스트",
+  "settings.notifications.testOS": "테스트",
+  "settings.notifications.testOS.testing": "테스트 알림을 보내는 중…",
+  "settings.notifications.testOS.success": "테스트 알림을 보냈습니다.",
+  "settings.notifications.testOS.error": "테스트 알림을 보내지 못했습니다",
   "settings.notifications.sound.default": "기본값",
   "settings.notifications.sound.system": "시스템",
   "settings.notifications.sound.description":

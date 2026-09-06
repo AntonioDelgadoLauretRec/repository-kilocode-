@@ -1225,6 +1225,11 @@ export const MessageList: Component<MessageListProps> = (props) => {
       if (pendingRestore() !== id) return
       const el = scrollEl()
       if (!el) return
+      if (session.consumeScrollBottom(id)) {
+        autoScroll.forceScrollToBottom()
+        setPendingRestore(undefined)
+        return
+      }
       const state = getScroll(id)
       const anchor = resolveAnchor(state, keys())
       const handle = virtualizer()
