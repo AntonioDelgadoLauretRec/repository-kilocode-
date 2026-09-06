@@ -451,12 +451,8 @@
 ## [7.1.6-rc.2] - 2026-09-06
 
 ### Fixed
-- fix(jetbrains): replace internal badge-icon APIs in worktree row icons by @kirillk in https://github.com/Kilo-Org/kilocode/pull/13831
 
-### Changed
-- release(jetbrains): v7.1.6-rc.1 by @kilo-maintainer[bot] in https://github.com/Kilo-Org/kilocode/pull/13823
-- chore(jetbrains): bump CLI pin to v7.5.6 by @kilo-maintainer[bot] in https://github.com/Kilo-Org/kilocode/pull/13562
-
+- Replace internal IntelliJ badge-icon APIs used for the worktree live-run indicator with a supported approach, fixing a plugin verification failure.
 
 ## [7.1.6-rc.1] - 2026-09-05
 
