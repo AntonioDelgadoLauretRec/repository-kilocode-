@@ -19,10 +19,15 @@ const EDIT_PREVIEW_PANEL_FILE = path.join(ROOT, "webview-ui/agent-manager/EditPr
 const CSS_FILES = [
   path.join(ROOT, "webview-ui/agent-manager/agent-manager.css"),
   path.join(ROOT, "webview-ui/agent-manager/agent-manager-review.css"),
+  path.join(ROOT, "webview-ui/agent-manager/intro/intro.css"),
   path.join(ROOT, "webview-ui/browser/browser.css"),
 ]
 const TSX_FILES = [
   path.join(ROOT, "webview-ui/agent-manager/AgentManagerApp.tsx"),
+  path.join(ROOT, "webview-ui/agent-manager/ShortcutsDialog.tsx"),
+  path.join(ROOT, "webview-ui/agent-manager/intro/AgentManagerIntro.tsx"),
+  path.join(ROOT, "webview-ui/agent-manager/intro/IntroGraph.tsx"),
+  path.join(ROOT, "webview-ui/src/components/chat/MessageList.tsx"),
   path.join(ROOT, "webview-ui/agent-manager/SubagentPanel.tsx"),
   path.join(ROOT, "webview-ui/agent-manager/EditPreviewPanel.tsx"),
   path.join(ROOT, "webview-ui/agent-manager/SessionRowActions.tsx"),
@@ -925,7 +930,9 @@ describe("KiloProvider — pending session refresh on reconnect", () => {
     // Find the onStateChange callback that handles "connected"
     const connectedIdx = provider.indexOf('state === "connected"')
     expect(connectedIdx, '"connected" state handler must exist').toBeGreaterThan(-1)
-    const snippet = provider.slice(connectedIdx, connectedIdx + 800)
+    const end = provider.indexOf("this.unsubscribeNotificationDismiss", connectedIdx)
+    expect(end, "notification subscription must follow connection handler").toBeGreaterThan(connectedIdx)
+    const snippet = provider.slice(connectedIdx, end)
     expect(snippet, "must call flushPendingSessionRefresh from connected handler").toContain(
       'this.flushPendingSessionRefresh("sse-connected")',
     )
