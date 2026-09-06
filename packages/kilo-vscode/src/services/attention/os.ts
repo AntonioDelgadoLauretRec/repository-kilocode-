@@ -19,6 +19,12 @@ function escape(value: string) {
   return value.replace(/[&<>"']/g, (char) => entities[char] ?? char)
 }
 
+// libnotify parses the body as Pango markup, so an unescaped `<` or `&` in a
+// workspace or session name can drop the notification or inject markup.
+function pango(value: string) {
+  return value.replace(/[&<>]/g, (char) => entities[char] ?? char)
+}
+
 function apple(value: string) {
   return value
     .replace(/\\/g, "\\\\")
@@ -60,7 +66,8 @@ export function notificationCommand(notice: AttentionNotice, platform = process.
     return { cmd: "osascript", args: ["-e", `display notification "${apple(text(notice))}" with title "Kilo Code"`] }
   }
   if (platform === "linux") {
-    return { cmd: "notify-send", args: ["--app-name=Kilo Code", "--urgency=normal", "Kilo Code", text(notice)] }
+    // Only the body is markup; the summary is taken literally.
+    return { cmd: "notify-send", args: ["--app-name=Kilo Code", "--urgency=normal", "Kilo Code", pango(text(notice))] }
   }
 }
 

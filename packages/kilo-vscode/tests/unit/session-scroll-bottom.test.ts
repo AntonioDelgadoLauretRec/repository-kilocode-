@@ -37,7 +37,7 @@ function extractFunctionBody(source: string, name: string): string {
 describe("selectSession records a pending scroll-to-bottom request", () => {
   it("sets scrollBottomID before touching currentSessionID", () => {
     const body = extractFunctionBody(session, "selectSession")
-    const setScroll = body.indexOf("setScrollBottomID(id)")
+    const setScroll = body.indexOf("setScrollBottomID(")
     const setCurrent = body.indexOf("setCurrentSessionID(id)")
     expect(setScroll).toBeGreaterThan(-1)
     expect(setCurrent).toBeGreaterThan(setScroll)
@@ -45,7 +45,16 @@ describe("selectSession records a pending scroll-to-bottom request", () => {
 
   it("only records the request when explicitly asked", () => {
     const body = extractFunctionBody(session, "selectSession")
-    expect(body).toMatch(/if \(options\.scrollToBottom\) setScrollBottomID\(id\)/)
+    expect(body).toMatch(/setScrollBottomID\(options\.scrollToBottom \? id : undefined\)/)
+  })
+
+  it("clears an unconsumed request on a later plain selection", () => {
+    // Guards a leak: MessageList returns early while loading(), so a request
+    // that was never consumed would otherwise fire on a future switch back to
+    // that session and override its saved scroll position.
+    const body = extractFunctionBody(session, "selectSession")
+    expect(body).not.toMatch(/if \(options\.scrollToBottom\) setScrollBottomID/)
+    expect(body).toContain(": undefined)")
   })
 })
 
@@ -62,6 +71,7 @@ describe("consumeScrollBottom is a one-shot check", () => {
 
   it("is exposed on the session context", () => {
     expect(session).toContain("consumeScrollBottom,")
+    expect(session).toContain("scrollBottomID,")
   })
 })
 
@@ -86,6 +96,19 @@ describe("the openSession webview message requests scroll-to-bottom", () => {
     const openHandler = app.slice(app.indexOf('message.type !== "openSession"'))
     expect(openHandler).toMatch(/tabs\.open\(message\.sessionID, \{ scrollToBottom: true \}\)/)
     expect(openHandler).toMatch(/session\.selectSession\(message\.sessionID, \{ scrollToBottom: true \}\)/)
+  })
+})
+
+describe("MessageList arms a restore pass for the already-selected session", () => {
+  it("watches scrollBottomID, not just currentSessionID", () => {
+    // Clicking Show on the session that is already current does not change
+    // currentSessionID, so the `on(session.currentSessionID)` effect never
+    // re-runs and the request would otherwise never be consumed.
+    expect(messageList).toContain("on(session.scrollBottomID")
+    const start = messageList.indexOf("on(session.scrollBottomID")
+    const block = messageList.slice(start, start + 200)
+    expect(block).toContain("setPendingRestore(id)")
+    expect(block).toContain("session.currentSessionID()")
   })
 })
 

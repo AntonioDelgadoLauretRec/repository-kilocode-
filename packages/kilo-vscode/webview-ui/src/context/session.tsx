@@ -2527,7 +2527,9 @@ export const SessionProvider: ParentComponent = (props) => {
       console.warn("[Kilo New] Cannot select cloud preview session via selectSession")
       return
     }
-    if (options.scrollToBottom) setScrollBottomID(id)
+    // Always reassign: a later plain selection must clear a request that
+    // MessageList never got to consume, or it would fire on a future switch.
+    setScrollBottomID(options.scrollToBottom ? id : undefined)
     const ready = loaded().has(id)
     batch(() => {
       agentDrafts.prune(draftSessionID())
@@ -2967,6 +2969,7 @@ export const SessionProvider: ParentComponent = (props) => {
     loadSessions,
     loadOlderMessages,
     selectSession,
+    scrollBottomID,
     consumeScrollBottom,
     releaseSession: handleSessionDeleted,
     deleteSession,

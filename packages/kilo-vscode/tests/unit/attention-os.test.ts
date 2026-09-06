@@ -46,6 +46,19 @@ describe("OS attention notifications", () => {
     })
   })
 
+  it("escapes Pango markup in the Linux body so the toast is not dropped", () => {
+    // libnotify parses the body as markup: a raw `<` or `&` from a workspace or
+    // session name can make the daemon reject the notification outright.
+    const command = notificationCommand(
+      { message: "Kilo task completed.", workspace: "foo & bar", session: "<b>fix</b>" },
+      "linux",
+    )
+
+    expect(command?.args.at(-1)).toBe("Kilo task completed.\nWorkspace: foo &amp; bar\nSession: &lt;b&gt;fix&lt;/b&gt;")
+    // Quotes and apostrophes are not markup, so they stay readable.
+    expect(notificationCommand({ message: `it's "done"` }, "linux")?.args.at(-1)).toBe(`it's "done"`)
+  })
+
   it("does not build a command for unsupported platforms", () => {
     expect(notificationCommand(notice, "freebsd")).toBeUndefined()
   })

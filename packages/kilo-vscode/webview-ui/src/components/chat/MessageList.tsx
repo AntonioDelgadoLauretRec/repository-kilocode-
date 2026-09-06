@@ -1224,6 +1224,15 @@ export const MessageList: Component<MessageListProps> = (props) => {
     }),
   )
 
+  // Clicking Show on the session that is already selected leaves
+  // currentSessionID untouched, so the effect above never re-arms. Arm the same
+  // restore pass from the request itself; it resolves to a scroll-to-bottom.
+  createEffect(
+    on(session.scrollBottomID, (id) => {
+      if (id && id === session.currentSessionID()) setPendingRestore(id)
+    }),
+  )
+
   createEffect(() => {
     const id = pendingRestore()
     if (!id || session.loading()) return

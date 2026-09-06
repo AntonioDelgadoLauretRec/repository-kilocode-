@@ -206,6 +206,7 @@ export interface SessionContextValue {
   loadSessions: () => void
   loadOlderMessages: () => boolean
   selectSession: (id: string, options?: { focus?: boolean; scrollToBottom?: boolean }) => void
+  scrollBottomID: Accessor<string | undefined>
   consumeScrollBottom: (id: string) => boolean
   releaseSession: (id: string) => void
   deleteSession: (id: string) => void
