@@ -420,91 +420,23 @@
 
 ## [Unreleased]
 
-## [7.1.6-rc.1] - 2026-09-06
+## [7.1.6-rc.1] - 2026-09-05
 
 ### Added
-- feat: add task-scoped shared agent boards by @marius-kilocode in https://github.com/Kilo-Org/kilocode/pull/13629
-- feat(vscode): introduce Kilo Swarm branding by @marius-kilocode in https://github.com/Kilo-Org/kilocode/pull/13711
-- feat: support preselected question answers by @marius-kilocode in https://github.com/Kilo-Org/kilocode/pull/13727
-- feat: expose swarm agent identity and execution state by @marius-kilocode in https://github.com/Kilo-Org/kilocode/pull/13732
-- feat(agent-manager): update worktrees from their saved base by @marius-kilocode in https://github.com/Kilo-Org/kilocode/pull/13735
-- feat(vscode): show unresolved PR comments on worktrees by @marius-kilocode in https://github.com/Kilo-Org/kilocode/pull/13733
-- feat(agent-manager): add inline worktree introduction by @marius-kilocode in https://github.com/Kilo-Org/kilocode/pull/13734
-- feat(jetbrains): move sessions to a worktree from the worktree editor by @kirillk in https://github.com/Kilo-Org/kilocode/pull/13756
-- feat(agent-manager): show PR conversation comments in PR panel by @marius-kilocode in https://github.com/Kilo-Org/kilocode/pull/13776
-- feat(agent-manager): add PR panel refresh button by @marius-kilocode in https://github.com/Kilo-Org/kilocode/pull/13779
-- feat(jetbrains): add Ctrl+1/2/3/0 shortcuts to cycle mode, model, and reasoning effort by @kirillk in https://github.com/Kilo-Org/kilocode/pull/13764
-- feat(jetbrains): exclude Kilo worktrees from IntelliJ indexing by @kirillk in https://github.com/Kilo-Org/kilocode/pull/13800
-- feat(jetbrains): fork a session from the worktree editor by @kirillk in https://github.com/Kilo-Org/kilocode/pull/13766
-- feat(jetbrains): surface PR and run status in the Agent Manager worktree list by @kirillk in https://github.com/Kilo-Org/kilocode/pull/13712
-- feat(jetbrains): run project run configs delegated to Gradle in worktrees by @kirillk in https://github.com/Kilo-Org/kilocode/pull/13761
+
+- Move a session to a worktree directly from the worktree editor.
+- Fork a session from the worktree editor.
+- Add Ctrl+1/2/3/0 shortcuts to cycle mode, model, and reasoning effort.
+- Exclude Kilo worktrees from IntelliJ project indexing.
+- Run project run configurations delegated to Gradle inside a worktree.
+- Surface pull request and run status in the Agent Manager worktree list.
+- Add task-scoped shared agent boards (Swarm), including agent identity, execution state, and preselected question answers.
 
 ### Fixed
-- fix(opencode): announce locally started sessions to the mobile live list by @iscekic in https://github.com/Kilo-Org/kilocode/pull/13681
-- fix(opencode): share session status across worktree contexts by @iscekic in https://github.com/Kilo-Org/kilocode/pull/13685
-- fix(cli): normalize line breaks in question prompts by @lambertjosh in https://github.com/Kilo-Org/kilocode/pull/13684
-- fix(cli): use terminal-safe diagram guidance in Ask mode by @marius-kilocode in https://github.com/Kilo-Org/kilocode/pull/13696
-- fix(docs): update VS Code telemetry link by @marius-kilocode in https://github.com/Kilo-Org/kilocode/pull/13697
-- fix(vscode): implement org-level default model selection by @WebReflection in https://github.com/Kilo-Org/kilocode/pull/13692
-- fix(vscode): send review comments on second Cmd+Enter by @marius-kilocode in https://github.com/Kilo-Org/kilocode/pull/13706
-- fix(vscode): resolve subagent permission cards after replies by @marius-kilocode in https://github.com/Kilo-Org/kilocode/pull/13704
-- fix(agent-manager): parallelize worktree terminal cleanup by @marius-kilocode in https://github.com/Kilo-Org/kilocode/pull/13707
-- fix(indexing): replace chokidar file watcher with @parcel/watcher by @mavrukin in https://github.com/Kilo-Org/kilocode/pull/12784
-- fix(cli): avoid stale Swarm activity notices after reads by @marius-kilocode in https://github.com/Kilo-Org/kilocode/pull/13709
-- fix(cli): prune old tool outputs in single-turn subagents by @marius-kilocode in https://github.com/Kilo-Org/kilocode/pull/13713
-- fix(agent-manager): preserve terminal-only tabs when switching contexts by @marius-kilocode in https://github.com/Kilo-Org/kilocode/pull/13715
-- fix(vscode): suggest worktree review first in Agent Manager by @marius-kilocode in https://github.com/Kilo-Org/kilocode/pull/13716
-- fix(agent-manager): select nearest session after worktree deletion by @marius-kilocode in https://github.com/Kilo-Org/kilocode/pull/13714
-- fix(cli): keep balance errors out of the terminal by @marius-kilocode in https://github.com/Kilo-Org/kilocode/pull/13729
-- fix(agent-manager): show outgoing prompts before approval by @marius-kilocode in https://github.com/Kilo-Org/kilocode/pull/13730
-- fix(vscode): cache and bound change badge file reads by @marius-kilocode in https://github.com/Kilo-Org/kilocode/pull/13728
-- fix(vscode): clear completion indicators when opening results by @marius-kilocode in https://github.com/Kilo-Org/kilocode/pull/13731
-- fix(cli): clarify experimental board coordination by @marius-kilocode in https://github.com/Kilo-Org/kilocode/pull/13736
-- fix(agent-manager): show initial worktree prompts immediately by @marius-kilocode in https://github.com/Kilo-Org/kilocode/pull/13738
-- fix(agent-manager): show completed status for review suggestions by @marius-kilocode in https://github.com/Kilo-Org/kilocode/pull/13743
-- fix(vscode): open sent-message images in an editor tab by @sylwester-liljegren in https://github.com/Kilo-Org/kilocode/pull/13683
-- fix(cli): stop plan-mode edit hardening for custom plan/architect agents by @maphew in https://github.com/Kilo-Org/kilocode/pull/13590
-- fix(cli): use space to toggle and enter to advance multi-select questions by @maphew in https://github.com/Kilo-Org/kilocode/pull/13578
-- fix(cli): keep subagents running after permission denial by @marius-kilocode in https://github.com/Kilo-Org/kilocode/pull/13744
-- fix(vscode): restore Agent Manager build within line cap by @marius-kilocode in https://github.com/Kilo-Org/kilocode/pull/13754
-- fix(cli): restore OpenCode provider request headers by @chrarnoldus in https://github.com/Kilo-Org/kilocode/pull/13752
-- fix(cli): clarify Explore execution limits by @marius-kilocode in https://github.com/Kilo-Org/kilocode/pull/13759
-- fix(vscode): a more compact serializer outcome by @WebReflection in https://github.com/Kilo-Org/kilocode/pull/13758
-- fix(jetbrains): refresh PR badges app-wide on IDE focus gain by @kirillk in https://github.com/Kilo-Org/kilocode/pull/13760
-- fix(agent-manager): preserve collapsed sections after deletion by @marius-kilocode in https://github.com/Kilo-Org/kilocode/pull/13773
-- fix(agent-manager): handle unanswered update questions by @marius-kilocode in https://github.com/Kilo-Org/kilocode/pull/13774
-- fix(agent-manager): clear stale child activity by @marius-kilocode in https://github.com/Kilo-Org/kilocode/pull/13775
-- fix(agent-manager): restore worktree delete actions by @marius-kilocode in https://github.com/Kilo-Org/kilocode/pull/13777
-- fix(vscode): keep @ mention search open across spaces by @sylwester-liljegren in https://github.com/Kilo-Org/kilocode/pull/13592
-- fix(agent-manager): reference update-from-base in introduction by @marius-kilocode in https://github.com/Kilo-Org/kilocode/pull/13753
-- fix(agent-manager): preserve local edits during base updates by @marius-kilocode in https://github.com/Kilo-Org/kilocode/pull/13780
-- fix(agent-manager): remove toolbar help icon by @marius-kilocode in https://github.com/Kilo-Org/kilocode/pull/13783
-- fix(cli): bound the piped-stdin wait in kilo run by @iscekic in https://github.com/Kilo-Org/kilocode/pull/13763
-- fix(ci): download release archives before smoke tests by @marius-kilocode in https://github.com/Kilo-Org/kilocode/pull/13786
-- fix(vscode): preserve open selectors during prompt focus recovery by @marius-kilocode in https://github.com/Kilo-Org/kilocode/pull/13789
-- fix(agent-manager): use consistent toolbar icon actions by @marius-kilocode in https://github.com/Kilo-Org/kilocode/pull/13791
-- fix(vscode): keep Shift+Tab out of slash command selection by @marius-kilocode in https://github.com/Kilo-Org/kilocode/pull/13792
-- fix(vscode): stop hidden polling and reuse diff file counts by @marius-kilocode in https://github.com/Kilo-Org/kilocode/pull/13795
-- fix(vscode): keep indexing status in sync by @marius-kilocode in https://github.com/Kilo-Org/kilocode/pull/13796
-- fix(vscode): retry marketplace publishing by @marius-kilocode in https://github.com/Kilo-Org/kilocode/pull/13802
-- fix(cli): time out stalled glob searches by @lambertjosh in https://github.com/Kilo-Org/kilocode/pull/13805
-- fix(jetbrains): fill session dialog cards with a raised surface by @kirillk in https://github.com/Kilo-Org/kilocode/pull/13797
-- fix(jetbrains): settle attention badges during auto-approve by @kirillk in https://github.com/Kilo-Org/kilocode/pull/13765
-- fix(cli): show GPT-6 Astra for ChatGPT OAuth by @lambertjosh in https://github.com/Kilo-Org/kilocode/pull/13816
 
-### Changed
-- release(jetbrains): v7.1.5 by @kilo-maintainer[bot] in https://github.com/Kilo-Org/kilocode/pull/13680
-- test(cli): verify TUI rendering without fixed UI text by @marius-kilocode in https://github.com/Kilo-Org/kilocode/pull/13693
-- chore(jetbrains): bump CLI pin to v7.5.9 by @kilo-maintainer[bot] in https://github.com/Kilo-Org/kilocode/pull/13695
-- test(vscode): give session activity integration a 15s timeout by @marius-kilocode in https://github.com/Kilo-Org/kilocode/pull/13708
-- refactor(agent-manager): clarify terminal restoration guards by @marius-kilocode in https://github.com/Kilo-Org/kilocode/pull/13726
-- refactor(vscode): share question resolution routing by @marius-kilocode in https://github.com/Kilo-Org/kilocode/pull/13739
-- refactor(vscode): share context mention parsing and attachments by @marius-kilocode in https://github.com/Kilo-Org/kilocode/pull/13740
-- refactor(vscode): share session tab layout styles by @marius-kilocode in https://github.com/Kilo-Org/kilocode/pull/13741
-- refactor(ui): remove redundant shared CSS by @marius-kilocode in https://github.com/Kilo-Org/kilocode/pull/13742
-- test(cli): cover JSON-clean task metadata without a selected variant by @maphew in https://github.com/Kilo-Org/kilocode/pull/13688
-- chore(jetbrains): disable feedback surveys and enable internal mode in dev runs by @kirillk in https://github.com/Kilo-Org/kilocode/pull/13755
-
+- Refresh pull request badges app-wide when the IDE regains focus.
+- Settle attention badges correctly during auto-approve.
+- Fill session dialog cards with a raised surface instead of a flat background.
 
 ## [7.1.5] - 2026-09-01
 
