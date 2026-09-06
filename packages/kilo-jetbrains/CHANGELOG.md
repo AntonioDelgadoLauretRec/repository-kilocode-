@@ -420,6 +420,24 @@
 
 ## [Unreleased]
 
+## [7.1.6-rc.1] - 2026-09-05
+
+### Added
+
+- Move a session to a worktree directly from the worktree editor.
+- Fork a session from the worktree editor.
+- Add Ctrl+1/2/3/0 shortcuts to cycle mode, model, and reasoning effort.
+- Exclude Kilo worktrees from IntelliJ project indexing.
+- Run project run configurations delegated to Gradle inside a worktree.
+- Surface pull request and run status in the Agent Manager worktree list.
+- Add task-scoped shared agent boards (Swarm), including agent identity, execution state, and preselected question answers.
+
+### Fixed
+
+- Refresh pull request badges app-wide when the IDE regains focus.
+- Settle attention badges correctly during auto-approve.
+- Fill session dialog cards with a raised surface instead of a flat background.
+
 ## [7.1.5] - 2026-09-01
 
 ### Fixed
