@@ -720,7 +720,7 @@ const { PRChecks } = await import("../../webview-ui/agent-manager/pr/PRChecks")
 const { summarize } = await import("../../src/agent-manager/pr/am-pr-utils")
 const third = document.createElement("div")
 document.body.append(third)
-const [checks, setChecks] = createSignal<PRStatus>({
+const [prState, setPrState] = createSignal<PRStatus>({
   ...base,
   checks: summarize([
     { name: "Typecheck", status: "failure", url: "https://github.com/example/repo/actions/runs/100/job/200" },
@@ -732,7 +732,7 @@ const cleanup = render(
   () => (
     <VSCodeProvider>
       <LanguageProvider>
-        <PRChecks pr={checks()} />
+        <PRChecks pr={prState()} />
       </LanguageProvider>
     </VSCodeProvider>
   ),
@@ -761,13 +761,13 @@ assert.deepEqual(sent.at(-1), feedback)
 fix()!.click()
 assert.equal(sent.length, before + 3)
 assert.deepEqual(sent.at(-1), feedback)
-setChecks((prev) => ({
+setPrState((prev) => ({
   ...prev,
   checks: summarize([
     { name: "Typecheck", status: "failure", url: "https://github.com/example/repo/actions/runs/100/job/201" },
   ]),
 }))
 assert.equal(fix()?.disabled, false)
-setChecks((prev) => ({ ...prev, checks: summarize([{ name: "Tests", status: "success" }]) }))
+setPrState((prev) => ({ ...prev, checks: summarize([{ name: "Tests", status: "success" }]) }))
 assert.equal(fix(), null)
 cleanup()
