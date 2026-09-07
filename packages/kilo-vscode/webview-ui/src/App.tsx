@@ -18,6 +18,7 @@ import { useWorktreeMode } from "./context/worktree-mode"
 import { useDiffStyle } from "./context/diff-style"
 import { dispatchAgentManagerEditPreview } from "./utils/agent-manager-events"
 import { strongest } from "./utils/session-activity"
+import { planOpens } from "./utils/open-plan"
 import type { PermissionFileDiff } from "./types/messages"
 
 // Override the upstream "task" tool renderer with the fully-expanded version
@@ -135,6 +136,17 @@ export const DataBridge: Component<{ children: any }> = (props) => {
     if (!window.dispatchEvent(event)) return
     vscode.postMessage({ type: "openFile", filePath, line, column, sessionID })
   }
+
+  const opened = new Set<string>()
+  const unsubscribePlans = vscode.onMessage((message) => {
+    for (const plan of planOpens(message)) {
+      const id = `${plan.sessionID}:${plan.id}`
+      if (opened.has(id)) continue
+      opened.add(id)
+      queueMicrotask(() => open(plan.path, undefined, undefined, plan.sessionID))
+    }
+  })
+  onCleanup(unsubscribePlans)
 
   const openDiff = (diff: PermissionFileDiff) => {
     if (worktree) {
