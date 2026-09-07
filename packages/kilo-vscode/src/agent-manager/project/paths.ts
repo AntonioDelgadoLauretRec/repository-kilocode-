@@ -64,7 +64,7 @@ export async function resolveProjectRoot(
     Promise.resolve()
       .then(() => git(dir, args))
       .catch(() => undefined)
-  const revparse = async (arg: string) => (await run(["rev-parse", arg]))?.replace(/\r?\n$/, "")
+  const revparse = async (arg: string) => (await run(["rev-parse", arg]))?.trimEnd()
   // Older Git echoes unsupported rev-parse flags into stdout with exit code zero.
   // --show-toplevel is already absolute; never resolve an option line as a path.
   const top = await revparse("--show-toplevel")
