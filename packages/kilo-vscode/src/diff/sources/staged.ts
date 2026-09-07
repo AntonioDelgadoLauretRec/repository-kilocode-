@@ -1,6 +1,5 @@
 import * as vscode from "vscode"
 import { GitOps } from "../../agent-manager/GitOps"
-import { generatedLike } from "../../agent-manager/local-diff"
 import { appendOutput, getWorkspaceRoot } from "../../review-utils"
 import { imageMime, loadImage } from "../shared/image"
 import { resolveInside } from "../shared/path"
@@ -9,6 +8,7 @@ import type { DiffSource, DiffSourceDescriptor, DiffSourceFetch } from "./types"
 import {
   blobOid,
   blobSize,
+  applyGeneratedAttributes,
   INDEX_REF,
   MAX_DETAIL_BYTES,
   parseNameStatus,
@@ -83,7 +83,7 @@ export function createStagedDiffSource(opts: StagedDiffSourceOptions = {}): Diff
     }
     const counts = parseNumstat(numstat.code === 0 ? numstat.stdout : "")
     const refs = parseRawOids(raw.code === 0 ? raw.stdout : "")
-    return parseNameStatus(nameStatus.stdout).map((item) => {
+    const entries = parseNameStatus(nameStatus.stdout).map((item) => {
       const ref = refs.get(item.file)
       const entry = {
         file: item.file,
@@ -99,6 +99,7 @@ export function createStagedDiffSource(opts: StagedDiffSourceOptions = {}): Diff
         item.status === "deleted" ? "missing" : (ref?.after ?? "missing"),
       )
     })
+    return applyGeneratedAttributes(git, dir, entries, true)
   }
 
   return {
@@ -165,7 +166,7 @@ export function createStagedDiffSource(opts: StagedDiffSourceOptions = {}): Diff
         deletions: entry.deletions,
         status: entry.status,
         tracked: true,
-        generatedLike: generatedLike(file),
+        generatedLike: entry.generatedLike,
         summarized,
         stamp: entry.stamp ?? `${entry.status}:${entry.additions}:${entry.deletions}`,
       }
@@ -211,10 +212,12 @@ async function fileEntry(
     tracked: true,
     binary: stats.get(item.file)?.binary ?? false,
   }
-  if (!imageMime(item.file)) return entry
+  const marked = (await applyGeneratedAttributes(git, dir, [entry], true)).at(0)
+  if (!marked) return undefined
+  if (!imageMime(item.file)) return marked
   const [before, after] = await Promise.all([
     item.status === "added" ? "missing" : blobOid(git, dir, "HEAD", item.file),
     item.status === "deleted" ? "missing" : blobOid(git, dir, INDEX_REF, item.file),
   ])
-  return stamp(entry, before, after)
+  return stamp(marked, before, after)
 }

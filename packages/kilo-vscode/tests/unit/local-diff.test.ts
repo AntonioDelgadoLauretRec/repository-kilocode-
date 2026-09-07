@@ -374,6 +374,28 @@ describe("diffSummary", () => {
       expect(src?.generatedLike).toBe(false)
     })
   })
+
+  it("uses linguist-generated attributes and keeps English and German visible", async () => {
+    await withRepo(async (dir, base) => {
+      await fs.mkdir(path.join(dir, "i18n"), { recursive: true })
+      await fs.writeFile(
+        path.join(dir, ".gitattributes"),
+        "**/i18n/*.ts linguist-generated=true\n**/i18n/en*.ts linguist-generated=false\n**/i18n/de*.ts linguist-generated=false\ndist/*.js linguist-generated=false\n",
+      )
+      await fs.mkdir(path.join(dir, "dist"), { recursive: true })
+      await Promise.all(
+        ["en", "de", "fr"].map((locale) => fs.writeFile(path.join(dir, "i18n", `${locale}.ts`), `${locale}\n`)),
+      )
+      await fs.writeFile(path.join(dir, "dist", "app.js"), "source\n")
+
+      const result = await diffSummary(git(), dir, base)
+      expect(result.find((entry) => entry.file === "i18n/en.ts")?.generatedLike).toBe(false)
+      expect(result.find((entry) => entry.file === "i18n/de.ts")?.generatedLike).toBe(false)
+      expect(result.find((entry) => entry.file === "i18n/fr.ts")?.generatedLike).toBe(true)
+      expect(result.find((entry) => entry.file === "dist/app.js")?.generatedLike).toBe(false)
+      expect((await diffFile(git(), dir, base, "i18n/fr.ts"))?.generatedLike).toBe(true)
+    })
+  })
 })
 
 describe("createLocalDiff summary cache", () => {
