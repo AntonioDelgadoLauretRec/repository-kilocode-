@@ -4,6 +4,7 @@ import { tmpdir } from "os"
 import { dirname, join } from "path"
 
 const source = join(import.meta.dir, "..", "..", "bin", "kilo")
+const helper = join(import.meta.dir, "..", "..", "bin", "kilocode", "windows-avx2.cjs")
 const node = (() => {
   const bin = Bun.which("node")
   if (!bin) throw new Error("Launcher tests require Node.js")
@@ -34,6 +35,7 @@ async function fixture() {
   const root = await realpath(await mkdtemp(join(tmpdir(), "kilo-bin-startup-")))
   const pkg = join(root, "node_modules", "@kilocode", "cli")
   const wrapper = join(pkg, "bin", "kilo")
+  const helperTarget = join(pkg, "bin", "kilocode", "windows-avx2.cjs")
   const cached = join(pkg, "bin", ".kilo")
   const optimized = join(pkg, "node_modules", "@kilocode", "cli-windows-x64", "bin", "kilo.exe")
   const baseline = join(pkg, "node_modules", "@kilocode", "cli-windows-x64-baseline", "bin", "kilo.exe")
@@ -51,6 +53,8 @@ async function fixture() {
   }
   await mkdir(home)
   await copyFile(source, wrapper)
+  await mkdir(dirname(helperTarget), { recursive: true })
+  await copyFile(helper, helperTarget)
   await writeFile(join(pkg, "package.json"), JSON.stringify({ name: "@kilocode/cli", type: "commonjs" }))
   await writeFile(
     preload,
