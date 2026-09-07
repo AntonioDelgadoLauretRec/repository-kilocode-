@@ -47,6 +47,7 @@ const worktree: WorktreeState = {
   path: "/test/task",
   createdAt: "2026-09-07T00:00:00Z",
 }
+const sibling: WorktreeState = { ...worktree, id: "wt-sibling", branch: "sibling", path: "/test/sibling" }
 const [worktrees, setWorktrees] = createSignal([worktree])
 const [project, setProject] = createSignal("legacy")
 let deletes = 0
@@ -203,10 +204,16 @@ for (const id of ["legacy", "project-two"]) {
   root.querySelector(".am-worktree-exit")!.dispatchEvent(new window.Event("animationend", { bubbles: true }))
   assert.equal(root.querySelector(".am-worktree-item"), null, "card is released after collapse")
 }
-setWorktrees([worktree])
+setWorktrees([worktree, sibling])
 message({ type: "agentManager.worktreeDeleted", projectId: project(), worktreeId: worktree.id })
-setWorktrees([])
+setWorktrees([sibling])
 assert.ok(root.querySelector(".am-worktree-completed"), "state may arrive before the delete event")
+assert.ok(root.querySelector('[data-sidebar-id="wt-sibling"]'), "remaining sibling stays visible")
+assert.equal(
+  root.querySelector('[data-sidebar-id="wt-sibling"]')!.closest(".am-worktree-completed"),
+  null,
+  "remaining sibling is not animated",
+)
 root.querySelector(".am-worktree-exit")!.dispatchEvent(new window.Event("animationend", { bubbles: true }))
 setWorktrees([worktree])
 setWorktrees([])

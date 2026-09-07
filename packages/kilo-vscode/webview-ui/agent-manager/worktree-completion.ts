@@ -26,7 +26,7 @@ export function createWorktreeCompletion(
         const current = source().findIndex((item) => item.id === message.worktreeId)
         const stored = known.get(message.worktreeId)
         const index = current >= 0 ? current : (stored?.index ?? -1)
-        const worktree = source().at(current) ?? stored?.worktree
+        const worktree = current >= 0 ? source().at(current) : stored?.worktree
         if (index < 0 || !worktree || timers.has(worktree.id)) return
         setRetained(
           (prev) => new Map([...prev, [worktree.id, { worktree: { ...worktree, label: label(worktree) }, index }]]),
