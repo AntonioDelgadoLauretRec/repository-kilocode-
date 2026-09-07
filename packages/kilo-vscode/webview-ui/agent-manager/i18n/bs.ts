@@ -304,9 +304,10 @@ export const dict = {
   "agentManager.import.noBranchesFound": "Nisu pronađeni branchevi.",
   "agentManager.import.noBranchesHint": "Zalijepite PR URL iznad ili kreirajte novi Worktree.",
   "agentManager.import.failed": "Uvoz neuspješan",
-  "agentManager.caffeination.toggle": "Održi računar budnim",
-  "agentManager.caffeination.armed": "Režim održavanja računara budnim je uključen; kliknite za isključivanje",
-  "agentManager.caffeination.active": "Računar se održava budnim",
+  "agentManager.caffeination.toggle": "Održi računar budnim dok Kilo agenti rade",
+  "agentManager.caffeination.armed":
+    "Režim održavanja računara budnim je uključen za Kilo agente; kliknite da ga isključite",
+  "agentManager.caffeination.active": "Računar se održava budnim dok Kilo agenti rade",
   "agentManager.caffeination.unavailable": "Režim održavanja računara budnim nije dostupan na ovoj platformi",
   "agentManager.browser.title": "Preglednik",
   "agentManager.browser.url": "URL lokalne aplikacije",

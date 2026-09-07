@@ -297,9 +297,9 @@ export const dict = {
   "agentManager.import.noBranchesFound": "未找到分支。",
   "agentManager.import.noBranchesHint": "在上方粘贴 PR URL 或创建新的 Worktree。",
   "agentManager.import.failed": "导入失败",
-  "agentManager.caffeination.toggle": "保持电脑唤醒",
-  "agentManager.caffeination.armed": "保持唤醒模式已启用；点击以禁用",
-  "agentManager.caffeination.active": "保持电脑唤醒",
+  "agentManager.caffeination.toggle": "Kilo 代理工作期间保持电脑唤醒",
+  "agentManager.caffeination.armed": "已为 Kilo 代理启用保持唤醒模式；点击以禁用",
+  "agentManager.caffeination.active": "Kilo 代理工作期间保持电脑唤醒",
   "agentManager.caffeination.unavailable": "此平台不支持保持唤醒模式",
 
   "agentManager.browser.title": "浏览器",

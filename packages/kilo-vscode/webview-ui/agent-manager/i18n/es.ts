@@ -308,9 +308,10 @@ export const dict = {
   "agentManager.import.noBranchesFound": "No se encontraron branches.",
   "agentManager.import.noBranchesHint": "Pega una URL de PR arriba o crea un nuevo Worktree.",
   "agentManager.import.failed": "Error en la importación",
-  "agentManager.caffeination.toggle": "Mantener el equipo activo",
-  "agentManager.caffeination.armed": "Modo para mantener el equipo activo habilitado; haz clic para desactivar",
-  "agentManager.caffeination.active": "Manteniendo el equipo activo",
+  "agentManager.caffeination.toggle": "Mantener el equipo activo mientras trabajan los agentes de Kilo",
+  "agentManager.caffeination.armed":
+    "Modo para mantener el equipo activo habilitado para los agentes de Kilo; haz clic para desactivar",
+  "agentManager.caffeination.active": "Manteniendo el equipo activo mientras trabajan los agentes de Kilo",
   "agentManager.caffeination.unavailable":
     "El modo para mantener el equipo activo no está disponible en esta plataforma",
   "agentManager.browser.title": "Navegador",

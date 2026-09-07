@@ -314,9 +314,10 @@ export const dict = {
   "agentManager.import.noBranchesFound": "Nessun branch trovato.",
   "agentManager.import.noBranchesHint": "Incolla un URL PR sopra o crea un nuovo worktree.",
   "agentManager.import.failed": "Importazione non riuscita",
-  "agentManager.caffeination.toggle": "Mantieni il computer attivo",
-  "agentManager.caffeination.armed": "Modalità per mantenere il computer attivo abilitata; fai clic per disabilitare",
-  "agentManager.caffeination.active": "Computer mantenuto attivo",
+  "agentManager.caffeination.toggle": "Mantieni il computer attivo mentre gli agenti Kilo lavorano",
+  "agentManager.caffeination.armed":
+    "Modalità per mantenere il computer attivo abilitata per gli agenti Kilo; fai clic per disabilitare",
+  "agentManager.caffeination.active": "Computer mantenuto attivo mentre gli agenti Kilo lavorano",
   "agentManager.caffeination.unavailable":
     "La modalità per mantenere il computer attivo non è disponibile su questa piattaforma",
   "agentManager.browser.title": "Browser",
