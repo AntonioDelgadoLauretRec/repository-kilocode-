@@ -186,7 +186,7 @@ assert.equal(refreshedRow?.getAttribute("aria-expanded"), "true")
 assert.match(root.textContent ?? "", /second paragraph only shows when expanded/)
 
 const send = [...root.querySelectorAll('[data-component="button"]')].find((node) =>
-  /Send to chat/.test(node.textContent ?? ""),
+  /Fix with Kilo/.test(node.textContent ?? ""),
 )
 assert.ok(send, "send button is rendered")
 ;(send as HTMLButtonElement).click()
