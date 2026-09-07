@@ -4,6 +4,7 @@ import ai.kilocode.backend.app.ConfigWarning
 import ai.kilocode.backend.app.KiloBackendSessionManager
 import ai.kilocode.backend.app.LoadError
 import ai.kilocode.backend.app.SseEvent
+import ai.kilocode.backend.cli.KiloBackendHttpClients
 import ai.kilocode.backend.cli.KiloCliDataParser
 import ai.kilocode.log.KiloLog
 import ai.kilocode.jetbrains.api.client.DefaultApi
@@ -58,10 +59,23 @@ class KiloBackendWorkspace(
     companion object {
         private const val MAX_RETRIES = 3
         private const val RETRY_DELAY_MS = 1000L
+        private const val WARNINGS_TIMEOUT_SECONDS = 5L
     }
 
     private val _state = MutableStateFlow<KiloWorkspaceState>(KiloWorkspaceState.Pending)
     val state: StateFlow<KiloWorkspaceState> = _state.asStateFlow()
+
+    /**
+     * Config warnings are optional, so they use a bounded client rather than the workspace [api],
+     * which has no call/read timeout. A stalled fetch would otherwise hold the workspace on
+     * Connecting even though the required catalog already loaded.
+     */
+    private val warningsApi by lazy {
+        DefaultApi(
+            basePath = "http://127.0.0.1:$port",
+            client = KiloBackendHttpClients.bounded(http, WARNINGS_TIMEOUT_SECONDS),
+        )
+    }
 
     private var loader: Job? = null
     private var eventWatcher: Job? = null
@@ -224,7 +238,9 @@ class KiloBackendWorkspace(
                         }
                         "global.config.updated" -> {
                             log.info("SSE global.config.updated — refreshing config warnings for $directory")
-                            refreshWarnings()
+                            // Launched so a slow fetch cannot block this collector and stall the
+                            // shared global SSE flow for chat and other workspaces.
+                            launch { refreshWarnings() }
                         }
                     }
                 }
@@ -245,7 +261,7 @@ class KiloBackendWorkspace(
 
     private suspend fun warnings(): List<ConfigWarning> = withContext(Dispatchers.IO) {
         try {
-            api.configWarnings(directory = directory).map {
+            warningsApi.configWarnings(directory = directory).map {
                 ConfigWarning(path = it.path, message = it.message, detail = it.detail)
             }
         } catch (e: CancellationException) {

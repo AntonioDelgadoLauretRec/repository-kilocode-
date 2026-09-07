@@ -180,6 +180,17 @@ class KiloBackendCliManagerEnvTest {
     }
 
     @Test
+    fun `work dir is returned when the directory was created concurrently`() {
+        // mkdirs() returns false for an already-existing directory; that must not fall back to
+        // the inherited IDE cwd, which is the $HOME resolution this helper exists to prevent.
+        File(tmp, "cwd").mkdirs()
+
+        val dir = workDir(tmp)
+
+        assertEquals(File(tmp, "cwd"), dir)
+    }
+
+    @Test
     fun `work dir is never home or a filesystem root`() {
         val dir = workDir(tmp)
 

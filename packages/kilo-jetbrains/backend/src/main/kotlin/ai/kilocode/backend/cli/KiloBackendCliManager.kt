@@ -622,8 +622,9 @@ internal fun workDir(
     log: KiloLog = KiloLog.create(KiloBackendCliManager::class.java),
 ): File? {
     val dir = File(root, "cwd")
-    if (dir.isDirectory) return dir
-    if (dir.mkdirs()) return dir
+    // mkdirs() returns false when the directory already exists, including when a concurrent
+    // spawn created it, so treat an existing directory as success.
+    if (dir.mkdirs() || dir.isDirectory) return dir
     log.warn("Could not create CLI working directory $dir; inheriting IDE working directory")
     return null
 }

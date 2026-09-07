@@ -27,6 +27,7 @@ import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.withTimeoutOrNull
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.concurrent.CountDownLatch
 import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -245,6 +246,26 @@ class KiloBackendWorkspaceTest {
 
         val state = ws.state.value as KiloWorkspaceState.Ready
         assertTrue(state.warnings.isEmpty())
+    }
+
+    @Test
+    fun `hung warnings do not prevent Ready`() = runBlocking {
+        val gate = CountDownLatch(1)
+        mock.warningsGate = gate
+
+        try {
+            val app = setup()
+            val ws = ready(app)
+
+            // The bounded warnings client aborts the stalled call, so Ready still arrives with
+            // the required catalog and no warnings.
+            loaded(ws)
+
+            val state = ws.state.value as KiloWorkspaceState.Ready
+            assertTrue(state.warnings.isEmpty())
+        } finally {
+            gate.countDown()
+        }
     }
 
     @Test
