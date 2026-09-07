@@ -802,7 +802,7 @@ html[data-theme="kilo-vscode"]
   animation: am-worktree-check-ring 380ms cubic-bezier(0.2, 0.7, 0.2, 1);
 }
 
-.am-worktree-finish-box [data-component="icon"] path {
+.am-worktree-finish-box [data-component="icon"] svg {
   stroke-dasharray: 12;
   animation: am-worktree-check-draw 150ms cubic-bezier(0.4, 0, 0.3, 1) 40ms both;
 }
@@ -904,7 +904,7 @@ html[data-theme="kilo-vscode"]
   .am-worktree-completed .am-wt-name,
   .am-worktree-finish-box,
   .am-worktree-finish-box::after,
-  .am-worktree-finish-box [data-component="icon"] path {
+  .am-worktree-finish-box [data-component="icon"] svg {
     animation: none;
   }
 }
