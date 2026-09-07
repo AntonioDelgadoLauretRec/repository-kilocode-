@@ -370,7 +370,16 @@ export const WorktreeItem: Component<WorktreeItemProps> = (props) => {
                       <div class="am-wt-hover-actions">
                         <Show when={props.completed}>
                           <span class="am-worktree-finish-box" aria-hidden="true">
-                            <Icon name="check-small" size="small" />
+                            {/* Inline so the check fills the 12px chip and its stroke can be drawn. */}
+                            <svg class="am-wt-check" viewBox="0 0 12 12" fill="none">
+                              <path
+                                d="M3 6.3L5 8.3L9 4"
+                                stroke="currentColor"
+                                stroke-width="1.75"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                              />
+                            </svg>
                           </span>
                         </Show>
                         <Show

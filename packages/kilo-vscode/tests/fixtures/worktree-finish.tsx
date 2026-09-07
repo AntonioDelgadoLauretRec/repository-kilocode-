@@ -164,7 +164,7 @@ for (const id of ["legacy", "project-two"]) {
   const completed = root.querySelector(".am-worktree-completed")!
   assert.ok(completed, `${id}: retain success in either event order`)
   assert.equal(completed.querySelector(".am-worktree-branch")!.textContent, "Test task")
-  assert.ok(completed.querySelector(".am-worktree-finish-box [data-component=icon]"))
+  assert.ok(completed.querySelector(".am-worktree-finish-box .am-wt-check path"))
   assert.equal(completed.querySelector("[data-sidebar-id]"), null)
   assert.ok(completed.querySelector(".am-worktree-item")!.hasAttribute("inert"))
   assert.equal(completed.querySelector("[role=status]")!.textContent, "Test task: Deleted")
