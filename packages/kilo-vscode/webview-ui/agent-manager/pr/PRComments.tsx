@@ -17,6 +17,7 @@ interface Props {
   worktreeId: string
   activeTerminalId?: string
   onOpenFile?: (file: string, line?: number) => void
+  onOpenDiff?: (comment: PRComment) => void
   onOpenUrl?: (url: string) => void
 }
 
@@ -131,6 +132,7 @@ export function PRComments(props: Props) {
       {(comment) => (
         <PRCommentCard
           comment={comment()}
+          preview={comment().outdated ? undefined : comment().preview}
           resolved={resolved(comment())}
           pending={state().pending[id] !== undefined}
           sent={state().sent[id] === true}
@@ -143,8 +145,15 @@ export function PRComments(props: Props) {
           onToggleResolved={() => toggleResolved(comment())}
           onSend={() => send([id])}
           onOpenFile={
-            comment().file && props.onOpenFile ? () => props.onOpenFile?.(comment().file!, comment().line) : undefined
+            comment().file && props.onOpenFile
+              ? () =>
+                  props.onOpenFile?.(
+                    comment().file!,
+                    comment().outdated || comment().side === "deletions" ? undefined : comment().line,
+                  )
+              : undefined
           }
+          onOpenDiff={comment().file && props.onOpenDiff ? () => props.onOpenDiff?.(comment()) : undefined}
           onOpenUrl={
             githubUrl(comment().url) && props.onOpenUrl ? () => props.onOpenUrl?.(githubUrl(comment().url)!) : undefined
           }
@@ -174,7 +183,7 @@ export function PRComments(props: Props) {
               {t(
                 props.activeTerminalId
                   ? "agentManager.pr.comment.sendAllToTerminal"
-                  : "agentManager.pr.comment.sendAll",
+                  : "agentManager.pr.fixWithKiloCount",
                 { count: Math.min(unsent().length, SEND_LIMIT) },
               )}
             </Button>
