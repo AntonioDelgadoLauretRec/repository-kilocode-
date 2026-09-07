@@ -5093,6 +5093,7 @@ export type EventKilocodeAgentManagerStart = {
     sessionID: string
     sandboxInheritanceToken?: string
     mode: "worktree" | "local"
+    worktreeID?: string
     versions?: boolean
     tasks: Array<{
       prompt?: string

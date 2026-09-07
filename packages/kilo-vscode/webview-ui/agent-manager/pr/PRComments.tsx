@@ -209,7 +209,7 @@ export function PRComments(props: Props) {
               {t(
                 props.activeTerminalId
                   ? "agentManager.pr.comment.sendAllToTerminal"
-                  : "agentManager.review.sendAllToChatWithCount",
+                  : "agentManager.pr.fixWithKiloCount",
                 { count: Math.min(unsent().length, SEND_LIMIT) },
               )}
             </Button>

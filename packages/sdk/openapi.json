@@ -42424,6 +42424,9 @@
                 "type": "string",
                 "enum": ["worktree", "local"]
               },
+              "worktreeID": {
+                "type": "string"
+              },
               "versions": {
                 "type": "boolean"
               },
