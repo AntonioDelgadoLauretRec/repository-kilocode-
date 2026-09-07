@@ -291,7 +291,8 @@ export const WorktreeItem: Component<WorktreeItemProps> = (props) => {
                           }}
                           title={t("agentManager.worktree.doubleClickRename")}
                         >
-                          {props.label}
+                          {/* Inner span keeps the finish strikethrough tight to the text. */}
+                          <span class="am-wt-name">{props.label}</span>
                         </span>
                       }
                     >
@@ -367,11 +368,6 @@ export const WorktreeItem: Component<WorktreeItemProps> = (props) => {
                         </Button>
                       </Show>
                       <div class="am-wt-hover-actions">
-                        <Show when={props.completed}>
-                          <span class="am-worktree-finish-box" aria-hidden="true">
-                            <Icon name="check-small" size="small" />
-                          </span>
-                        </Show>
                         <Show
                           when={props.shortcut !== undefined && props.shortcut >= 2 && props.shortcut <= MAX_SHORTCUT}
                         >
