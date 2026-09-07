@@ -1,5 +1,7 @@
-import { createMemo, Show, type Component } from "solid-js"
+import { createMemo, createSignal, Show, type Component } from "solid-js"
 import { UserMessageDisplay } from "@kilocode/kilo-ui/message-part"
+import { Button } from "@kilocode/kilo-ui/button"
+import { Icon } from "@kilocode/kilo-ui/icon"
 import { partFeedback } from "../../../../src/shared/browser-feedback"
 import { imageMime } from "../../../../src/shared/image-data-url"
 import type { Message, Part, TextPart } from "../../types/messages"
@@ -19,25 +21,55 @@ interface VscodeUserMessageProps {
   onDelete?: () => void
   onFork?: () => void
   onRevert?: () => void
+  onSelectSession?: (id: string) => boolean | void
 }
+
+const ATTRIBUTION = /\n\n<!-- kilo-agent-manager source=([^ ]+) -->$/
 
 export const VscodeUserMessage: Component<VscodeUserMessageProps> = (props) => {
   const language = useLanguage()
   const vscode = useVSCode()
   const text = createMemo(() => props.parts.find((part): part is TextPart => part.type === "text" && !part.synthetic))
+  const attribution = createMemo(() => text()?.text.match(ATTRIBUTION)?.[1])
+  const [unavailable, setUnavailable] = createSignal(false)
   const feedback = createMemo(() => {
     const part = text()
     if (!part) return undefined
     return partFeedback(part.metadata, part.text)
   })
-  const body = createMemo(() => feedback()?.body)
+  const body = createMemo(() =>
+    (feedback()?.body ?? (attribution() ? text()?.text : undefined))?.replace(ATTRIBUTION, ""),
+  )
+  const openSource = () => {
+    const id = attribution()
+    if (!id || !props.onSelectSession) return
+    if (props.onSelectSession(id) === false) setUnavailable(true)
+  }
 
   return (
     <UserMessageDisplay
       message={props.message as unknown as Parameters<typeof UserMessageDisplay>[0]["message"]}
       parts={props.parts as unknown as Parameters<typeof UserMessageDisplay>[0]["parts"]}
       text={body()}
-      copyText={feedback() ? text()?.text : undefined}
+      copyText={attribution() ? body() : feedback() ? text()?.text : undefined}
+      bubbleHeader={
+        attribution() ? (
+          <div class="agent-manager-attribution">
+            <span class="agent-manager-attribution-label">
+              <Icon name="square-arrow-top-right" size="small" />
+              <span>Sent by Kilo from another session</span>
+            </span>
+            <Show
+              when={props.onSelectSession && !unavailable()}
+              fallback={<span class="agent-manager-attribution-status">Session not open</span>}
+            >
+              <Button variant="ghost" size="small" class="agent-manager-attribution-link" onClick={openSource}>
+                Open source session
+              </Button>
+            </Show>
+          </div>
+        ) : undefined
+      }
       header={
         feedback() ? (
           <>

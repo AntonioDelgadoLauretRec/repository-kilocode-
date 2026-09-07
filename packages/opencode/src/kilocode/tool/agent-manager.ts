@@ -297,6 +297,7 @@ export const AgentManagerTool = Tool.define<
                   operation: "prompt",
                   sessionID: ctx.sessionID,
                   targetSessionID: params.sessionID,
+                  sourceSessionID: ctx.sessionID,
                   prompt,
                 }),
                 ctx.abort,

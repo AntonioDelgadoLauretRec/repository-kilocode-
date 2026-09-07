@@ -28,3 +28,39 @@
 @import "./settings.css";
 @import "./provider-usage.css";
 @import "./high-contrast.css";
+
+.agent-manager-attribution {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+  margin-bottom: 6px;
+  color: var(--text-weak);
+  font-size: var(--kilo-font-size-11);
+  line-height: 16px;
+  white-space: normal;
+}
+
+.agent-manager-attribution-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.agent-manager-attribution-link[data-component="button"] {
+  margin-left: auto;
+  height: auto;
+  min-height: 0;
+  padding: 0;
+  color: inherit;
+  font: inherit;
+}
+
+.agent-manager-attribution-link:hover {
+  text-decoration: underline;
+}
+
+.agent-manager-attribution-status {
+  margin-left: auto;
+}

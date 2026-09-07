@@ -1087,6 +1087,20 @@ const AgentManagerContent: Component = () => {
     return true
   }
 
+  const focusExistingSession = (sid: string) => {
+    if (localSessionIDs().includes(sid)) {
+      saveTabMemory()
+      closeHistory()
+      setSelection(LOCAL)
+      session.selectSession(sid)
+      requestChatFocus(true)
+      return true
+    }
+    const item = managedSessions().find((entry) => entry.id === sid)
+    if (!item?.worktreeId) return false
+    return focusManagedSession(item.worktreeId, sid)
+  }
+
   const sidebarSearch = createSidebarSearch({
     worktrees: sortedWorktrees,
     sections,
@@ -2418,7 +2432,7 @@ const AgentManagerContent: Component = () => {
                 session.selectSession(id)
                 setSelection(LOCAL)
                 requestChatFocus(true)
-                return
+                return true
               }
               const ms = worktreeSessionIds().has(id) ? managedSessions().find((s) => s.id === id) : undefined
               if (ms?.worktreeId) {
@@ -2426,9 +2440,10 @@ const AgentManagerContent: Component = () => {
                 session.selectSession(id)
                 setReviewActive(false)
                 requestChatFocus()
-                return
+                return true
               }
               openLocally(id)
+              return true
             }}
             onBack={closeHistory}
             worktreeSessionIds={historyProject() ? undefined : activeWorktreeSessionIds}
@@ -2478,6 +2493,7 @@ const AgentManagerContent: Component = () => {
                     introduction={intro.visible()}
                     onForkMessage={readOnly() ? undefined : handleForkSession}
                     onForkSession={readOnly() ? undefined : handleForkSession}
+                    onSelectSession={focusExistingSession}
                     readonly={readOnly()}
                     continueInWorktree={selection() === LOCAL}
                     worktree={worktrees().some((wt) => wt.id === selection())}
