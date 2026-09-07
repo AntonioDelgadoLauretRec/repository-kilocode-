@@ -1,4 +1,5 @@
 export const dict = {
+  "agentManager.dialog.invalidBranch": "أدخل اسم فرع Git صالحًا. تم الاحتفاظ بالمطالبة والمرفقات.",
   "agentManager.local": "محلي",
   "agentManager.sidebar.collapse": "طي الشريط الجانبي",
   "agentManager.sidebar.expand": "إظهار الشريط الجانبي",
@@ -6,6 +7,12 @@ export const dict = {
   "agentManager.section.sessions": "الجلسات",
   "agentManager.projects": "المشاريع",
   "agentManager.settings.title": "Agent Manager",
+  "agentManager.settings.autoBranchNaming.title": "تسمية الفروع تلقائيًا",
+  "agentManager.settings.autoBranchNaming.description":
+    "تسمية الفروع تلقائيًا عندما تصف المحادثة مهمة واضحة. ينطبق على جميع المشاريع. لا تُعاد تسمية الفروع المسماة صراحةً أو المنشورة مطلقًا.",
+  "agentManager.settings.branchPrefix.title": "بادئة الفرع",
+  "agentManager.settings.branchPrefix.description":
+    "بادئة للفروع المسماة تلقائيًا في جميع المشاريع، مثل feature/. لا تنطبق على أسماء الفروع الصريحة. اتركها فارغة لعدم استخدام بادئة.",
   "agentManager.settings.project.title": "المشروع",
   "agentManager.settings.project.description": "اختر repository الذي تريد تعديل إعدادات worktree الخاصة به.",
   "agentManager.settings.project.empty": "لا تتوفر أي مشاريع في Agent Manager.",

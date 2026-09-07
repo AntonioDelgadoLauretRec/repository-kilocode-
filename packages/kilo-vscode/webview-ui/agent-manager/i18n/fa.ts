@@ -1,4 +1,5 @@
 export const dict = {
+  "agentManager.dialog.invalidBranch": "یک نام معتبر برای شاخه Git وارد کنید. پیام و پیوست‌های شما حفظ شده‌اند.",
   "agentManager.local": "محلی",
   "agentManager.sidebar.collapse": "بستن نوار کناری",
   "agentManager.sidebar.expand": "نمایش نوار کناری",
@@ -6,6 +7,12 @@ export const dict = {
   "agentManager.section.sessions": "جلسات",
   "agentManager.projects": "پروژه‌ها",
   "agentManager.settings.title": "Agent Manager",
+  "agentManager.settings.autoBranchNaming.title": "نام‌گذاری خودکار شاخه‌ها",
+  "agentManager.settings.autoBranchNaming.description":
+    "وقتی گفتگو یک کار مشخص را توصیف می‌کند، شاخه‌ها را خودکار نام‌گذاری کنید. برای همه پروژه‌ها اعمال می‌شود. نام شاخه‌های صریحاً نام‌گذاری‌شده و منتشرشده هرگز تغییر نمی‌کند.",
+  "agentManager.settings.branchPrefix.title": "پیشوند شاخه",
+  "agentManager.settings.branchPrefix.description":
+    "پیشوند شاخه‌هایی که در همه پروژه‌ها خودکار نام‌گذاری می‌شوند، برای مثال feature/. برای نام‌های صریح شاخه‌ها اعمال نمی‌شود. برای نداشتن پیشوند، خالی بگذارید.",
   "agentManager.settings.project.title": "پروژه",
   "agentManager.settings.project.description":
     "repository موردنظر را انتخاب کنید تا تنظیمات worktree آن را ویرایش کنید.",

@@ -1,4 +1,6 @@
 export const dict = {
+  "agentManager.dialog.invalidBranch":
+    "Introduce un nombre de rama Git válido. Se han conservado tu prompt y tus archivos adjuntos.",
   "agentManager.local": "local",
   "agentManager.sidebar.collapse": "Contraer barra lateral",
   "agentManager.sidebar.expand": "Mostrar barra lateral",
@@ -6,6 +8,12 @@ export const dict = {
   "agentManager.section.sessions": "SESIONES",
   "agentManager.projects": "PROYECTOS",
   "agentManager.settings.title": "Agent Manager",
+  "agentManager.settings.autoBranchNaming.title": "Nombres automáticos de ramas",
+  "agentManager.settings.autoBranchNaming.description":
+    "Asigna nombres a las ramas automáticamente cuando la conversación describa una tarea clara. Se aplica a todos los proyectos. Las ramas con nombres explícitos y las publicadas nunca se renombran.",
+  "agentManager.settings.branchPrefix.title": "Prefijo de rama",
+  "agentManager.settings.branchPrefix.description":
+    "Prefijo para las ramas nombradas automáticamente en todos los proyectos, por ejemplo feature/. No se aplica a nombres de rama explícitos. Déjalo vacío para no usar prefijo.",
   "agentManager.settings.project.title": "Proyecto",
   "agentManager.settings.project.description": "Elige el repository cuyos ajustes de worktree quieres editar.",
   "agentManager.settings.project.empty": "No hay proyectos de Agent Manager disponibles.",

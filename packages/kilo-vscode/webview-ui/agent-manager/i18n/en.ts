@@ -1,4 +1,5 @@
 export const dict = {
+  "agentManager.dialog.invalidBranch": "Enter a valid Git branch name. Your prompt and attachments have been kept.",
   "agentManager.local": "local",
   "agentManager.sidebar.collapse": "Collapse sidebar",
   "agentManager.sidebar.expand": "Show sidebar",
@@ -6,6 +7,12 @@ export const dict = {
   "agentManager.section.sessions": "SESSIONS",
   "agentManager.projects": "PROJECTS",
   "agentManager.settings.title": "Agent Manager",
+  "agentManager.settings.autoBranchNaming.title": "Automatic branch naming",
+  "agentManager.settings.autoBranchNaming.description":
+    "Automatically name branches when the conversation describes a clear task. Applies to all projects. Explicitly named and published branches are never renamed.",
+  "agentManager.settings.branchPrefix.title": "Branch prefix",
+  "agentManager.settings.branchPrefix.description":
+    "Prefix for automatically named branches in all projects, for example feature/. Does not apply to explicit branch names. Leave empty for no prefix.",
   "agentManager.settings.project.title": "Project",
   "agentManager.settings.project.description": "Choose the repository whose worktree settings you want to edit.",
   "agentManager.settings.project.empty": "No Agent Manager projects are available.",

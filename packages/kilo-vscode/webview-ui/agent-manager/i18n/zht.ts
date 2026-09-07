@@ -1,4 +1,5 @@
 export const dict = {
+  "agentManager.dialog.invalidBranch": "請輸入有效的 Git 分支名稱。您的提示詞和附件已保留。",
   "agentManager.local": "本機",
   "agentManager.sidebar.collapse": "收合側邊欄",
   "agentManager.sidebar.expand": "顯示側邊欄",
@@ -6,6 +7,12 @@ export const dict = {
   "agentManager.section.sessions": "工作階段",
   "agentManager.projects": "專案",
   "agentManager.settings.title": "Agent Manager",
+  "agentManager.settings.autoBranchNaming.title": "自動命名分支",
+  "agentManager.settings.autoBranchNaming.description":
+    "當對話描述了明確的任務時，自動為分支命名。適用於所有專案。明確命名的分支和已發佈的分支永遠不會被重新命名。",
+  "agentManager.settings.branchPrefix.title": "分支前綴",
+  "agentManager.settings.branchPrefix.description":
+    "所有專案中自動命名分支的前綴，例如 feature/。不適用於明確指定的分支名稱。留空則不使用前綴。",
   "agentManager.settings.project.title": "專案",
   "agentManager.settings.project.description": "選擇要編輯其 worktree 設定的 repository。",
   "agentManager.settings.project.empty": "沒有可用的 Agent Manager 專案。",

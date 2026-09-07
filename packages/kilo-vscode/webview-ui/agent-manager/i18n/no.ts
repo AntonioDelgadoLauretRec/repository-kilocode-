@@ -1,4 +1,5 @@
 export const dict = {
+  "agentManager.dialog.invalidBranch": "Skriv inn et gyldig Git-grennavn. Prompten og vedleggene dine er bevart.",
   "agentManager.local": "lokal",
   "agentManager.sidebar.collapse": "Skjul sidefelt",
   "agentManager.sidebar.expand": "Vis sidefelt",
@@ -6,6 +7,12 @@ export const dict = {
   "agentManager.section.sessions": "ØKTER",
   "agentManager.projects": "PROSJEKTER",
   "agentManager.settings.title": "Agent Manager",
+  "agentManager.settings.autoBranchNaming.title": "Automatisk navngivning av grener",
+  "agentManager.settings.autoBranchNaming.description":
+    "Gi grener navn automatisk når samtalen beskriver en tydelig oppgave. Gjelder alle prosjekter. Eksplisitt navngitte og publiserte grener får aldri nytt navn.",
+  "agentManager.settings.branchPrefix.title": "Grenprefiks",
+  "agentManager.settings.branchPrefix.description":
+    "Prefiks for automatisk navngitte grener i alle prosjekter, for eksempel feature/. Gjelder ikke eksplisitte grennavn. La feltet stå tomt for å ikke bruke prefiks.",
   "agentManager.settings.project.title": "Prosjekt",
   "agentManager.settings.project.description": "Velg repository hvis worktree-innstillinger du vil redigere.",
   "agentManager.settings.project.empty": "Ingen Agent Manager-prosjekter er tilgjengelige.",

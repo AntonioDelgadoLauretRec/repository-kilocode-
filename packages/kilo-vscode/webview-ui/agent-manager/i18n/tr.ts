@@ -1,4 +1,5 @@
 export const dict = {
+  "agentManager.dialog.invalidBranch": "Geçerli bir Git dalı adı girin. İsteminiz ve ekleriniz korundu.",
   "agentManager.local": "yerel",
   "agentManager.sidebar.collapse": "Kenar çubuğunu daralt",
   "agentManager.sidebar.expand": "Kenar çubuğunu göster",
@@ -6,6 +7,12 @@ export const dict = {
   "agentManager.section.sessions": "OTURUMLAR",
   "agentManager.projects": "PROJELER",
   "agentManager.settings.title": "Agent Manager",
+  "agentManager.settings.autoBranchNaming.title": "Otomatik dal adlandırma",
+  "agentManager.settings.autoBranchNaming.description":
+    "Konuşma net bir görevi tanımladığında dalları otomatik olarak adlandırır. Tüm projelere uygulanır. Açıkça adlandırılmış ve yayımlanmış dallar asla yeniden adlandırılmaz.",
+  "agentManager.settings.branchPrefix.title": "Dal öneki",
+  "agentManager.settings.branchPrefix.description":
+    "Tüm projelerde otomatik adlandırılan dallar için önek, örneğin feature/. Açıkça belirtilen dal adlarına uygulanmaz. Önek kullanmamak için boş bırakın.",
   "agentManager.settings.project.title": "Proje",
   "agentManager.settings.project.description": "Worktree ayarlarını düzenlemek istediğiniz repository'yi seçin.",
   "agentManager.settings.project.empty": "Kullanılabilir Agent Manager projesi yok.",

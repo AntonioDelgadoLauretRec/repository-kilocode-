@@ -1,4 +1,6 @@
 export const dict = {
+  "agentManager.dialog.invalidBranch":
+    "Gib einen gültigen Git-Branch-Namen ein. Dein Prompt und deine Anhänge wurden beibehalten.",
   "agentManager.local": "lokal",
   "agentManager.sidebar.collapse": "Seitenleiste einklappen",
   "agentManager.sidebar.expand": "Seitenleiste anzeigen",
@@ -6,6 +8,12 @@ export const dict = {
   "agentManager.section.sessions": "SITZUNGEN",
   "agentManager.projects": "PROJEKTE",
   "agentManager.settings.title": "Agent Manager",
+  "agentManager.settings.autoBranchNaming.title": "Automatische Branch-Benennung",
+  "agentManager.settings.autoBranchNaming.description":
+    "Branches automatisch benennen, wenn die Unterhaltung eine klare Aufgabe beschreibt. Gilt für alle Projekte. Explizit benannte und veröffentlichte Branches werden nie umbenannt.",
+  "agentManager.settings.branchPrefix.title": "Branch-Präfix",
+  "agentManager.settings.branchPrefix.description":
+    "Präfix für automatisch benannte Branches in allen Projekten, zum Beispiel feature/. Gilt nicht für explizite Branch-Namen. Für kein Präfix leer lassen.",
   "agentManager.settings.project.title": "Projekt",
   "agentManager.settings.project.description":
     "Wählen Sie das repository aus, dessen worktree-Einstellungen Sie bearbeiten möchten.",

@@ -1,4 +1,5 @@
 export const dict = {
+  "agentManager.dialog.invalidBranch": "Unesite važeći naziv Git grane. Vaš upit i prilozi su sačuvani.",
   "agentManager.local": "lokalno",
   "agentManager.sidebar.collapse": "Skupi bočnu traku",
   "agentManager.sidebar.expand": "Prikaži bočnu traku",
@@ -6,6 +7,12 @@ export const dict = {
   "agentManager.section.sessions": "SESIJE",
   "agentManager.projects": "PROJEKTI",
   "agentManager.settings.title": "Agent Manager",
+  "agentManager.settings.autoBranchNaming.title": "Automatsko imenovanje grana",
+  "agentManager.settings.autoBranchNaming.description":
+    "Automatski imenujte grane kada razgovor opisuje jasan zadatak. Primjenjuje se na sve projekte. Izričito imenovane i objavljene grane nikada se ne preimenuju.",
+  "agentManager.settings.branchPrefix.title": "Prefiks grane",
+  "agentManager.settings.branchPrefix.description":
+    "Prefiks za automatski imenovane grane u svim projektima, na primjer feature/. Ne primjenjuje se na izričite nazive grana. Ostavite prazno ako ne želite prefiks.",
   "agentManager.settings.project.title": "Projekat",
   "agentManager.settings.project.description": "Izaberite repository čije worktree postavke želite urediti.",
   "agentManager.settings.project.empty": "Nema dostupnih projekata u Agent Manager.",

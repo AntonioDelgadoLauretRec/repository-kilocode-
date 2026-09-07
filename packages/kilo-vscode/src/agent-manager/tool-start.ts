@@ -193,7 +193,7 @@ async function worktree(
   versions?: boolean,
   source?: ToolSource,
 ) {
-  const baseBranch = branch(task.branchName) ?? branch(task.name)
+  const baseBranch = task.branchName ?? branch(task.name)
   const baseLabel = label(task.name) ?? label(task.branchName) ?? label(task.prompt)
   const version = versionedName(baseBranch, versions ? index : 0, versions ? total : 1)
   const created = await deps.createWorktree({
