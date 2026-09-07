@@ -30,6 +30,14 @@ const GROUP_KEYS: Record<CheckBucket, string> = {
   success: "agentManager.pr.checks.group.success",
 }
 
+const TALLY_KEYS: Record<CheckBucket, string> = {
+  failure: "agentManager.pr.checks.tally.failure",
+  pending: "agentManager.pr.checks.tally.pending",
+  cancelled: "agentManager.pr.checks.tally.cancelled",
+  skipped: "agentManager.pr.checks.tally.skipped",
+  success: "agentManager.pr.checks.tally.success",
+}
+
 export function PRChecks(props: { pr: PRStatus; worktreeId?: string; activeTerminalId?: string }) {
   const vscode = useVSCode()
   const { t } = useLanguage()
@@ -41,11 +49,16 @@ export function PRChecks(props: { pr: PRStatus; worktreeId?: string; activeTermi
   function groupLabel(bucket: CheckBucket, count: number) {
     return t(`${GROUP_KEYS[bucket]}.${count === 1 ? "one" : "other"}`, { count })
   }
-  const count = createMemo(() =>
-    counts(props.pr.checks.checks)
-      .map((item) => groupLabel(item.bucket, item.count))
-      .join(` ${t("agentManager.pr.checks.separator")} `),
-  )
+  function tallyLabel(bucket: CheckBucket, count: number) {
+    return t(`${TALLY_KEYS[bucket]}.${count === 1 ? "one" : "other"}`, { count })
+  }
+  const count = createMemo(() => {
+    const all = counts(props.pr.checks.checks)
+    const signal = all.filter((item) => item.bucket !== "success")
+    return (signal.length > 0 ? signal : all)
+      .map((item) => tallyLabel(item.bucket, item.count))
+      .join(` ${t("agentManager.pr.checks.separator")} `)
+  })
   const feedback = createMemo(() => checkFeedback(props.pr, t("agentManager.pr.checks.feedback")))
   const groupOpen = (bucket: CheckBucket) => state()?.checkGroups[bucket] ?? localGroups()[bucket] ?? expands(bucket)
   const statusLabel = (status: CheckStatus) => t(`agentManager.pr.checks.status.${CHECK[status].key}`)

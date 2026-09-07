@@ -145,6 +145,10 @@
 }
 
 .am-pr-panel-section-count {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-size: var(--kilo-font-size-11);
   font-weight: 400;
   text-transform: none;

@@ -56,11 +56,23 @@ export function parsePRResult(json: string): PRResult | null {
 function checks(items: unknown[]): PRStatus["checks"] {
   const latest = new Map<string, { item: unknown; index: number; started: number }>()
   items.forEach((item, index) => {
-    const check = item as { name?: string; context?: string; workflowName?: string; event?: string; startedAt?: string }
+    const check = item as {
+      name?: string
+      context?: string
+      workflowName?: string
+      event?: string
+      startedAt?: string
+      state?: string
+      status?: string
+      conclusion?: string | null
+    }
     const key = check.context
       ? `status:${check.context}`
       : `run:${check.name ?? "Unknown check"}:${check.workflowName ?? ""}:${check.event ?? ""}`
-    const started = check.startedAt ? new Date(check.startedAt).getTime() : Number.NEGATIVE_INFINITY
+    const state = check.conclusion ?? check.state ?? check.status
+    const active = ["PENDING", "QUEUED", "IN_PROGRESS", "REQUESTED", "WAITING", "EXPECTED"].includes(state ?? "")
+    const date = check.startedAt ? new Date(check.startedAt).getTime() : Number.NaN
+    const started = Number.isFinite(date) ? date : active ? Number.POSITIVE_INFINITY : Number.NEGATIVE_INFINITY
     const current = latest.get(key)
     if (!current || started >= current.started) latest.set(key, { item, index, started })
   })

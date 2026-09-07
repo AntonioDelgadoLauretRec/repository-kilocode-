@@ -235,6 +235,19 @@ describe("parsePRResult", () => {
     expect(result?.checks?.checks).toEqual([{ name: "build", status: "success", url: undefined, duration: undefined }])
   })
 
+  it("prefers a queued rerun without a start time", () => {
+    const result = parsePRResult(
+      JSON.stringify({
+        number: 12,
+        statusCheckRollup: [
+          { name: "build", conclusion: "SUCCESS", startedAt: "2024-01-01T00:00:00Z" },
+          { name: "build", status: "QUEUED" },
+        ],
+      }),
+    )
+    expect(result?.checks?.checks).toEqual([{ name: "build", status: "pending", url: undefined, duration: undefined }])
+  })
+
   it("keeps CI running when cancelled checks coexist with pending checks", () => {
     const result = parsePRResult(
       JSON.stringify({
