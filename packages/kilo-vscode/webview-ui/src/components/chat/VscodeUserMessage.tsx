@@ -1,4 +1,4 @@
-import { createMemo, createSignal, Show, type Component } from "solid-js"
+import { createMemo, Show, type Component } from "solid-js"
 import { UserMessageDisplay } from "@kilocode/kilo-ui/message-part"
 import { Button } from "@kilocode/kilo-ui/button"
 import { Icon } from "@kilocode/kilo-ui/icon"
@@ -22,6 +22,7 @@ interface VscodeUserMessageProps {
   onFork?: () => void
   onRevert?: () => void
   onSelectSession?: (id: string) => boolean | void
+  isSessionOpen?: (id: string) => boolean
 }
 
 const ATTRIBUTION = /\n\n<!-- kilo-agent-manager source=([^ ]+) -->$/
@@ -31,7 +32,6 @@ export const VscodeUserMessage: Component<VscodeUserMessageProps> = (props) => {
   const vscode = useVSCode()
   const text = createMemo(() => props.parts.find((part): part is TextPart => part.type === "text" && !part.synthetic))
   const attribution = createMemo(() => text()?.text.match(ATTRIBUTION)?.[1])
-  const [unavailable, setUnavailable] = createSignal(false)
   const feedback = createMemo(() => {
     const part = text()
     if (!part) return undefined
@@ -43,7 +43,7 @@ export const VscodeUserMessage: Component<VscodeUserMessageProps> = (props) => {
   const openSource = () => {
     const id = attribution()
     if (!id || !props.onSelectSession) return
-    if (props.onSelectSession(id) === false) setUnavailable(true)
+    props.onSelectSession(id)
   }
 
   return (
@@ -54,13 +54,13 @@ export const VscodeUserMessage: Component<VscodeUserMessageProps> = (props) => {
       copyText={attribution() ? body() : feedback() ? text()?.text : undefined}
       bubbleHeader={
         attribution() ? (
-          <div class="agent-manager-attribution">
+          <div class="agent-manager-attribution" dir="ltr">
             <span class="agent-manager-attribution-label">
               <Icon name="square-arrow-top-right" size="small" />
               <span>Sent by Kilo from another session</span>
             </span>
             <Show
-              when={props.onSelectSession && !unavailable()}
+              when={props.onSelectSession && props.isSessionOpen?.(attribution() ?? "") !== false}
               fallback={<span class="agent-manager-attribution-status">Session not open</span>}
             >
               <Button variant="ghost" size="small" class="agent-manager-attribution-link" onClick={openSource}>

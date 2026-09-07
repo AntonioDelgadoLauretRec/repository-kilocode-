@@ -1082,6 +1082,9 @@ const AgentManagerContent: Component = () => {
   const focusManagedSession = (worktreeId: string, sid: string) => {
     selectWorktree(worktreeId)
     closeHistory()
+    terms.setActiveId(undefined)
+    setActivePendingId(undefined)
+    setReviewActive(false)
     session.selectSession(sid)
     requestChatFocus()
     return true
@@ -1089,11 +1092,7 @@ const AgentManagerContent: Component = () => {
 
   const focusExistingSession = (sid: string) => {
     if (localSessionIDs().includes(sid)) {
-      saveTabMemory()
-      closeHistory()
-      setSelection(LOCAL)
-      session.selectSession(sid)
-      requestChatFocus(true)
+      focusLocalSession(sid)
       return true
     }
     const item = managedSessions().find((entry) => entry.id === sid)
@@ -2490,6 +2489,9 @@ const AgentManagerContent: Component = () => {
                     onForkMessage={readOnly() ? undefined : handleForkSession}
                     onForkSession={readOnly() ? undefined : handleForkSession}
                     onSelectSession={focusExistingSession}
+                    isSessionOpen={(id) =>
+                      localSessionIDs().includes(id) || managedSessions().some((entry) => entry.id === id)
+                    }
                     readonly={readOnly()}
                     continueInWorktree={selection() === LOCAL}
                     worktree={worktrees().some((wt) => wt.id === selection())}
