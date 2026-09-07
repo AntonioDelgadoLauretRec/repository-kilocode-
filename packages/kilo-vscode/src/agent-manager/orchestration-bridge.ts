@@ -503,6 +503,7 @@ export class AgentManagerOrchestrationBridge {
     for (const message of result.data) {
       for (const part of message.parts) {
         if (part.type !== "text") continue
+        if (!part.metadata || typeof part.metadata !== "object") continue
         const id = (part.metadata as { agentManager?: { requestID?: unknown } }).agentManager?.requestID
         if (id !== request.replyTo) continue
         const reply = route(part.metadata)

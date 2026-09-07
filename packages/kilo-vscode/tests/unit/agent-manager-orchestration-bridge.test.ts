@@ -263,7 +263,7 @@ describe("AgentManagerOrchestrationBridge", () => {
 
     const body = test.promptAsync.mock.calls[0]?.[0] as { parts: Array<{ metadata?: unknown }> }
     test.client.session.messages.mockResolvedValue({
-      data: [{ parts: [{ type: "text", metadata: body.parts[0]?.metadata }] }],
+      data: [{ parts: [{ type: "text" }, { type: "text", metadata: body.parts[0]?.metadata }] }],
     })
     ;(test.bridge as unknown as { replyRoutes: Map<string, unknown> }).replyRoutes.clear()
 
