@@ -324,7 +324,9 @@ describe("sendMessage / sendCommand draft id contract", () => {
 
   it("sendMessage and sendCommand post the settings returned by submission", () => {
     expect(extractFunctionBody(source, "sendMessage")).toContain("const settings = submission(scope, selection)")
-    expect(extractFunctionBody(source, "sendCommand")).toContain("const settings = submission(scope, effectiveSelection)")
+    expect(extractFunctionBody(source, "sendCommand")).toContain(
+      "const settings = submission(scope, effectiveSelection)",
+    )
     expect(extractFunctionBody(source, "submission")).toContain("agent: resolvePromptAgent({")
   })
 
