@@ -1,4 +1,5 @@
 export const dict = {
+  "agentManager.dialog.invalidBranch": "Wpisz prawidłową nazwę gałęzi Git. Twój prompt i załączniki zostały zachowane.",
   "agentManager.local": "lokalne",
   "agentManager.sidebar.collapse": "Zwiń pasek boczny",
   "agentManager.sidebar.expand": "Pokaż pasek boczny",

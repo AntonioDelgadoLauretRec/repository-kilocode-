@@ -781,6 +781,7 @@ describe("WorktreeManager.createWorktree cleanup", () => {
     const second = await mgr.createWorktree({ existingBranch: branch })
 
     expect(second.branch).toBe(branch)
+    expect(second.path).toBe(first.path)
     const gitFile = await fs.stat(path.join(second.path, ".git"))
     expect(gitFile.isFile()).toBe(true)
 
@@ -1017,6 +1018,32 @@ describe("WorktreeManager.renameBranch", () => {
 // ---------------------------------------------------------------------------
 
 describe("WorktreeManager.createWorktree branch collision", () => {
+  it("preserves an unrelated dirty worktree when an existing slash branch hashes to its literal name", async () => {
+    const root = await createTempRepo()
+    const mgr = createManager(root)
+    const branch = "Feature/My_fix.v2"
+    const original = await mgr.createWorktree({ branchName: branch })
+    const literal = path.basename(original.path)
+    await mgr.removeWorktree(original.path)
+    const other = await mgr.createWorktree({ branchName: literal })
+    const file = path.join(other.path, "draft.txt")
+    await fs.writeFile(file, "uncommitted work")
+    const occupied = `${other.path}-2`
+    await fs.mkdir(occupied)
+    await fs.writeFile(path.join(occupied, "keep.txt"), "keep")
+
+    const result = await mgr.createWorktree({ existingBranch: branch })
+
+    expect(result.branch).toBe(branch)
+    expect(result.path).toBe(`${other.path}-3`)
+    expect((await simpleGit(result.path).raw(["symbolic-ref", "HEAD"])).trim()).toBe(`refs/heads/${branch}`)
+    expect((await simpleGit(other.path).raw(["symbolic-ref", "HEAD"])).trim()).toBe(`refs/heads/${literal}`)
+    expect(await fs.readFile(file, "utf8")).toBe("uncommitted work")
+    expect(await changedFiles(other.path)).toEqual(["?? draft.txt"])
+    expect(await fs.readFile(path.join(occupied, "keep.txt"), "utf8")).toBe("keep")
+    expect(await mgr.checkedOutBranches()).toEqual(new Set(["main", literal, branch]))
+  })
+
   it("creates a suffixed worktree without replacing an active explicitly named worktree", async () => {
     const root = await createTempRepo()
     const mgr = createManager(root)

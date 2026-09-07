@@ -1,4 +1,5 @@
 export const dict = {
+  "agentManager.dialog.invalidBranch": "یک نام معتبر برای شاخه Git وارد کنید. پیام و پیوست‌های شما حفظ شده‌اند.",
   "agentManager.local": "محلی",
   "agentManager.sidebar.collapse": "بستن نوار کناری",
   "agentManager.sidebar.expand": "نمایش نوار کناری",

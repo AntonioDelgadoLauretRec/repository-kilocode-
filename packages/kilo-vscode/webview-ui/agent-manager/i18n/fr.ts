@@ -1,4 +1,6 @@
 export const dict = {
+  "agentManager.dialog.invalidBranch":
+    "Saisissez un nom de branche Git valide. Votre prompt et vos pièces jointes ont été conservés.",
   "agentManager.local": "local",
   "agentManager.sidebar.collapse": "Réduire la barre latérale",
   "agentManager.sidebar.expand": "Afficher la barre latérale",

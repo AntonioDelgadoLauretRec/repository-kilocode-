@@ -1,4 +1,5 @@
 export const dict = {
+  "agentManager.dialog.invalidBranch": "Skriv inn et gyldig Git-grennavn. Prompten og vedleggene dine er bevart.",
   "agentManager.local": "lokal",
   "agentManager.sidebar.collapse": "Skjul sidefelt",
   "agentManager.sidebar.expand": "Vis sidefelt",

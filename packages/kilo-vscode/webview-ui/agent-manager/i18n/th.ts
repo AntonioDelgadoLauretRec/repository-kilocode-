@@ -1,4 +1,5 @@
 export const dict = {
+  "agentManager.dialog.invalidBranch": "ป้อนชื่อสาขา Git ที่ถูกต้อง พรอมต์และไฟล์แนบของคุณยังคงอยู่",
   "agentManager.local": "ในเครื่อง",
   "agentManager.sidebar.collapse": "ย่อแถบด้านข้าง",
   "agentManager.sidebar.expand": "แสดงแถบด้านข้าง",

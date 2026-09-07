@@ -1,4 +1,6 @@
 export const dict = {
+  "agentManager.dialog.invalidBranch":
+    "有効なGitブランチ名を入力してください。プロンプトと添付ファイルは保持されています。",
   "agentManager.local": "ローカル",
   "agentManager.sidebar.collapse": "サイドバーを折りたたむ",
   "agentManager.sidebar.expand": "サイドバーを表示",

@@ -1,4 +1,5 @@
 export const dict = {
+  "agentManager.dialog.invalidBranch": "Введіть допустиму назву гілки Git. Ваш запит і вкладення збережено.",
   "agentManager.local": "локальний",
   "agentManager.sidebar.collapse": "Згорнути бічну панель",
   "agentManager.sidebar.expand": "Показати бічну панель",

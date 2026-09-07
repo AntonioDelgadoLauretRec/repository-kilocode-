@@ -1,4 +1,5 @@
 export const dict = {
+  "agentManager.dialog.invalidBranch": "Indtast et gyldigt Git-grennavn. Din prompt og dine vedhæftninger er bevaret.",
   "agentManager.local": "lokal",
   "agentManager.sidebar.collapse": "Skjul sidebjælke",
   "agentManager.sidebar.expand": "Vis sidebjælke",

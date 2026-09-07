@@ -1,4 +1,5 @@
 export const dict = {
+  "agentManager.dialog.invalidBranch": "請輸入有效的 Git 分支名稱。您的提示詞和附件已保留。",
   "agentManager.local": "本機",
   "agentManager.sidebar.collapse": "收合側邊欄",
   "agentManager.sidebar.expand": "顯示側邊欄",

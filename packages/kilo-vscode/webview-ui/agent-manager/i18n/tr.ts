@@ -1,4 +1,5 @@
 export const dict = {
+  "agentManager.dialog.invalidBranch": "Geçerli bir Git dalı adı girin. İsteminiz ve ekleriniz korundu.",
   "agentManager.local": "yerel",
   "agentManager.sidebar.collapse": "Kenar çubuğunu daralt",
   "agentManager.sidebar.expand": "Kenar çubuğunu göster",

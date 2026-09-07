@@ -1,4 +1,6 @@
 export const dict = {
+  "agentManager.dialog.invalidBranch":
+    "Inserisci un nome di ramo Git valido. Il prompt e gli allegati sono stati conservati.",
   "agentManager.local": "locale",
   "agentManager.sidebar.collapse": "Comprimi barra laterale",
   "agentManager.sidebar.expand": "Mostra barra laterale",

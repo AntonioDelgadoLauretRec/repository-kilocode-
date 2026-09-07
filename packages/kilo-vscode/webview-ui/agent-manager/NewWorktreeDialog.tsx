@@ -52,6 +52,7 @@ import { cycleAgent } from "../src/context/session-agent"
 import type { ModeRouter } from "./mode-router"
 import { ProjectSelect } from "./ProjectSelect"
 import { createDialogModels } from "./new-worktree-models"
+import { validBranch } from "./new-worktree-branch"
 
 type VersionCount = 1 | 2 | 3 | 4
 const VERSION_OPTIONS: VersionCount[] = [1, 2, 3, 4]
@@ -395,13 +396,21 @@ export const NewWorktreeDialog: Component<{
 
   const handleSubmit = () => {
     if (!canSubmit()) return
+    const advanced = showAdvanced()
+    const customBranch = advanced ? branchName() || undefined : undefined
+    if (!validBranch(customBranch)) {
+      showToast({
+        variant: "error",
+        title: t("agentManager.dialog.branchName"),
+        description: t("agentManager.dialog.invalidBranch"),
+      })
+      return
+    }
     setStarting(true)
 
     const text = prompt().trim() || undefined
     const defaultAgent = session.agents()[0]?.name
     const selectedAgent = agent() !== defaultAgent ? agent() : undefined
-    const advanced = showAdvanced()
-    const customBranch = advanced ? branchName() || undefined : undefined
     const imgs = imageAttach.images()
     const imgFiles = imgs.length > 0 ? imgs.map((img) => ({ mime: img.mime, url: img.dataUrl })) : undefined
 

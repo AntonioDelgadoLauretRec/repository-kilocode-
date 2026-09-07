@@ -1,4 +1,6 @@
 export const dict = {
+  "agentManager.dialog.invalidBranch":
+    "Gib einen gültigen Git-Branch-Namen ein. Dein Prompt und deine Anhänge wurden beibehalten.",
   "agentManager.local": "lokal",
   "agentManager.sidebar.collapse": "Seitenleiste einklappen",
   "agentManager.sidebar.expand": "Seitenleiste anzeigen",

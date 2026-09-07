@@ -1,4 +1,5 @@
 export const dict = {
+  "agentManager.dialog.invalidBranch": "Введите допустимое имя ветки Git. Ваш запрос и вложения сохранены.",
   "agentManager.local": "локальный",
   "agentManager.sidebar.collapse": "Свернуть боковую панель",
   "agentManager.sidebar.expand": "Показать боковую панель",

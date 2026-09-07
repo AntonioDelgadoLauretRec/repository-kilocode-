@@ -297,7 +297,7 @@ export class WorktreeManager {
     const dirName = directory(branch)
     let worktreePath = path.join(this.dir, dirName)
 
-    await this.prepareWorktreePath(worktreePath, !!params.existingBranch)
+    worktreePath = await this.prepareWorktreePath(worktreePath, params.existingBranch)
 
     params.onProgress?.("creating", `Creating worktree for ${branch}...`)
 
@@ -375,11 +375,26 @@ export class WorktreeManager {
     return branch
   }
 
-  private async prepareWorktreePath(worktreePath: string, reuse: boolean): Promise<void> {
-    if (!fs.existsSync(worktreePath)) return
-    if (!reuse) throw new Error(`Worktree path already exists: ${worktreePath}`)
+  private async prepareWorktreePath(worktreePath: string, branch?: string): Promise<string> {
+    if (!fs.existsSync(worktreePath)) return worktreePath
+    if (!branch) throw new Error(`Worktree path already exists: ${worktreePath}`)
+    const entries = parseWorktreeList(await this.git.raw(["worktree", "list", "--porcelain"]))
+    const canonical = normalizePath(await fs.promises.realpath(worktreePath))
+    const entry = entries.find((entry) => normalizePath(entry.path) === canonical)
+    if (entry && (entry.branch !== branch || entry.detached || entry.bare)) {
+      // A literal branch can match another ref's hashed directory name.
+      const parent = await fs.promises.realpath(path.dirname(worktreePath))
+      for (let suffix = 2; ; suffix++) {
+        const candidate = `${worktreePath}-${suffix}`
+        const canonical = normalizePath(path.join(parent, path.basename(candidate)))
+        if (!fs.existsSync(candidate) && !entries.some((entry) => normalizePath(entry.path) === canonical)) {
+          return candidate
+        }
+      }
+    }
     this.log(`Worktree directory exists, cleaning up before re-creation: ${worktreePath}`)
     await this.removeWorktreeImpl(worktreePath)
+    return worktreePath
   }
 
   private async resolveBranch(params: {

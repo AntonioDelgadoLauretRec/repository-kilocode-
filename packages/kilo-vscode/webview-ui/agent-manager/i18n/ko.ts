@@ -1,4 +1,5 @@
 export const dict = {
+  "agentManager.dialog.invalidBranch": "유효한 Git 브랜치 이름을 입력하세요. 프롬프트와 첨부 파일은 보존되었습니다.",
   "agentManager.local": "로컬",
   "agentManager.sidebar.collapse": "사이드바 접기",
   "agentManager.sidebar.expand": "사이드바 표시",

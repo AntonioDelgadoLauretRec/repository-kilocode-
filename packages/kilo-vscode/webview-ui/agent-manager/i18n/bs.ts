@@ -1,4 +1,5 @@
 export const dict = {
+  "agentManager.dialog.invalidBranch": "Unesite važeći naziv Git grane. Vaš upit i prilozi su sačuvani.",
   "agentManager.local": "lokalno",
   "agentManager.sidebar.collapse": "Skupi bočnu traku",
   "agentManager.sidebar.expand": "Prikaži bočnu traku",
