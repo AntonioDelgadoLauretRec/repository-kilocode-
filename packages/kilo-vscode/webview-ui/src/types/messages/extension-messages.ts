@@ -848,6 +848,12 @@ export interface AgentManagerSessionClosedMessage {
   sessionId: string
 }
 
+export interface AgentManagerWorktreeDeletedMessage {
+  type: "agentManager.worktreeDeleted"
+  projectId: string
+  worktreeId: string
+}
+
 // Full state push from extension to webview
 export interface AgentManagerStateMessage {
   type: "agentManager.state"
@@ -1615,6 +1621,7 @@ export type ExtensionMessage =
   | AgentManagerSessionClosedMessage
   | AgentManagerWorktreeActivityMessage
   | AgentManagerStateMessage
+  | AgentManagerWorktreeDeletedMessage
   | AgentManagerProjectsMessage
   | AgentManagerSelectionActivatedMessage
   | AgentManagerProjectSessionsMessage
