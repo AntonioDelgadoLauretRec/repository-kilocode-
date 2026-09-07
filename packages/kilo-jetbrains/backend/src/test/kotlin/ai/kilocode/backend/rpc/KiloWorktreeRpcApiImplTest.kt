@@ -17,7 +17,9 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.CapturingProcessHandler
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.SystemInfo
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -88,6 +90,17 @@ class KiloWorktreeRpcApiImplTest {
         assertEquals("timed out", api.reason(CmdOut(-1, "", "", timeout = true), "git worktree remove failed"))
         assertEquals("boom", api.reason(CmdOut(1, "", "boom"), "git worktree remove failed"))
         assertEquals("git worktree remove failed", api.reason(CmdOut(1, "", ""), "git worktree remove failed"))
+    }
+
+    @Test
+    fun `cancellation checks in the poll wrappers also cover ProcessCanceledException`() {
+        // statsSafe/dirtySafe/prStatus isolate per-worktree failures behind runCatching and rethrow
+        // only CancellationException. That is enough to honor IntelliJ's "never swallow a PCE" rule
+        // solely because PCE extends java.util.concurrent.CancellationException, which is also what
+        // kotlinx.coroutines.CancellationException aliases on the JVM. Locked down here so a platform
+        // change that decoupled the two would fail this test instead of silently turning a cancelled
+        // progress indicator into a fake empty poll result.
+        assertTrue(ProcessCanceledException() is CancellationException)
     }
 
     @Test

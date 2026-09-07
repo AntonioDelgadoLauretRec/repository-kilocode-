@@ -76,7 +76,16 @@ class KiloWorktreeRpcApiImplTrashTest {
 
         assertTrue(result.ok, "remove should still succeed via the prune-only path: ${result.error}")
         val listed = output(repo, "worktree", "list", "--porcelain")
-        assertFalse(listed.contains(created.path))
+        assertFalse(listed.contains(created.path), "the worktree must be unregistered: $listed")
+        // This arm reports success without running any git removal of its own, so the shared prune has
+        // to unregister the worktree before `branch -D` runs: git refuses to delete a branch a
+        // registered worktree still has checked out, and the default prune expiry is three months, so
+        // a just-vanished checkout would not be pruned at all without `--expire now`.
+        assertEquals(
+            "",
+            output(repo, "for-each-ref", "--format=%(refname)", "refs/heads/feature/x"),
+            "the branch must be deleted on the prune-only path too",
+        )
     }
 
     @Test

@@ -50,6 +50,44 @@ class WorktreeTrashTest {
     }
 
     @Test
+    fun `unmark clears the entry even though the directory disappeared after mark`() {
+        // The real removal sequence: mark while the checkout exists, stage it away, then unmark in a
+        // finally block. Anything derived from toRealPath() is no longer reproducible by then, so an
+        // entry keyed on it would leak and keep the slug invisible to every poll until the IDE
+        // restarts — including for a worktree later recreated at the same path.
+        val dir = root.resolve("wt").also { Files.createDirectories(it) }
+        trash.mark(dir.toString())
+        assertNotNull(trash.stage(dir))
+        trash.unmark(dir.toString())
+
+        assertFalse(trash.doomed(dir.toString()), "unmark must clear the entry mark() created")
+        Files.createDirectories(dir)
+        assertFalse(trash.doomed(dir.toString()), "a worktree recreated at the path must not stay doomed")
+    }
+
+    @Test
+    fun `doomed still matches the forms captured at mark time once nothing resolves any more`() {
+        val real = root.resolve("real").also { Files.createDirectories(it) }
+        val link = root.resolve("link")
+        try {
+            Files.createSymbolicLink(link, real)
+        } catch (e: Exception) {
+            return // symlinks unsupported (e.g. some Windows CI configs without privilege) — skip
+        }
+        val resolved = link.toRealPath() // the identity mark() records, captured while still resolvable
+
+        trash.mark(link.toString())
+        delete(real)
+        Files.deleteIfExists(link)
+
+        // Recording both forms up front is what keeps this matching: a removal renames the checkout
+        // away immediately, and once nothing resolves, a query can only be compared against whatever
+        // was captured while it still did.
+        assertTrue(trash.doomed(link.toString()), "the name used to mark must keep matching")
+        assertTrue(trash.doomed(resolved.toString()), "the resolved form recorded at mark time must keep matching")
+    }
+
+    @Test
     fun `doomed is true for any path whose name carries the delete prefix`() {
         val staged = root.resolve("${WorktreeTrash.PREFIX}abc-123")
         assertTrue(trash.doomed(staged.toString()))
@@ -111,6 +149,38 @@ class WorktreeTrashTest {
     fun `sweep on a missing storage directory does not throw`() = runBlocking {
         trash.sweep(root.resolve("missing"))
         trash.drain()
+    }
+
+    @Test
+    fun `concurrent reaps and sweeps over the same tree still delete it without failing`() = runBlocking {
+        // sweep() runs on every list() poll while a reap of the same staged tree may already be in
+        // flight. Two walkers over one tree would otherwise abort each other as each deletes files the
+        // other is about to visit, leaving the tree behind.
+        val dir = root.resolve("${WorktreeTrash.PREFIX}contended")
+        repeat(40) { i ->
+            val nested = dir.resolve("nested-$i")
+            Files.createDirectories(nested)
+            repeat(10) { j -> Files.writeString(nested.resolve("file-$j.txt"), "x".repeat(64)) }
+        }
+
+        repeat(4) { trash.reap(dir) }
+        repeat(4) { trash.sweep(root) }
+        trash.drain()
+
+        assertFalse(Files.exists(dir), "the tree must be gone despite contending walkers")
+    }
+
+    @Test
+    fun `repeated sweeps and reaps do not accumulate jobs`() = runBlocking {
+        // jobs exists only so drain() can await in-flight work; if completed entries were never
+        // removed it would grow for the whole IDE session, since sweep() is called from every poll.
+        repeat(30) {
+            trash.sweep(root)
+            trash.reap(root.resolve("${WorktreeTrash.PREFIX}absent-$it"))
+        }
+        trash.drain()
+
+        assertEquals(0, trash.pending(), "every finished reap/sweep must drop out of the job list")
     }
 
     private fun delete(path: Path) {

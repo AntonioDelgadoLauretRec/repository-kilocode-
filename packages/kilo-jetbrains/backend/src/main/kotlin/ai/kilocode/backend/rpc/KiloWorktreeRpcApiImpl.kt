@@ -639,10 +639,6 @@ class KiloWorktreeRpcApiImpl(
                 val temp = trash?.stage(targetPath)
                 if (temp != null) {
                     LOG.info("worktree remove staged: path=${target.path} temp=$temp ms=${System.currentTimeMillis() - start}")
-                    val prune = runGit(base, "worktree", "prune", "--expire", "now")
-                    if (!prune.ok) {
-                        LOG.warn("worktree remove prune after stage failed: path=${target.path} exit=${prune.exit} stderr=${snippet(prune.stderr)}")
-                    }
                     Triple("rename", CmdOut(0, "", ""), temp)
                 } else {
                     LOG.info(
@@ -664,6 +660,17 @@ class KiloWorktreeRpcApiImpl(
             )
             return RemoveWorktreeResultDto(error = reason(res, "git worktree remove failed"), locked = locked)
         }
+        // Every successful arm arrives here with no checkout at the registered path — renamed away,
+        // deleted by git, or already gone before this call started — so unregistering is always both
+        // safe and needed. It has to happen before `branch -D`: git refuses to delete a branch that a
+        // registered worktree still has checked out, so pruning afterwards would leave the branch
+        // behind (the `git` arm has already unregistered it, making this a no-op there). `--expire now`
+        // because the default grace period is three months, which for a checkout that is already gone
+        // would mean not pruning it at all. This also clears unrelated dangling entries.
+        val prune = runGit(base, "worktree", "prune", "--expire", "now")
+        if (!prune.ok) {
+            LOG.warn("worktree prune failed: path=${target.path} exit=${prune.exit} stderr=${snippet(prune.stderr)}")
+        }
         // The worktree is gone; a failed branch delete must not fail the removal, only warn.
         branch?.trim()?.takeIf { it.isNotEmpty() }?.let {
             val del = runGit(base, "branch", "-D", it)
@@ -673,8 +680,6 @@ class KiloWorktreeRpcApiImpl(
         LOG.info("worktree removed: path=${target.path} branch=${branch ?: "(none)"} mode=$mode ms=${System.currentTimeMillis() - start}")
         invalidate()
         removeWorktreeState(store, target.path)
-        val prune = runGit(base, "worktree", "prune")
-        if (!prune.ok) LOG.warn("worktree prune failed: exit=${prune.exit} stderr=${prune.stderr.trim()}")
         runCatching { service<KiloBackendAppService>().workspaces.remove(target.path) }
             .onFailure { err -> LOG.info("workspace cache eviction skipped: path=${target.path} message=${err.message}") }
         storage?.let { trash?.sweep(it) }
