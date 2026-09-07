@@ -624,6 +624,7 @@ describe("agent_manager tool", () => {
       {
         operation: "prompt",
         sessionID: ctx.sessionID,
+        sourceSessionID: ctx.sessionID,
         targetSessionID: "ses_target",
         prompt,
       },
@@ -681,6 +682,7 @@ describe("agent_manager tool", () => {
       {
         operation: "prompt",
         sessionID: ctx.sessionID,
+        sourceSessionID: ctx.sessionID,
         targetSessionID: "ses_caller",
         prompt: "The change is complete.",
         replyTo: "amr_request",

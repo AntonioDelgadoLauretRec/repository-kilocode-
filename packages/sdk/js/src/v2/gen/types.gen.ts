@@ -368,6 +368,7 @@ export type AgentManagerPromptRequest = {
   sessionID: string
   operation: "prompt"
   targetSessionID: string
+  sourceSessionID?: string
   prompt: string
   replyTo?: AgentManagerRequestId
 }
