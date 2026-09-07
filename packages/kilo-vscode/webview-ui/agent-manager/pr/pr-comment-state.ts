@@ -86,7 +86,7 @@ export function createReactionController(opts: ReactionOptions): ReactionControl
   const key = () => opts.worktree() ?? ""
   const enabled = () => opts.worktree() != null
   const pending = (id: string, content: PRReactionContent) =>
-    commentState(key()).reactionPending[reactionKey(id, content)] === true
+    reactionKey(id, content) in commentState(key()).reactionPending
   const error = (id: string) => commentState(key()).reactionErrors[id]
 
   /**
@@ -102,13 +102,15 @@ export function createReactionController(opts: ReactionOptions): ReactionControl
       const count = choice ? item.count + 1 : item.count - 1
       // The last reaction removed keeps its pill while the request runs, so the
       // spinner has somewhere to show and the pill is not rebuilt on failure.
-      const keep = count > 0 || state.reactionPending[reactionKey(id, item.content)] === true
+      const keep = count > 0 || reactionKey(id, item.content) in state.reactionPending
       return keep ? [{ ...item, count: Math.max(count, 0), viewerHasReacted: choice }] : []
     })
     for (const content of PR_REACTION_CONTENT) {
-      if (picked[reactionKey(id, content)] !== true) continue
+      const pick = reactionKey(id, content)
+      const removing = state.reactionPending[pick] === false
+      if (picked[pick] !== true && !removing) continue
       if (merged.some((item) => item.content === content)) continue
-      merged.push({ content, count: 1, viewerHasReacted: true })
+      merged.push({ content, count: removing ? 0 : 1, viewerHasReacted: !removing })
     }
     // Enum order, so a pill keeps its place when a pick or a poll lands.
     return merged.sort((a, b) => PR_REACTION_CONTENT.indexOf(a.content) - PR_REACTION_CONTENT.indexOf(b.content))
@@ -126,7 +128,7 @@ export function createReactionController(opts: ReactionOptions): ReactionControl
       add,
     })
     patchCommentState(worktree, (prev) => ({
-      reactionPending: { ...prev.reactionPending, [reactionKey(id, content)]: true },
+      reactionPending: { ...prev.reactionPending, [reactionKey(id, content)]: add },
       reactionPicked: { ...prev.reactionPicked, [reactionKey(id, content)]: add },
       reactionErrors: omit(prev.reactionErrors, id),
     }))
@@ -141,7 +143,11 @@ export function createReactionController(opts: ReactionOptions): ReactionControl
       reactionPending: omit(prev.reactionPending, pick),
       // A pick that landed stays until a poll reports it, so the pill does not
       // drop back to the old count in between.
-      reactionPicked: msg.success ? prev.reactionPicked : omit(prev.reactionPicked, pick),
+      reactionPicked: msg.success
+        ? prev.reactionPicked
+        : msg.add
+          ? omit(prev.reactionPicked, pick)
+          : { ...prev.reactionPicked, [pick]: true },
       reactionErrors: msg.success
         ? omit(prev.reactionErrors, msg.commentId)
         : { ...prev.reactionErrors, [msg.commentId]: opts.fail(msg.error) },

@@ -212,9 +212,16 @@ await window.happyDOM.waitUntilComplete()
 // The pick holds until a poll reports it, so the count does not drop back.
 assert.equal(reactionCount(addReaction!), "3")
 assert.equal(addReaction!.classList.contains("am-pr-reaction-active"), true)
+addReaction!.click()
+await window.happyDOM.waitUntilComplete()
+assert.ok(addReaction!.querySelector('[data-component="spinner"]'), "a pending removal keeps a new reaction mounted")
+reactionResult("THUMBS_UP", false, false)
+await window.happyDOM.waitUntilComplete()
+assert.equal(reactionCount(addReaction!), "3")
+assert.equal(addReaction!.classList.contains("am-pr-reaction-active"), true)
 removeReaction!.click()
 await window.happyDOM.waitUntilComplete()
-assert.deepEqual(reactions[2], {
+assert.deepEqual(reactions[3], {
   type: "agentManager.commentReaction",
   projectId: undefined,
   worktreeId: "wt-test",
@@ -232,7 +239,7 @@ assert.equal(removeReaction!.classList.contains("am-pr-reaction-active"), true)
 assert.match(root.textContent ?? "", /Could not update reaction/)
 removeReaction!.click()
 await window.happyDOM.waitUntilComplete()
-assert.deepEqual(reactions[3], {
+assert.deepEqual(reactions[4], {
   type: "agentManager.commentReaction",
   projectId: undefined,
   worktreeId: "wt-test",
@@ -465,7 +472,7 @@ const inlineReaction = first.host.querySelector<HTMLButtonElement>(".am-pr-react
 assert.ok(inlineReaction, "inline reaction control is rendered")
 inlineReaction!.click()
 await window.happyDOM.waitUntilComplete()
-assert.deepEqual(reactions.at(4), {
+assert.deepEqual(reactions.at(5), {
   type: "agentManager.commentReaction",
   projectId: undefined,
   worktreeId: "wt-test",

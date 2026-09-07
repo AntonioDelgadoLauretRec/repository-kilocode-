@@ -14,6 +14,7 @@ import type { PanelContext } from "./types"
 import { SourceController } from "./SourceController"
 import { addCommentReaction, isPRReactionContent, removeCommentReaction } from "../agent-manager/pr/PRActions"
 import type { PRStatus } from "../agent-manager/types"
+import { ghErrorReason } from "../agent-manager/pr/am-pr-utils"
 
 type CommentHandler = (comments: unknown[], autoSend: boolean) => void
 type OpenArgs = {
@@ -303,7 +304,7 @@ export class DiffViewerProvider implements vscode.Disposable {
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err)
       this.log("Failed to update PR comment reaction:", message)
-      result(false, message)
+      result(false, ghErrorReason(message))
     }
   }
 
