@@ -291,7 +291,8 @@ export const WorktreeItem: Component<WorktreeItemProps> = (props) => {
                           }}
                           title={t("agentManager.worktree.doubleClickRename")}
                         >
-                          {props.label}
+                          {/* Inner span keeps the finish strikethrough tight to the text. */}
+                          <span class="am-wt-name">{props.label}</span>
                         </span>
                       }
                     >
