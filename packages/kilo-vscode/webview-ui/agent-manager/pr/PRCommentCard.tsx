@@ -7,10 +7,10 @@ import { Markdown } from "@kilocode/kilo-ui/markdown"
 import { Spinner } from "@kilocode/kilo-ui/spinner"
 import { Tooltip } from "@kilocode/kilo-ui/tooltip"
 import { useLanguage } from "../../src/context/language"
-import { formatRelativeDate } from "../../src/utils/date"
 import { PRCommentDiff } from "../../diff-viewer/PRCommentDiff"
 import { CopyButton } from "./CopyButton"
 import { prMarkdown, preview } from "./pr-comment-payload"
+import { PRCommentTime } from "./PRCommentTime"
 import type { PRComment } from "./pr-types"
 
 interface Props {
@@ -58,9 +58,7 @@ export function PRCommentCard(props: Props) {
           <Show when={props.sent}>
             <span class="am-pr-comment-tag am-pr-comment-tag-sent">{t("agentManager.pr.comment.sent")}</span>
           </Show>
-          <Show when={props.comment.createdAt}>
-            {(time) => <span class="am-pr-comment-time">{formatRelativeDate(new Date(time()).toISOString())}</span>}
-          </Show>
+          <PRCommentTime time={props.comment.createdAt} />
         </div>
       </button>
 
