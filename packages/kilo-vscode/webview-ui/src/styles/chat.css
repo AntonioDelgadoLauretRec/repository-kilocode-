@@ -48,17 +48,8 @@
   min-width: 0;
 }
 
-.agent-manager-attribution-link[data-component="button"] {
+.agent-manager-attribution-link {
   margin-left: auto;
-  height: auto;
-  min-height: 0;
-  padding: 0;
-  color: inherit;
-  font: inherit;
-}
-
-.agent-manager-attribution-link:hover {
-  text-decoration: underline;
 }
 
 .agent-manager-attribution-status {

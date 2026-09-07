@@ -1,7 +1,7 @@
 import { createMemo, Show, type Component } from "solid-js"
 import { UserMessageDisplay } from "@kilocode/kilo-ui/message-part"
-import { Button } from "@kilocode/kilo-ui/button"
-import { Icon } from "@kilocode/kilo-ui/icon"
+import { IconButton } from "@kilocode/kilo-ui/icon-button"
+import { Tooltip } from "@kilocode/kilo-ui/tooltip"
 import { partFeedback } from "../../../../src/shared/browser-feedback"
 import { imageMime } from "../../../../src/shared/image-data-url"
 import type { Message, Part, TextPart } from "../../types/messages"
@@ -55,17 +55,21 @@ export const VscodeUserMessage: Component<VscodeUserMessageProps> = (props) => {
       bubbleHeader={
         attribution() ? (
           <div class="agent-manager-attribution" dir="ltr">
-            <span class="agent-manager-attribution-label">
-              <Icon name="square-arrow-top-right" size="small" />
-              <span>Sent by Kilo from another session</span>
-            </span>
+            <span class="agent-manager-attribution-label">Sent by Kilo from another session</span>
             <Show
               when={props.onSelectSession && props.isSessionOpen?.(attribution() ?? "") !== false}
               fallback={<span class="agent-manager-attribution-status">Session not open</span>}
             >
-              <Button variant="ghost" size="small" class="agent-manager-attribution-link" onClick={openSource}>
-                Open source session
-              </Button>
+              <Tooltip value="Go to originating session" placement="top">
+                <IconButton
+                  icon="square-arrow-top-right"
+                  size="small"
+                  variant="ghost"
+                  class="agent-manager-attribution-link"
+                  aria-label="Go to originating session"
+                  onClick={openSource}
+                />
+              </Tooltip>
             </Show>
           </div>
         ) : undefined
