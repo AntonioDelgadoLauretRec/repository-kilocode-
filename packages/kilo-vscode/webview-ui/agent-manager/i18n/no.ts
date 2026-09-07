@@ -303,9 +303,10 @@ export const dict = {
   "agentManager.import.noBranchesFound": "Ingen branches funnet.",
   "agentManager.import.noBranchesHint": "Lim inn en PR URL ovenfor eller opprett et nytt Worktree.",
   "agentManager.import.failed": "Import mislyktes",
-  "agentManager.caffeination.toggle": "Hold datamaskinen våken",
-  "agentManager.caffeination.armed": "Modus for å holde datamaskinen våken er aktivert; klikk for å deaktivere",
-  "agentManager.caffeination.active": "Holder datamaskinen våken",
+  "agentManager.caffeination.toggle": "Hold datamaskinen våken mens Kilo-agentene arbeider",
+  "agentManager.caffeination.armed":
+    "Modus for å holde datamaskinen våken er aktivert for Kilo-agentene; klikk for å deaktivere",
+  "agentManager.caffeination.active": "Holder datamaskinen våken mens Kilo-agentene arbeider",
   "agentManager.caffeination.unavailable":
     "Modus for å holde datamaskinen våken er ikke tilgjengelig på denne plattformen",
   "agentManager.browser.title": "Nettleser",

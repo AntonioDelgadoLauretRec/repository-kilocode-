@@ -306,9 +306,10 @@ export const dict = {
   "agentManager.import.noBranchesFound": "Nenhum branch encontrado.",
   "agentManager.import.noBranchesHint": "Cole uma URL de PR acima ou crie um novo Worktree.",
   "agentManager.import.failed": "Falha na importação",
-  "agentManager.caffeination.toggle": "Manter o computador acordado",
-  "agentManager.caffeination.armed": "O modo de manter o computador acordado está ativado; clique para desativar",
-  "agentManager.caffeination.active": "Mantendo o computador acordado",
+  "agentManager.caffeination.toggle": "Manter o computador acordado enquanto os agentes Kilo trabalham",
+  "agentManager.caffeination.armed":
+    "O modo de manter o computador acordado para os agentes Kilo está ativado; clique para desativar",
+  "agentManager.caffeination.active": "Mantendo o computador acordado enquanto os agentes Kilo trabalham",
   "agentManager.caffeination.unavailable":
     "O modo de manter o computador acordado não está disponível nesta plataforma",
   "agentManager.browser.title": "Navegador",
