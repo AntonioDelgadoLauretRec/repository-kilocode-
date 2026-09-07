@@ -280,14 +280,17 @@ const resolvedRow = rows.find((node) => /reviewer/.test(node.textContent ?? ""))
 assert.ok(resolvedRow, "resolved row is present")
 assert.equal(resolvedRow!.getAttribute("aria-expanded"), "false")
 assert.ok(resolvedRow!.querySelector(".am-pr-comment-preview"), "collapsed row shows a preview")
+const summary = resolvedRow!.querySelector(".am-pr-comment-preview")!.textContent
 assert.doesNotMatch(root.textContent ?? "", /second paragraph only shows when expanded/)
 
 // The row expands into a full card whose unresolve action is enabled.
 ;(resolvedRow as HTMLButtonElement).click()
 await window.happyDOM.waitUntilComplete()
 assert.equal(resolvedRow!.getAttribute("aria-expanded"), "true")
+assert.equal(resolvedRow!.querySelector(".am-pr-comment-preview")!.textContent, summary)
 assert.match(root.textContent ?? "", /second paragraph only shows when expanded/)
 const card = resolvedRow!.parentElement!
+assert.equal(card.querySelector(".am-pr-diff-file")!.textContent, "packages/kilo-ui/src/components/other.tsx:3")
 const actions = [...card.querySelectorAll('[data-component="button"]')]
 const unresolve = actions.find((node) => /Unresolve/.test(node.textContent ?? ""))
 assert.ok(unresolve, "unresolve button is rendered")
@@ -769,14 +772,17 @@ setBadge((prev) => ({ ...prev, unresolvedThreads: 0 }))
 assert.equal(indicator(), null)
 const inline = () => second.querySelector<HTMLElement>('[data-thread-id="feedback"]')!
 const placed = (name: string) => {
-  const wrapper = inline().closest<HTMLElement>("[slot]")
-  const host = inline().closest("diffs-container")
+  const body = inline().querySelector(".am-pr-comment-body")!
+  const wrapper = body.closest<HTMLElement>("[slot]")
+  const host = body.closest("diffs-container")
   assert.ok(wrapper && host)
   assert.equal(wrapper.parentElement, host)
   assert.equal(wrapper.getAttribute("slot"), name)
   assert.ok(host.shadowRoot!.querySelector(`slot[name="${name}"]`))
 }
-const container = inline().closest("diffs-container")!
+const toggle = inline().querySelector<HTMLButtonElement>(".am-pr-comment-head")!
+assert.equal(toggle.closest("diffs-container"), null)
+const container = inline().querySelector("diffs-container")!
 assert.ok(container)
 placed("annotation-additions-417")
 assert.match(container.shadowRoot!.textContent ?? "", /chevron-down/)
@@ -789,7 +795,8 @@ setBadge((prev) => ({
   },
 }))
 await window.happyDOM.waitUntilComplete()
-assert.equal(inline().closest("diffs-container"), container)
+assert.equal(inline().querySelector("diffs-container"), container)
+assert.equal(inline().querySelector(".am-pr-comment-head"), toggle)
 assert.match(inline().textContent ?? "", /Updated committed thread/)
 const count = sent.length
 inline().querySelector<HTMLButtonElement>('.am-pr-comment-actions [data-variant="primary"]')!.click()
@@ -797,11 +804,13 @@ await window.happyDOM.waitUntilComplete()
 assert.equal(sent.length, count + 1)
 inline().querySelector<HTMLButtonElement>(".am-pr-comment-head")!.click()
 await window.happyDOM.waitUntilComplete()
-assert.equal(inline().closest("diffs-container"), null)
+assert.equal(inline().querySelector("diffs-container"), null)
+assert.equal(inline().querySelector(".am-pr-comment-head"), toggle)
 assert.equal(inline().querySelector(".am-pr-comment-head")!.getAttribute("aria-expanded"), "false")
 inline().querySelector<HTMLButtonElement>(".am-pr-comment-head")!.click()
 await window.happyDOM.waitUntilComplete()
 placed("annotation-additions-417")
+assert.equal(inline().querySelector(".am-pr-comment-head"), toggle)
 setBadge((prev) => ({
   ...prev,
   comments: {

@@ -62,6 +62,7 @@ import type { ProviderUsageLoadedMessage } from "./provider-usage"
 import type {
   AgentManagerApplyWorktreeDiffConflict,
   AgentManagerApplyWorktreeDiffStatus,
+  AgentManagerCaffeinationMessage,
   BranchInfo,
   ContinueInWorktreeStatus,
   LocalGitStats,
@@ -1637,6 +1638,7 @@ export type ExtensionMessage =
   | AgentManagerSelectionActivatedMessage
   | AgentManagerProjectSessionsMessage
   | AgentManagerRunStatusMessage
+  | AgentManagerCaffeinationMessage
   | AgentManagerKeybindingsMessage
   | AutoApproveStateMessage
   | SandboxStatusMessage

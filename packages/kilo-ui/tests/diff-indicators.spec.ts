@@ -29,6 +29,13 @@ for (const scheme of ["light", "dark"]) {
         expect(bar.height).toBeGreaterThan(0)
         expect(bar.content).toBe('""')
         if (type === "deletion") expect(bar.base).not.toBe(scheme === "dark" ? "#ff6762" : "#ff2e3f")
+        if (type === "deletion") {
+          const context = page.locator("[data-column-number][data-line-type='context']").first()
+          await expect(context).toBeVisible()
+          expect(await gutter.evaluate((element) => getComputedStyle(element).color)).toBe(
+            await context.evaluate((element) => getComputedStyle(element).color),
+          )
+        }
       }
     })
   }
