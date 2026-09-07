@@ -200,7 +200,7 @@ export function PRConversation(props: Props) {
               {t(
                 props.activeTerminalId
                   ? "agentManager.pr.conversation.sendAllToTerminal"
-                  : "agentManager.pr.fixWithKiloCount",
+                  : "agentManager.pr.conversation.sendAll",
                 { count: Math.min(actionable().length, SEND_LIMIT) },
               )}
             </Button>
