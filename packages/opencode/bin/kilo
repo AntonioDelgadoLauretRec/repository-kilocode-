@@ -136,7 +136,7 @@ function supportsAvx2() {
   }
 
   if (platform === "windows") {
-    return require("./kilocode/windows-avx2.cjs").supportsAvx2(arch) // kilocode_change
+    return require(path.join(scriptDir, "kilocode", "windows-avx2.cjs")).supportsAvx2(arch) // kilocode_change
   }
 
   return false

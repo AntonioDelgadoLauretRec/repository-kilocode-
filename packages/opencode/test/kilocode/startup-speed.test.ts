@@ -13,6 +13,7 @@ test("warm npm launcher and real CLI startup stay within budget", async () => {
   const platform = process.platform === "win32" ? "windows" : process.platform
   const modules = path.join(dir.path, "node_modules", "@kilocode")
   const wrapper = path.join(modules, "cli", "bin", "kilo")
+  const helper = path.join(modules, "cli", "bin", "kilocode", "windows-avx2.cjs")
   const binary = path.join(
     modules,
     `cli-${platform}-${process.arch}`,
@@ -20,8 +21,10 @@ test("warm npm launcher and real CLI startup stay within budget", async () => {
     process.platform === "win32" ? "kilo.exe" : "kilo",
   )
   await fs.mkdir(path.dirname(wrapper), { recursive: true })
+  await fs.mkdir(path.dirname(helper), { recursive: true })
   await fs.mkdir(path.dirname(binary), { recursive: true })
   await fs.copyFile(path.join(root, "bin", "kilo"), wrapper)
+  await fs.copyFile(path.join(root, "bin", "kilocode", "windows-avx2.cjs"), helper)
   await fs.copyFile(process.execPath, binary)
   const env: Record<string, string> = {}
   for (const key of ["PATH", "SystemRoot", "WINDIR", "COMSPEC", "PATHEXT", "SystemDrive"]) {
