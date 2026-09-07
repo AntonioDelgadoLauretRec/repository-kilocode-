@@ -600,6 +600,7 @@ describe("agent_manager tool", () => {
       {
         operation: "prompt",
         sessionID: ctx.sessionID,
+        sourceSessionID: ctx.sessionID,
         targetSessionID: "ses_target",
         prompt,
       },

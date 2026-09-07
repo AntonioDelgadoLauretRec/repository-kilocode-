@@ -5,6 +5,7 @@ import type { WorktreeStateManager } from "./WorktreeStateManager"
 import type { PanelContext } from "./host"
 import { PLATFORM, SNAPSHOT_INITIALIZATION } from "./constants"
 import { sameDirectory } from "../kilo-provider-utils"
+import { attribute } from "./prompt-attribution"
 
 const LABEL_MAX = 28
 const PREFIX = new Set(["feat", "fix", "chore", "bug", "issue", "task", "branch"])
@@ -30,6 +31,7 @@ export interface ToolRequest {
 }
 
 export interface ToolSource {
+  sessionID?: string
   sandboxInheritanceToken?: string
 }
 
@@ -107,14 +109,14 @@ function versionedLabel(base: string | undefined, index: number, total: number):
   return base
 }
 
-async function prompt(client: KiloClient, sid: string, dir: string, task: ToolTask) {
+async function prompt(client: KiloClient, sid: string, dir: string, task: ToolTask, source?: ToolSource) {
   const body = text(task)
   if (!body) return
   await client.session.promptAsync(
     {
       sessionID: sid,
       directory: dir,
-      parts: [{ type: "text", text: body }],
+      parts: [{ type: "text", text: attribute(body, source?.sessionID) }],
       model: task.model,
       variant: task.variant,
       snapshotInitialization: SNAPSHOT_INITIALIZATION,
@@ -172,7 +174,7 @@ async function local(
   deps.push()
   deps.getPanel()?.sessions.registerSession(session)
   if (wt) deps.post({ type: "agentManager.sessionAdded", sessionId: session.id, worktreeId: wt.id })
-  await prompt(client, session.id, target, task)
+  await prompt(client, session.id, target, task, source)
   deps.capture("Agent Manager Session Started", {
     source: PLATFORM,
     sessionId: session.id,
@@ -225,7 +227,7 @@ async function worktree(
   deps.registerWorktreeSession(session.id, created.result.path)
   deps.notifyReady(session.id, created.result, created.worktree.id)
   deps.getPanel()?.sessions.registerSession(session)
-  await prompt(client, session.id, created.result.path, task)
+  await prompt(client, session.id, created.result.path, task, source)
   deps.capture("Agent Manager Session Started", {
     source: PLATFORM,
     sessionId: session.id,
@@ -254,7 +256,7 @@ export async function startFromTool(deps: ToolDeps, req: ToolRequest): Promise<v
   const versions = req.mode === "worktree" && req.versions === true && total > 1
   const groupId = versions ? `grp-${Date.now()}` : undefined
   const state = { ok: 0 }
-  const source = { sandboxInheritanceToken: req.sandboxInheritanceToken }
+  const source = { sessionID: req.sessionID, sandboxInheritanceToken: req.sandboxInheritanceToken }
 
   deps.post({
     type: "agentManager.multiVersionProgress",
