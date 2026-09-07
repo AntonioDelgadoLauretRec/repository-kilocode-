@@ -27,6 +27,7 @@ export const dict = {
   "agentManager.worktree.setupScript": "Worktree Kurulum Betiği",
   "agentManager.worktree.delete": "Worktree'yi sil",
   "agentManager.worktree.confirmDelete": "Silinsin mi?",
+  "agentManager.worktree.finishedAnnouncement": "{{name}} tamamlandı. Worktree silindi.",
   "agentManager.worktree.stale": "Eskimiş",
   "agentManager.worktree.staleTooltip": "Diskte bulunamıyor veya artık git worktree tarafından izlenmiyor",
   "agentManager.worktree.removeStale": "Eskimiş worktree'yi kaldır",

@@ -26,6 +26,7 @@ export const dict = {
   "agentManager.worktree.setupScript": "Worktree 設定指令碼",
   "agentManager.worktree.delete": "刪除 Worktree",
   "agentManager.worktree.confirmDelete": "刪除？",
+  "agentManager.worktree.finishedAnnouncement": "{{name}} 已完成。Worktree 已刪除。",
   "agentManager.worktree.stale": "已失效",
   "agentManager.worktree.staleTooltip": "磁碟上不存在，或不再由 git worktree 追蹤",
   "agentManager.worktree.removeStale": "移除失效 Worktree",

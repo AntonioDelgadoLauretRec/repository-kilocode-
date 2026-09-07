@@ -26,6 +26,7 @@ export const dict = {
   "agentManager.worktree.setupScript": "Skripta za postavljanje Worktree-a",
   "agentManager.worktree.delete": "Obriši Worktree",
   "agentManager.worktree.confirmDelete": "Izbrisati?",
+  "agentManager.worktree.finishedAnnouncement": "{{name}} je završen. Worktree je obrisan.",
   "agentManager.worktree.stale": "Zastario",
   "agentManager.worktree.staleTooltip": "Nedostaje na disku ili ga git worktree više ne prati",
   "agentManager.worktree.removeStale": "Ukloni zastarjeli Worktree",

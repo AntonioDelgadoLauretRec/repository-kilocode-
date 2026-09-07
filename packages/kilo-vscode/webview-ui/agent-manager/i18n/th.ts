@@ -26,6 +26,7 @@ export const dict = {
   "agentManager.worktree.setupScript": "สคริปต์ตั้งค่า Worktree",
   "agentManager.worktree.delete": "ลบ Worktree",
   "agentManager.worktree.confirmDelete": "ลบ?",
+  "agentManager.worktree.finishedAnnouncement": "{{name}} เสร็จสิ้นแล้ว ลบ worktree แล้ว",
   "agentManager.worktree.stale": "ล้าสมัย",
   "agentManager.worktree.staleTooltip": "ไม่พบบนดิสก์หรือไม่ได้ถูกติดตามโดย git worktree อีกต่อไป",
   "agentManager.worktree.removeStale": "ลบ Worktree ที่ล้าสมัย",

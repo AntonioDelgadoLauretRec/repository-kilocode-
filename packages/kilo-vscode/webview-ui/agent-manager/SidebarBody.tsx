@@ -1,4 +1,4 @@
-import { For, Show, createMemo, createSignal, type Component } from "solid-js"
+import { For, Show, createMemo, createSignal, mergeProps, type Component } from "solid-js"
 import { Icon } from "@kilocode/kilo-ui/icon"
 import {
   DragDropProvider,
@@ -21,7 +21,8 @@ import type { LanguageContextValue } from "../src/context/language"
 import type { SidebarSearchItem } from "./sidebar-search"
 import { LOCAL, adjacentHint } from "./navigate"
 import { applyTabOrder, reorderTabs } from "./tab-order"
-import { isGroupEnd, isGroupStart, isGrouped, type TopLevelItem } from "./section-helpers"
+import { buildTopLevelItems, isGroupEnd, isGroupStart, isGrouped, type TopLevelItem } from "./section-helpers"
+import { createWorktreeCompletion } from "./worktree-completion"
 import { sectionAwareDetector } from "./section-dnd"
 import { ConstrainDragXAxis } from "./constrain-drag-x"
 import { useVSCode } from "../src/context/vscode"
@@ -89,14 +90,26 @@ export interface SidebarBodyProps {
   worktreeStats: () => Record<string, WorktreeGitStats>
   prStatuses: () => Record<string, PRStatus | null>
   runStatuses: () => Record<string, RunStatus>
-  confirmDeleteWorktree: (id: string) => void
+  cancelPendingDelete: () => void
   handleDeleteWorktree: (id: string, e: MouseEvent) => void
   confirmRemoveStaleWorktree: (id: string) => void
   track: (event: string, source: string, action: () => void) => () => void
 }
 
 /** Legacy single-project sidebar body: local repo, worktrees, unassigned sessions. */
-export const SidebarBody: Component<SidebarBodyProps> = (props) => {
+export const SidebarBody: Component<SidebarBodyProps> = (input) => {
+  const completion = createWorktreeCompletion(input.sortedWorktrees, () => input.projectId, input.worktreeLabel)
+  const ungrouped = createMemo(() => completion.rows().filter((wt) => !wt.sectionId))
+  const top = createMemo(() =>
+    buildTopLevelItems(input.sections(), ungrouped(), completion.rows(), input.sidebarWorktreeOrder()),
+  )
+  const props = mergeProps(input, {
+    sortedWorktrees: completion.rows,
+    worktrees: completion.rows,
+    ungrouped,
+    topLevelItems: top,
+    worktreesInSection: (id: string) => completion.rows().filter((wt) => wt.sectionId === id),
+  })
   const vscode = useVSCode()
   const updateBase = useBaseUpdate()
   const localState = () => props.activityFor(null)
@@ -307,6 +320,8 @@ export const SidebarBody: Component<SidebarBodyProps> = (props) => {
                               class={`am-wt-sortable ${sortable.isActiveDraggable ? "am-wt-dragging" : ""}`}
                             >
                               <WorktreeItem
+                                completed={completion.completed(wt.id)}
+                                onCompletionEnd={() => completion.release(wt.id)}
                                 worktree={wt}
                                 label={props.worktreeLabel(wt)}
                                 subtitle={props.worktreeSubtitle(wt)}
@@ -351,12 +366,10 @@ export const SidebarBody: Component<SidebarBodyProps> = (props) => {
                                   props.onNewSection(),
                                 )}
                                 onClick={() => {
-                                  if (props.pendingDelete() === wt.id) {
-                                    props.confirmDeleteWorktree(wt.id)
-                                    return
-                                  }
+                                  props.cancelPendingDelete()
                                   props.selectWorktree(wt.id)
                                 }}
+                                onCancelDelete={props.cancelPendingDelete}
                                 onDelete={(e) => props.handleDeleteWorktree(wt.id, e)}
                                 onStartRename={(current) => startRename(wt.id, current)}
                                 onRenameInput={(v) => setRenameValue(v)}

@@ -2383,7 +2383,7 @@ const AgentManagerContent: Component = () => {
             worktreeStats={worktreeStats}
             prStatuses={prStatuses}
             runStatuses={runStatuses}
-            confirmDeleteWorktree={confirmDeleteWorktree}
+            cancelPendingDelete={cancelPendingDelete}
             handleDeleteWorktree={handleDeleteWorktree}
             confirmRemoveStaleWorktree={confirmRemoveStaleWorktree}
             track={metrics.click}

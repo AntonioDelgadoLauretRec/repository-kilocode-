@@ -26,6 +26,7 @@ export const dict = {
   "agentManager.worktree.setupScript": "Worktreeセットアップスクリプト",
   "agentManager.worktree.delete": "Worktreeを削除",
   "agentManager.worktree.confirmDelete": "削除しますか？",
+  "agentManager.worktree.finishedAnnouncement": "{{name}} が完了しました。Worktree を削除しました。",
   "agentManager.worktree.stale": "無効",
   "agentManager.worktree.staleTooltip": "ディスク上に存在しないか、git worktree で追跡されていません",
   "agentManager.worktree.removeStale": "無効な Worktree を削除",

@@ -27,6 +27,7 @@ export const dict = {
   "agentManager.worktree.setupScript": "Worktree setup script",
   "agentManager.worktree.delete": "Worktree verwijderen",
   "agentManager.worktree.confirmDelete": "Verwijderen?",
+  "agentManager.worktree.finishedAnnouncement": "{{name}} is voltooid. Worktree verwijderd.",
   "agentManager.worktree.stale": "Verouderd",
   "agentManager.worktree.staleTooltip": "Ontbreekt op schijf of wordt niet meer gevolgd door git worktree",
   "agentManager.worktree.removeStale": "Verouderde worktree verwijderen",

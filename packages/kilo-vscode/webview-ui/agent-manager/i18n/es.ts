@@ -27,6 +27,7 @@ export const dict = {
   "agentManager.worktree.setupScript": "Script de configuración de Worktree",
   "agentManager.worktree.delete": "Eliminar Worktree",
   "agentManager.worktree.confirmDelete": "¿Eliminar?",
+  "agentManager.worktree.finishedAnnouncement": "{{name}} terminó. Se eliminó el worktree.",
   "agentManager.worktree.stale": "Obsoleto",
   "agentManager.worktree.staleTooltip": "No está en disco o ya no está seguido por git worktree",
   "agentManager.worktree.removeStale": "Eliminar Worktree obsoleto",
