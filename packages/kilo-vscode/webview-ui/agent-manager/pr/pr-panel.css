@@ -382,6 +382,57 @@
   flex: 1;
 }
 
+.am-pr-reactions {
+  gap: 3px;
+  flex-wrap: wrap;
+}
+
+.am-pr-reaction {
+  min-width: 34px;
+  padding: 2px 6px;
+  border: 1px solid var(--border-base);
+  border-radius: 999px;
+  gap: 3px;
+  line-height: 1;
+  transition:
+    background 80ms ease-out,
+    border-color 80ms ease-out;
+}
+
+.am-pr-reaction.am-pr-reaction-active {
+  border-color: var(--border-focus, var(--border-base));
+  background: var(--surface-interactive-base);
+}
+
+/* Fixed width, so swapping the count for the spinner cannot move the pill,
+   the pills after it, or the picker button next to them. */
+.am-pr-reaction-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.am-pr-reaction-spinner {
+  width: 10px;
+  height: 10px;
+}
+
+.am-pr-reaction-picker {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 2px;
+  padding: 4px;
+}
+
+.am-pr-reaction-option {
+  min-width: 28px;
+  min-height: 28px;
+  padding: 2px;
+  font-size: var(--font-size-base);
+}
+
 /* Same bordered treatment the local review comment actions use, because the
    VS Code theme renders secondary kilo-ui buttons as bare text. */
 [data-component="button"].am-pr-comment-btn[data-variant="secondary"] {

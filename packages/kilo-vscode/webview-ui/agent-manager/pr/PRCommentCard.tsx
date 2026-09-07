@@ -12,7 +12,8 @@ import { CopyButton } from "./CopyButton"
 import { PRAvatar } from "./PRAvatar"
 import { prMarkdown, preview } from "./pr-comment-payload"
 import { PRCommentTime } from "./PRCommentTime"
-import type { PRComment } from "./pr-types"
+import type { PRComment, PRReaction, PRReactionContent } from "./pr-types"
+import { PRReactions } from "./PRReactions"
 
 interface Props {
   comment: PRComment
@@ -23,6 +24,11 @@ interface Props {
   inline?: boolean
   preview?: PRComment["preview"]
   error?: string
+  reactionError?: string
+  /** Polled reactions with an unconfirmed pick applied; falls back to the comment. */
+  reactions?: PRReaction[]
+  reactionPending?: (content: PRReactionContent) => boolean
+  onReaction?: (content: PRReactionContent, add: boolean) => void
   onToggleOpen: () => void
   onToggleResolved?: () => void
   onSend: () => void
@@ -135,6 +141,7 @@ export function PRCommentCard(props: Props) {
             )}
           </For>
           <Show when={props.error}>{(err) => <div class="am-pr-comment-error">{err()}</div>}</Show>
+          <Show when={props.reactionError}>{(err) => <div class="am-pr-comment-error">{err()}</div>}</Show>
           <div class="am-pr-comment-actions am-pr-row">
             <Button variant="primary" size="small" disabled={props.sent} onClick={props.onSend}>
               {t("agentManager.pr.fixWithKilo")}
@@ -152,6 +159,13 @@ export function PRCommentCard(props: Props) {
                 </Show>
                 {props.resolved ? t("agentManager.pr.comment.unresolve") : t("agentManager.pr.comment.resolve")}
               </Button>
+            </Show>
+            <Show when={props.onReaction}>
+              <PRReactions
+                reactions={props.reactions ?? props.comment.reactions}
+                pending={props.reactionPending}
+                onToggle={(content, add) => props.onReaction?.(content, add)}
+              />
             </Show>
             <span class="am-pr-comment-actions-gap" />
             <CopyButton text={prMarkdown(props.comment)} label={t("agentManager.pr.comment.copy")} />

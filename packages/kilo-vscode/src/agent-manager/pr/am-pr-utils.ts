@@ -5,14 +5,18 @@ import type {
   PRCheck,
   PRComment,
   PRConversationComment,
+  PRReaction,
+  PRReactionContent,
   PRReviewer,
   PRStatus,
   ReviewerState,
 } from "../types"
+import { PR_REACTION_CONTENT } from "../../../webview-ui/agent-manager/pr/pr-types"
 import type {
   PRResult,
   GhAuthor,
   GhComment,
+  GhReactionGroup,
   GhThread,
   GhReviewRequest,
   GhReview,
@@ -155,6 +159,25 @@ const REVIEWER_STATE: Record<string, ReviewerState> = {
   COMMENTED: "commented",
 }
 
+const REACTION_CONTENT = new Set<string>(PR_REACTION_CONTENT)
+
+export function parseReactions(groups?: GhReactionGroup[]): PRReaction[] {
+  return (groups ?? []).flatMap((group) => {
+    const content = group.content
+    const count = group.reactors?.totalCount ?? group.users?.totalCount
+    if (
+      !content ||
+      !REACTION_CONTENT.has(content) ||
+      typeof count !== "number" ||
+      !Number.isSafeInteger(count) ||
+      count < 1
+    ) {
+      return []
+    }
+    return [{ content: content as PRReactionContent, count, viewerHasReacted: group.viewerHasReacted === true }]
+  })
+}
+
 function location(
   thread: GhThread,
   first: GhComment,
@@ -186,6 +209,7 @@ function parseThread(thread: GhThread): PRComment | undefined {
   const first = nodes.at(0)
   if (!first) return undefined
   const current = thread.line === undefined ? first.line : thread.line
+  const reactions = parseReactions(first.reactionGroups)
   return {
     id: first.id,
     threadId: thread.id ?? first.id,
@@ -200,6 +224,7 @@ function parseThread(thread: GhThread): PRComment | undefined {
     diffHunk: first.diffHunk,
     ...(typeof current === "number" ? {} : { unmapped: true, previewUnavailable: true }),
     replies: parseReplies(nodes),
+    ...(reactions.length > 0 ? { reactions } : {}),
   }
 }
 
@@ -237,6 +262,7 @@ function bot(author?: GhAuthor & { __typename?: string }): boolean {
 
 function commentItem(node: GhConversationComment): PRConversationComment | null {
   if (!node.id || !node.body?.trim()) return null
+  const reactions = parseReactions(node.reactionGroups)
   return {
     id: node.id,
     author: node.author?.login ?? "unknown",
@@ -245,11 +271,13 @@ function commentItem(node: GhConversationComment): PRConversationComment | null 
     createdAt: node.createdAt ? new Date(node.createdAt).getTime() : undefined,
     url: node.url,
     isBot: bot(node.author) || undefined,
+    ...(reactions.length > 0 ? { reactions } : {}),
   }
 }
 
 function reviewItem(node: GhReviewWithBody): PRConversationComment | null {
   if (!node.id || !node.body?.trim()) return null
+  const reactions = parseReactions(node.reactionGroups)
   return {
     id: node.id,
     author: node.author?.login ?? "unknown",
@@ -259,6 +287,7 @@ function reviewItem(node: GhReviewWithBody): PRConversationComment | null {
     url: node.url,
     state: REVIEWER_STATE[node.state ?? ""],
     isBot: bot(node.author) || undefined,
+    ...(reactions.length > 0 ? { reactions } : {}),
   }
 }
 
@@ -331,7 +360,14 @@ export function signature(pr: PRStatus): string {
       pr.unresolvedThreads ?? null,
       commentsSig(pr.comments?.comments),
     ],
-    pr.conversation?.map((c) => [c.id, c.author, c.body, c.state ?? "", c.isBot ? 1 : 0]) ?? [],
+    pr.conversation?.map((c) => [
+      c.id,
+      c.author,
+      c.body,
+      c.state ?? "",
+      c.isBot ? 1 : 0,
+      c.reactions?.map((reaction) => [reaction.content, reaction.count, reaction.viewerHasReacted]) ?? [],
+    ]) ?? [],
   ])
 }
 
