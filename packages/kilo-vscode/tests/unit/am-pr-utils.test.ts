@@ -7,6 +7,7 @@ import {
   ghErrorReason,
   parseComments,
   parseConversation,
+  parseReactions,
   parseReviewers,
   signature,
   summarize,
@@ -366,6 +367,34 @@ describe("parseComments", () => {
         replies: undefined,
       },
     ])
+  })
+
+  it("parses reaction groups and ignores empty or unknown reactions", () => {
+    expect(
+      parseReactions([
+        { content: "HEART", reactors: { totalCount: 3 }, viewerHasReacted: true },
+        { content: "THUMBS_UP", users: { totalCount: 0 }, viewerHasReacted: false },
+        { content: "NOT_A_REACTION", users: { totalCount: 2 }, viewerHasReacted: false },
+      ]),
+    ).toEqual([{ content: "HEART", count: 3, viewerHasReacted: true }])
+  })
+
+  it("includes reactions on the top-level review comment", () => {
+    const result = parseComments([
+      {
+        id: "thread",
+        comments: {
+          nodes: [
+            {
+              id: "comment",
+              body: "note",
+              reactionGroups: [{ content: "ROCKET", users: { totalCount: 1 }, viewerHasReacted: false }],
+            },
+          ],
+        },
+      },
+    ])
+    expect(result[0]?.reactions).toEqual([{ content: "ROCKET", count: 1, viewerHasReacted: false }])
   })
 
   it("uses comment id as threadId fallback when thread has no id", () => {

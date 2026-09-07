@@ -77,6 +77,8 @@ export type {
   PRCommentReply,
   PRReviewer,
   PRConversationComment,
+  PRReaction,
+  PRReactionContent,
 } from "../../../agent-manager/pr/pr-types"
 
 export interface PRStatus {

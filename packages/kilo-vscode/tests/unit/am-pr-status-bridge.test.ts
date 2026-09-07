@@ -2,8 +2,19 @@ import { describe, expect, it, mock, beforeEach } from "bun:test"
 
 const resolveComment = mock(async (_threadId: string, _cwd: string) => {})
 const unresolveComment = mock(async (_threadId: string, _cwd: string) => {})
+const addCommentReaction = mock(async (_commentId: string, _reaction: string, _cwd: string) => {})
+const removeCommentReaction = mock(async (_commentId: string, _reaction: string, _cwd: string) => {})
+const isPRReactionContent = (value: unknown): value is string =>
+  typeof value === "string" &&
+  ["THUMBS_UP", "THUMBS_DOWN", "LAUGH", "HOORAY", "CONFUSED", "HEART", "ROCKET", "EYES"].includes(value)
 
-mock.module("../../src/agent-manager/pr/PRActions", () => ({ resolveComment, unresolveComment }))
+mock.module("../../src/agent-manager/pr/PRActions", () => ({
+  addCommentReaction,
+  isPRReactionContent,
+  removeCommentReaction,
+  resolveComment,
+  unresolveComment,
+}))
 
 import { PRStatusBridge } from "../../src/agent-manager/pr-status-bridge"
 import { PRStatusPoller } from "../../src/agent-manager/PRStatusPoller"
@@ -775,5 +786,78 @@ describe("PRStatusBridge.handleMessage resolveComment", () => {
     bridge.handleMessage({ type: "agentManager.resolveComment", worktreeId: "wt-missing", threadId: "PRT_1" })
     expect(resolveComment).not.toHaveBeenCalled()
     expect(logged.length).toBeGreaterThan(0)
+  })
+})
+
+describe("PRStatusBridge.handleMessage commentReaction", () => {
+  beforeEach(() => {
+    addCommentReaction.mockReset()
+    removeCommentReaction.mockReset()
+  })
+
+  it("adds a reaction to a cached review comment and reports success", async () => {
+    const { bridge, sent, onStatus } = harness()
+    onStatus("wt1", {
+      ...pr,
+      comments: {
+        total: 1,
+        unresolved: 1,
+        comments: [
+          { id: "PRRC_1", threadId: "PRRT_1", author: "alice", body: "note", resolved: false, outdated: false },
+        ],
+      },
+    })
+    addCommentReaction.mockResolvedValueOnce(undefined)
+
+    expect(
+      bridge.handleMessage({
+        type: "agentManager.commentReaction",
+        worktreeId: "wt1",
+        commentId: "PRRC_1",
+        reaction: "HEART",
+        add: true,
+      }),
+    ).toBe(true)
+    await Promise.resolve()
+
+    expect(addCommentReaction).toHaveBeenCalledWith("PRRC_1", "HEART", "/repo/wt1")
+    expect(sent).toContainEqual(
+      expect.objectContaining({
+        type: "agentManager.commentReactionResult",
+        worktreeId: "wt1",
+        commentId: "PRRC_1",
+        reaction: "HEART",
+        add: true,
+        success: true,
+      }),
+    )
+  })
+
+  it("removes a reaction and reports a failure", async () => {
+    const { bridge, sent, onStatus } = harness()
+    onStatus("wt1", {
+      ...pr,
+      conversation: [{ id: "IC_1", author: "alice", body: "note" }],
+    })
+    removeCommentReaction.mockRejectedValueOnce(new Error("gh: forbidden"))
+
+    bridge.handleMessage({
+      type: "agentManager.commentReaction",
+      worktreeId: "wt1",
+      commentId: "IC_1",
+      reaction: "HEART",
+      add: false,
+    })
+    await Promise.resolve()
+
+    expect(removeCommentReaction).toHaveBeenCalledWith("IC_1", "HEART", "/repo/wt1")
+    expect(sent).toContainEqual(
+      expect.objectContaining({
+        type: "agentManager.commentReactionResult",
+        commentId: "IC_1",
+        add: false,
+        success: false,
+      }),
+    )
   })
 })
