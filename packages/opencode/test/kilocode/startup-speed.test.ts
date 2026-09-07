@@ -4,7 +4,7 @@ import path from "node:path"
 import { TestCli } from "../../script/kilocode/test-cli"
 import { tmpdir } from "../fixture/fixture"
 
-test("warm npm launcher and real CLI startup stay below 3 seconds", async () => {
+test("warm npm launcher and real CLI startup stay within budget", async () => {
   const root = path.resolve(import.meta.dir, "../..")
   const entry = process.env[TestCli.ENV] ?? (await TestCli.build(root))
   const node = Bun.which("node")
@@ -80,6 +80,8 @@ test("warm npm launcher and real CLI startup stay below 3 seconds", async () => 
   }
   // One warm-up, then a median with headroom for shared CI runners. The old
   // Windows probe alone took about 3.3s; warm native --version took 0.6s.
+  // Loaded macOS CI measured a 2.1s median with a 2.9s sample; allow more noise there.
+  const budget = process.platform === "darwin" ? 5000 : 3000
   const warm = samples.slice(1)
   const median = warm.toSorted((a, b) => a - b).at(1) ?? Infinity
   console.log(
@@ -95,11 +97,11 @@ test("warm npm launcher and real CLI startup stay below 3 seconds", async () => 
         warmup: samples.at(0),
         samples: warm,
         median,
-        budget: 3000,
+        budget,
       },
       null,
       2,
     ),
   )
-  expect(median).toBeLessThan(3000)
+  expect(median).toBeLessThan(budget)
 }, 60_000)
