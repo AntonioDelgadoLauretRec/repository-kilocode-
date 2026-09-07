@@ -11,6 +11,7 @@ import { PRCommentDiff } from "../../diff-viewer/PRCommentDiff"
 import { CopyButton } from "./CopyButton"
 import { PRAvatar } from "./PRAvatar"
 import { prMarkdown, preview } from "./pr-comment-payload"
+import { PRCommentTime } from "./PRCommentTime"
 import type { PRComment } from "./pr-types"
 
 interface Props {
@@ -65,15 +66,18 @@ export function PRCommentCard(props: Props) {
         <Show when={props.open} fallback={<span class="am-pr-comment-preview">{preview(props.comment.body)}</span>}>
           <Show when={!props.inline && location()}>{(value) => <span class="am-pr-comment-file">{value()}</span>}</Show>
         </Show>
-        <Show when={props.comment.outdated}>
-          <span class="am-pr-comment-tag">{t("agentManager.pr.comment.outdated")}</span>
-        </Show>
-        <Show when={props.inline && props.resolved}>
-          <span class="am-pr-comment-tag">{t("agentManager.pr.comment.resolved")}</span>
-        </Show>
-        <Show when={props.sent}>
-          <span class="am-pr-comment-tag am-pr-comment-tag-sent">{t("agentManager.pr.comment.sent")}</span>
-        </Show>
+        <div class="am-pr-comment-tags">
+          <Show when={props.comment.outdated}>
+            <span class="am-pr-comment-tag">{t("agentManager.pr.comment.outdated")}</span>
+          </Show>
+          <Show when={props.inline && props.resolved}>
+            <span class="am-pr-comment-tag">{t("agentManager.pr.comment.resolved")}</span>
+          </Show>
+          <Show when={props.sent}>
+            <span class="am-pr-comment-tag am-pr-comment-tag-sent">{t("agentManager.pr.comment.sent")}</span>
+          </Show>
+          <PRCommentTime time={props.comment.createdAt} />
+        </div>
       </button>
 
       <Show when={props.open}>
