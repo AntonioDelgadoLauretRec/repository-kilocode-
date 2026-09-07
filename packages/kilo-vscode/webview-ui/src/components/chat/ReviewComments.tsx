@@ -4,7 +4,7 @@ import { Icon } from "@kilocode/kilo-ui/icon"
 import { IconButton } from "@kilocode/kilo-ui/icon-button"
 import { Markdown } from "@kilocode/kilo-ui/markdown"
 import { Tooltip } from "@kilocode/kilo-ui/tooltip"
-import { isPRReviewComment } from "../../../../src/shared/review-comments"
+import { isCIReviewComment, isPRReviewComment } from "../../../../src/shared/review-comments"
 import { useLanguage } from "../../context/language"
 import { useVSCode } from "../../context/vscode"
 import type { ReviewCommentEntry } from "../../types/messages"
@@ -31,14 +31,24 @@ export const ReviewComments: Component<ReviewCommentsProps> = (props) => {
   const [full, setFull] = createSignal<string[]>([])
 
   const author = (item: ReviewCommentEntry) => (isPRReviewComment(item) ? item.author : "")
-  const side = (item: ReviewCommentEntry) => (isPRReviewComment(item) ? "" : item.side === "deletions" ? "-" : "+")
-  const line = (item: ReviewCommentEntry) => (item.line ? `${side(item)}${item.line}` : "")
-  const body = (item: ReviewCommentEntry) => (isPRReviewComment(item) ? item.body : item.comment)
-  const snippet = (item: ReviewCommentEntry) => (isPRReviewComment(item) ? item.diffHunk : item.selectedText)
-  const label = (item: ReviewCommentEntry) => (item.file ? fileName(item.file) : `@${author(item)}`)
+  const side = (item: ReviewCommentEntry) =>
+    isPRReviewComment(item) || isCIReviewComment(item) ? "" : item.side === "deletions" ? "-" : "+"
+  const line = (item: ReviewCommentEntry) => (!isCIReviewComment(item) && item.line ? `${side(item)}${item.line}` : "")
+  const body = (item: ReviewCommentEntry) =>
+    isPRReviewComment(item) || isCIReviewComment(item) ? item.body : item.comment
+  const snippet = (item: ReviewCommentEntry) => {
+    if (isCIReviewComment(item)) return undefined
+    return isPRReviewComment(item) ? item.diffHunk : item.selectedText
+  }
+  const file = (item: ReviewCommentEntry) => (isCIReviewComment(item) ? undefined : item.file)
+  const label = (item: ReviewCommentEntry) => {
+    if (isCIReviewComment(item)) return item.title
+    return item.file ? fileName(item.file) : `@${author(item)}`
+  }
   const outdated = (item: ReviewCommentEntry) => isPRReviewComment(item) && item.outdated === true
 
-  const files = createMemo(() => new Set(props.comments.filter((item) => item.file).map((item) => item.file)).size)
+  const ci = createMemo(() => props.comments.length > 0 && props.comments.every(isCIReviewComment))
+  const files = createMemo(() => new Set(props.comments.map(file).filter(Boolean)).size)
   // Collapsing a single extra row is not worth a toggle, so only hide from two up.
   const hidden = createMemo(() => (props.comments.length > PREVIEW + 1 ? props.comments.length - PREVIEW : 0))
   const rows = createMemo(() => (hidden() > 0 && !all() ? props.comments.slice(0, PREVIEW) : props.comments))
@@ -47,7 +57,7 @@ export const ReviewComments: Component<ReviewCommentsProps> = (props) => {
     setFull((prev) => (prev.includes(id) ? prev.filter((entry) => entry !== id) : [...prev, id]))
 
   const reveal = (item: ReviewCommentEntry) => {
-    if (!item.file) return
+    if (isCIReviewComment(item) || !item.file) return
     // An outdated PR thread is anchored to a line that has since moved, so
     // jumping there lands on unrelated code. Open the file at the top instead.
     const at = outdated(item) ? undefined : item.line
@@ -80,7 +90,9 @@ export const ReviewComments: Component<ReviewCommentsProps> = (props) => {
         >
           <Icon name={open() ? "chevron-down" : "chevron-right"} size="small" />
           <span class="prompt-review-comments-title">
-            {language.t("agentManager.review.inlineCount", { count: props.comments.length })}
+            {ci()
+              ? language.t("agentManager.pr.checks.feedback")
+              : language.t("agentManager.review.inlineCount", { count: props.comments.length })}
           </span>
           <Show when={files() > 1}>
             <span class="prompt-review-comments-meta">
@@ -105,7 +117,10 @@ export const ReviewComments: Component<ReviewCommentsProps> = (props) => {
               <div class="prompt-review-row" classList={{ "prompt-review-row--full": full().includes(item.id) }}>
                 <div class="prompt-review-row-top">
                   <span class="prompt-review-row-icon">
-                    <Icon name={isPRReviewComment(item) ? "github" : "comment"} size="small" />
+                    <Icon
+                      name={isCIReviewComment(item) ? "checklist" : isPRReviewComment(item) ? "github" : "comment"}
+                      size="small"
+                    />
                   </span>
                   <button
                     type="button"
@@ -116,7 +131,7 @@ export const ReviewComments: Component<ReviewCommentsProps> = (props) => {
                     <span class="prompt-review-row-head">
                       <span class="prompt-review-row-label">{label(item)}</span>
                       <Show when={line(item)}>{(value) => <span class="prompt-review-row-line">{value()}</span>}</Show>
-                      <Show when={item.file && author(item)}>
+                      <Show when={file(item) && author(item)}>
                         <span class="prompt-review-row-author">@{author(item)}</span>
                       </Show>
                       <Show when={outdated(item)}>
@@ -127,7 +142,7 @@ export const ReviewComments: Component<ReviewCommentsProps> = (props) => {
                       <span class="prompt-review-row-preview">{body(item)}</span>
                     </Show>
                   </button>
-                  <Show when={item.file}>
+                  <Show when={file(item)}>
                     <Tooltip value={language.t("agentManager.diff.openFile")} placement="top">
                       <IconButton
                         icon="go-to-file"
@@ -152,9 +167,9 @@ export const ReviewComments: Component<ReviewCommentsProps> = (props) => {
 
                 <Show when={full().includes(item.id)}>
                   <div class="prompt-review-row-detail">
-                    <Show when={item.file}>{(file) => <code class="prompt-review-row-path">{file()}</code>}</Show>
+                    <Show when={file(item)}>{(file) => <code class="prompt-review-row-path">{file()}</code>}</Show>
                     <div class="prompt-review-row-text">
-                      <Show when={isPRReviewComment(item)} fallback={body(item)}>
+                      <Show when={isPRReviewComment(item) || isCIReviewComment(item)} fallback={body(item)}>
                         <Markdown text={body(item)} />
                       </Show>
                     </div>

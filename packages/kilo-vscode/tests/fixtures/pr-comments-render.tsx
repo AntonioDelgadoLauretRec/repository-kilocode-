@@ -449,3 +449,59 @@ assert.deepEqual(refreshed, [
 assert.equal(visible(), true)
 release()
 navigation.dispose()
+
+const { PRChecks } = await import("../../webview-ui/agent-manager/pr/PRChecks")
+const { summarize } = await import("../../src/agent-manager/pr/am-pr-utils")
+const third = document.createElement("div")
+document.body.append(third)
+const [checks, setChecks] = createSignal<PRStatus>({
+  ...base,
+  checks: summarize([
+    { name: "Typecheck", status: "failure", url: "https://github.com/example/repo/actions/runs/100/job/200" },
+    { name: "Tests", status: "success" },
+    { name: "Lint", status: "pending" },
+  ]),
+})
+const cleanup = render(
+  () => (
+    <VSCodeProvider>
+      <LanguageProvider>
+        <PRChecks pr={checks()} />
+      </LanguageProvider>
+    </VSCodeProvider>
+  ),
+  third,
+)
+await window.happyDOM.waitUntilComplete()
+const fix = () => third.querySelector<HTMLButtonElement>(".am-pr-checks-fix")
+assert.equal(fix()?.textContent?.trim(), "Fix with Kilo")
+assert.equal(fix()?.querySelector('[data-component="icon"]'), null)
+const before = sent.length
+fix()!.click()
+const feedback = sent.at(-1) as {
+  autoSend: boolean
+  comments: import("../../src/shared/review-comments").CIReviewCommentData[]
+}
+assert.equal(sent.length, before + 1)
+assert.equal(feedback.autoSend, true)
+assert.equal(feedback.comments[0]?.origin, "ci")
+// Draft removal and session changes are outside PRChecks. Unchanged checks
+// must remain sendable without remounting or waiting for another CI run.
+assert.equal(fix()?.disabled, false)
+assert.equal(fix()?.textContent?.trim(), "Fix with Kilo")
+fix()!.click()
+assert.equal(sent.length, before + 2)
+assert.deepEqual(sent.at(-1), feedback)
+fix()!.click()
+assert.equal(sent.length, before + 3)
+assert.deepEqual(sent.at(-1), feedback)
+setChecks((prev) => ({
+  ...prev,
+  checks: summarize([
+    { name: "Typecheck", status: "failure", url: "https://github.com/example/repo/actions/runs/100/job/201" },
+  ]),
+}))
+assert.equal(fix()?.disabled, false)
+setChecks((prev) => ({ ...prev, checks: summarize([{ name: "Tests", status: "success" }]) }))
+assert.equal(fix(), null)
+cleanup()

@@ -256,7 +256,12 @@ export function signature(pr: PRStatus): string {
     pr.title,
     pr.state,
     pr.review,
-    [pr.checks.status, pr.checks.passed, pr.checks.total],
+    [
+      pr.checks.status,
+      pr.checks.passed,
+      pr.checks.total,
+      pr.checks.checks.map((check) => [check.name, check.status, check.url ?? "", check.duration ?? ""]),
+    ],
     pr.reviewers.map((r) => [r.login, r.state]),
     pr.body ?? "",
     [pr.comments?.total ?? null, pr.unresolvedThreads ?? null, commentsSig(pr.comments?.comments)],

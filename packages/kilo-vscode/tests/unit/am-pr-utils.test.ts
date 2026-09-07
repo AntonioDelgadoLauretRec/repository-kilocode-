@@ -9,6 +9,7 @@ import {
   parseConversation,
   parseReviewers,
   signature,
+  summarize,
 } from "../../src/agent-manager/pr/am-pr-utils"
 import type {
   GhThread,
@@ -698,5 +699,40 @@ describe("signature with conversation", () => {
 
     expect(withConvo).not.toBe(withoutConvo)
     expect(updatedConvo).not.toBe(withConvo)
+  })
+
+  it("updates check links and failures even when aggregate counts stay the same", () => {
+    const base: PRStatus = {
+      number: 1,
+      title: "PR",
+      url: "https://example.com/pr/1",
+      state: "open",
+      review: null,
+      checks: summarize([
+        { name: "Lint", status: "failure", url: "https://example.com/job/1" },
+        { name: "Tests", status: "success" },
+      ]),
+      reviewers: [],
+      additions: 0,
+      deletions: 0,
+      files: 0,
+    }
+    const rerun = {
+      ...base,
+      checks: summarize([
+        { name: "Lint", status: "failure", url: "https://example.com/job/2" },
+        { name: "Tests", status: "success" },
+      ]),
+    }
+    const swapped = {
+      ...base,
+      checks: summarize([
+        { name: "Lint", status: "success", url: "https://example.com/job/1" },
+        { name: "Tests", status: "failure" },
+      ]),
+    }
+    expect(signature(rerun)).not.toBe(signature(base))
+    expect(signature(swapped)).not.toBe(signature(base))
+    expect(signature(structuredClone(base))).toBe(signature(base))
   })
 })

@@ -372,7 +372,8 @@
   margin-right: 4px;
 }
 
-.am-pr-comment-send-all {
+.am-pr-comment-send-all,
+.am-pr-checks-fix {
   margin-top: 6px;
   align-self: flex-start;
 }

@@ -12,6 +12,7 @@ import {
   partReview,
   parseReview,
   reviewMetadata,
+  type CIReviewCommentData,
   type PRReviewCommentData,
   type ReviewCommentData,
 } from "../../src/shared/review-comments"
@@ -38,6 +39,16 @@ function pr(overrides: Partial<PRReviewCommentData> = {}): PRReviewCommentData {
 
 function local(): ReviewCommentData {
   return { id: "c1", file: "src/a.ts", side: "additions", line: 3, comment: "rename", selectedText: "const x = 1" }
+}
+
+function ci(overrides: Partial<CIReviewCommentData> = {}): CIReviewCommentData {
+  return {
+    id: "ci:42:100",
+    origin: "ci",
+    title: "Typecheck failed",
+    body: "Inspect the failed typecheck job before making a fix.",
+    ...overrides,
+  }
 }
 
 function thread(overrides: Partial<PRComment> = {}): PRComment {
@@ -131,6 +142,31 @@ describe("PR review comment metadata", () => {
 
   it("rejects a PR entry with a bogus line", () => {
     const comments = [pr({ line: 0 })]
+    expect(parseReview({ version: 1, comments }, formatReviewCommentsMarkdown(comments))).toBeUndefined()
+  })
+})
+
+describe("CI review comment metadata", () => {
+  it("round-trips CI metadata with and without a visible message body", () => {
+    const data = { version: 1 as const, comments: [ci({ body: "Failed: `typecheck`\n\nRead logs on demand." })] }
+    const text = formatReviewCommentsMarkdown(data.comments)
+    const metadata = JSON.parse(JSON.stringify(reviewMetadata(data)))
+    expect(partReview(metadata, text)).toEqual({ data, body: "" })
+    expect(partReview(metadata, `${text}\n\nFix only these failures.`)).toEqual({
+      data,
+      body: "Fix only these failures.",
+    })
+  })
+
+  it("round-trips mixed local, PR, and CI metadata", () => {
+    const data = { version: 1 as const, comments: [local(), pr(), ci()] }
+    const text = formatReviewCommentsMarkdown(data.comments)
+    const metadata = JSON.parse(JSON.stringify(reviewMetadata(data)))
+    expect(partReview(metadata, text)).toEqual({ data, body: "" })
+  })
+
+  it("rejects an oversized CI body", () => {
+    const comments = [ci({ body: "x".repeat(16_001) })]
     expect(parseReview({ version: 1, comments }, formatReviewCommentsMarkdown(comments))).toBeUndefined()
   })
 })
