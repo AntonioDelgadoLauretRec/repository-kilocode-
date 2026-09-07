@@ -54,26 +54,38 @@ export function parsePRResult(json: string): PRResult | null {
 }
 
 function checks(items: unknown[]): PRStatus["checks"] {
-  const values = items.map((item): PRCheck => {
-    const check = item as {
-      name?: string
-      context?: string
-      state?: string
-      status?: string
-      conclusion?: string | null
-      link?: string
-      detailsUrl?: string
-      targetUrl?: string
-      startedAt?: string
-      completedAt?: string
-    }
-    return {
-      name: check.name ?? check.context ?? "Unknown check",
-      status: checkStatus(check.conclusion ?? check.state ?? check.status ?? "PENDING"),
-      url: check.detailsUrl ?? check.targetUrl ?? check.link,
-      duration: formatCheckDuration(check.startedAt, check.completedAt),
-    }
+  const latest = new Map<string, { item: unknown; index: number; started: number }>()
+  items.forEach((item, index) => {
+    const check = item as { name?: string; context?: string; workflowName?: string; event?: string; startedAt?: string }
+    const key = check.context
+      ? `status:${check.context}`
+      : `run:${check.name ?? "Unknown check"}:${check.workflowName ?? ""}:${check.event ?? ""}`
+    const started = check.startedAt ? new Date(check.startedAt).getTime() : Number.NEGATIVE_INFINITY
+    const current = latest.get(key)
+    if (!current || started >= current.started) latest.set(key, { item, index, started })
   })
+  const values = [...latest.values()]
+    .sort((a, b) => a.index - b.index)
+    .map(({ item }) => {
+      const check = item as {
+        name?: string
+        context?: string
+        state?: string
+        status?: string
+        conclusion?: string | null
+        link?: string
+        detailsUrl?: string
+        targetUrl?: string
+        startedAt?: string
+        completedAt?: string
+      }
+      return {
+        name: check.name ?? check.context ?? "Unknown check",
+        status: checkStatus(check.conclusion ?? check.state ?? check.status ?? "PENDING"),
+        url: check.detailsUrl ?? check.targetUrl ?? check.link,
+        duration: formatCheckDuration(check.startedAt, check.completedAt),
+      }
+    })
   return summarize(values)
 }
 
@@ -96,19 +108,20 @@ export function checkStatus(state: string): CheckStatus {
     case "FAILURE":
     case "ERROR":
     case "ACTION_REQUIRED":
+    case "TIMED_OUT":
+    case "STARTUP_FAILURE":
       return "failure"
     case "PENDING":
     case "QUEUED":
     case "IN_PROGRESS":
     case "REQUESTED":
     case "WAITING":
+    case "EXPECTED":
       return "pending"
     case "SKIPPED":
       return "skipped"
     case "CANCELLED":
-    case "TIMED_OUT":
     case "STALE":
-    case "STARTUP_FAILURE":
       return "cancelled"
     default:
       return "pending"

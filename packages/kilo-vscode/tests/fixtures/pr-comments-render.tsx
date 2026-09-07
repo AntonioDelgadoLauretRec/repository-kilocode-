@@ -732,7 +732,7 @@ const cleanup = render(
   () => (
     <VSCodeProvider>
       <LanguageProvider>
-        <PRChecks pr={prState()} />
+        <PRChecks pr={prState()} worktreeId={target.worktreeId} />
       </LanguageProvider>
     </VSCodeProvider>
   ),
@@ -740,6 +740,26 @@ const cleanup = render(
 )
 await window.happyDOM.waitUntilComplete()
 const fix = () => third.querySelector<HTMLButtonElement>(".am-pr-checks-fix")
+const failureGroup = () => third.querySelector<HTMLElement>('.am-pr-check-group[data-bucket="failure"]')
+const successGroup = () => third.querySelector<HTMLElement>('.am-pr-check-group[data-bucket="success"]')
+assert.ok(failureGroup()?.querySelector(".am-pr-check-group-items"))
+assert.equal(successGroup()?.querySelector(".am-pr-check-group-items"), null)
+successGroup()?.querySelector<HTMLButtonElement>(".am-pr-check-group-heading")?.click()
+await window.happyDOM.waitUntilComplete()
+assert.ok(successGroup()?.querySelector(".am-pr-check-group-items"))
+cleanup()
+const remount = render(
+  () => (
+    <VSCodeProvider>
+      <LanguageProvider>
+        <PRChecks pr={prState()} worktreeId={target.worktreeId} />
+      </LanguageProvider>
+    </VSCodeProvider>
+  ),
+  third,
+)
+await window.happyDOM.waitUntilComplete()
+assert.ok(successGroup()?.querySelector(".am-pr-check-group-items"))
 assert.equal(fix()?.textContent?.trim(), "Fix with Kilo")
 assert.equal(fix()?.querySelector('[data-component="icon"]'), null)
 const before = sent.length
@@ -770,4 +790,4 @@ setPrState((prev) => ({
 assert.equal(fix()?.disabled, false)
 setPrState((prev) => ({ ...prev, checks: summarize([{ name: "Tests", status: "success" }]) }))
 assert.equal(fix(), null)
-cleanup()
+remount()
