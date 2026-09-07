@@ -47,7 +47,6 @@ import { historyRowActions as historyRowActionsFactory } from "./history-actions
 import { readFontSize } from "../src/font-size"
 import { IndexingProvider } from "../src/context/indexing"
 import {} from "@thisbeyond/solid-dnd"
-import type { DragEvent } from "@thisbeyond/solid-dnd"
 import { useDialog } from "@kilocode/kilo-ui/context/dialog"
 import { Dialog } from "@kilocode/kilo-ui/dialog"
 import { showToast } from "@kilocode/kilo-ui/toast"
@@ -155,7 +154,8 @@ import {
   isPendingSend,
   promotePendingDraftDiscard,
 } from "../src/utils/draft-store"
-import { reorderTabs, applyTabOrder, firstOrderedTitle } from "./tab-order"
+import { applyTabOrder, firstOrderedTitle } from "./tab-order"
+import { createTabDrag } from "./tab-drag"
 import { createTabOrderSync } from "./tab-order-sync"
 import { reportRemoteSessions, reportVisibleSession, visible } from "./remote-sessions"
 import { ConstrainDragYAxis } from "../src/components/chat/TabDnd"
@@ -674,8 +674,6 @@ const AgentManagerContent: Component = () => {
 
   const isPending = (id: string) => id.startsWith(PENDING_PREFIX)
   reportRemoteSessions(vscode, localSessionIDs, managedSessions, isPending)
-
-  const [draggingTab, setDraggingTab] = createSignal<string | undefined>()
 
   const freezeTabs = () => {
     const bar = document.querySelector(".am-tab-bar")
@@ -2086,75 +2084,19 @@ const AgentManagerContent: Component = () => {
   }
 
   const tabLookup = createMemo(() => new Map(activeTabs().map((s) => [s.id, s])))
-  const tabIds = createMemo(() => {
-    const ids = activeTabs().map((s) => s.id)
-    const sel = selection()
-    if (sel === null) return ids
-    const withReview = reviewOpen() ? [...ids, REVIEW_TAB_ID] : ids
-    const terminalIds = terms.current().map((t) => t.id)
-    const base = [...withReview, ...terminalIds]
-    // `worktreeTabOrder` stores the per-context mixed order. Applied
-    // for every context (LOCAL too) and persisted server-side via
-    // `setTabOrder`; unknown IDs are filtered by `applyTabOrder`.
-    const key = sel === LOCAL ? LOCAL : sel
-    return applyTabOrder(
-      base.map((id) => ({ id })),
-      worktreeTabOrder()[key],
-    ).map((item) => item.id)
+  const drag = createTabDrag({
+    selection,
+    sessions: activeTabs,
+    review: { id: REVIEW_TAB_ID, open: reviewOpen, title: () => t("session.tab.review") },
+    order: worktreeTabOrder,
+    setOrder: setWorktreeTabOrder,
+    setLocal: setLocalSessionIDs,
+    terms,
+    namespace: nsKey,
+    persist: persistTabOrder,
   })
+  const tabIds = drag.ids
   const tabScroll = useTabScroll(tabIds, visibleTabId)
-  const handleDragStart = (event: DragEvent) => {
-    const id = event.draggable?.id
-    if (typeof id === "string") setDraggingTab(id)
-  }
-
-  const handleDragOver = (event: DragEvent) => {
-    const from = event.draggable?.id
-    const to = event.droppable?.id
-    if (typeof from !== "string" || typeof to !== "string") return
-    const sel = selection()
-    if (sel === null) return
-    const key = sel === LOCAL ? LOCAL : sel
-    // Unified mixed-drag: the current visible order is `tabIds()` and
-    // includes sessions, review, and terminals. `reorderTabs` moves
-    // `from` to `to`'s position regardless of kind, so a user can slot
-    // a terminal between two sessions or vice versa.
-    const reordered = reorderTabs(tabIds(), from, to)
-    if (!reordered) return
-    setWorktreeTabOrder((prev) => ({ ...prev, [key]: reordered }))
-    // Keep the session-only list in sync for LOCAL so `localSessions()`
-    // and membership checks stay aligned after a drag.
-    if (key === LOCAL) {
-      const sessionSubset = reordered.filter((id) => id !== REVIEW_TAB_ID && !isTerminalTabId(id))
-      setLocalSessionIDs(sessionSubset)
-    }
-    // Mirror the order into the terminal state so `terms.current()`
-    // (the source for renderTerminalLayer's slot order) matches. The
-    // terminal state is keyed by namespaced context, not the plain
-    // tab-order key.
-    const terminalSubset = reordered.filter(isTerminalTabId)
-    if (terminalSubset.length > 0) terms.reorder(nsKey(key), terminalSubset)
-  }
-
-  const handleDragEnd = () => {
-    setDraggingTab(undefined)
-    const sel = selection()
-    if (sel === null) return
-    const key = sel === LOCAL ? LOCAL : sel
-    const order = worktreeTabOrder()[key]
-    if (order && order.length > 0) persistTabOrder(key, order)
-  }
-
-  const draggedTab = createMemo(() => {
-    const id = draggingTab()
-    if (!id) return undefined
-    if (id === REVIEW_TAB_ID) return { id, title: t("session.tab.review") }
-    if (isTerminalTabId(id)) {
-      const title = terms.title(id)
-      return title ? { id, title } : undefined
-    }
-    return activeTabs().find((s) => s.id === id)
-  })
 
   const focusTab = (id: string) => {
     focusCurrentTab({
@@ -2408,11 +2350,11 @@ const AgentManagerContent: Component = () => {
           ids={tabIds}
           renderTab={renderTabById}
           newTab={renderAddTab}
-          onDragStart={handleDragStart}
-          onDragEnd={handleDragEnd}
-          onDragOver={handleDragOver}
+          onDragStart={drag.start}
+          onDragEnd={drag.end}
+          onDragOver={drag.over}
           onRelease={releaseTabs}
-          overlay={draggedTab}
+          overlay={drag.overlay}
           localStats={localStats}
           worktreeStats={worktreeStats}
           applyState={apply.applyStateForSelection}
