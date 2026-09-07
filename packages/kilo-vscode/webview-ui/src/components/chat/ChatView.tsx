@@ -236,8 +236,8 @@ export const ChatView: Component<ChatViewProps> = (props) => {
   const hasActions = (hasChat: boolean) =>
     canStartSession(hasChat) || canFork(hasChat) || canStartWorktree() || canMoveToWorktree(hasChat)
 
-  const renderActions = (hasChat: boolean) => (
-    <Show when={hasActions(hasChat)}>
+  const renderActions = (hasChat: boolean, control: () => JSX.Element) => (
+    <Show when={hasActions(hasChat) || !!goal()}>
       <div class="new-task-button-wrapper" classList={{ "new-task-button-wrapper--empty": !hasChat }}>
         <div class="session-actions-row">
           <Show when={canStartSession(hasChat)}>
@@ -352,6 +352,7 @@ export const ChatView: Component<ChatViewProps> = (props) => {
               </Tooltip>
             </>
           </Show>
+          {control()}
         </div>
       </div>
     </Show>
@@ -400,8 +401,8 @@ export const ChatView: Component<ChatViewProps> = (props) => {
             </Show>
             <SessionDock
               blocked={dockBlocked()}
-              hasActions={() => !props.readonly && !goal() && hasActions(hasMessages())}
-              actions={() => !goal() && renderActions(hasMessages())}
+              hasActions={() => !props.readonly && (hasActions(hasMessages()) || !!goal())}
+              actions={(control) => renderActions(hasMessages(), control)}
               readonly={props.readonly}
             />
             <Show when={!props.readonly}>

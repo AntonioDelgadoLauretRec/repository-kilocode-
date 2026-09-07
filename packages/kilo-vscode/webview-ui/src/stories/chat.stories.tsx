@@ -207,13 +207,19 @@ export const ChatViewSessionDockStability: Story = {
   name: "ChatView — session dock keeps its height",
   render: () => {
     const [busy, setBusy] = createSignal(false)
+    const [goal, setGoal] = createSignal(false)
     // Statuses of deliberately different widths: the label swap is what used to
     // shove the centered spinner sideways.
     const labels = ["Thinking…", "Searching the codebase", "Making edits"]
     const [step, setStep] = createSignal(0)
     const status = () => (busy() ? "busy" : "idle")
+    const base = mockSessionValue({ id: SESSION_ID, status: "idle", closeReason: "completed" })
     const session = {
-      ...mockSessionValue({ id: SESSION_ID, status: "idle", closeReason: "completed" }),
+      ...base,
+      currentSession: () => ({
+        ...base.currentSession(),
+        goal: goal() ? { text: "Keep the session controls available", active: busy() } : undefined,
+      }),
       status,
       statusInfo: () => ({ type: status() }),
       statusText: () => (busy() ? labels[step() % labels.length] : undefined),
@@ -228,12 +234,15 @@ export const ChatViewSessionDockStability: Story = {
         <ServerContext.Provider value={mockServer as any}>
           <SessionContext.Provider value={session as any}>
             <WorktreeModeProvider>
-              <div style={{ height: "320px", display: "flex", "flex-direction": "column" }}>
+              <div style={{ height: "400px", display: "flex", "flex-direction": "column" }}>
                 <button data-testid="toggle-busy" onClick={() => setBusy(!busy())}>
                   toggle busy
                 </button>
                 <button data-testid="next-status" onClick={() => setStep(step() + 1)}>
                   next status
+                </button>
+                <button data-testid="toggle-goal" onClick={() => setGoal(!goal())}>
+                  toggle goal
                 </button>
                 <ChatView onForkSession={() => undefined} continueInWorktree />
               </div>
@@ -319,6 +328,45 @@ export const UserMessageReviewComments: Story = {
       </StoryProviders>
     )
   },
+}
+
+export const UserMessageMixedReviewComments: Story = {
+  name: "User message - local and PR comments",
+  render: () => (
+    <StoryProviders sessionID={SESSION_ID} status="idle">
+      <div style={{ "max-height": "620px", padding: "12px" }}>
+        {reviewMessage([
+          {
+            id: "local-note",
+            file: "src/review.ts",
+            side: "additions",
+            line: 12,
+            comment: "Keep the local draft when the active session changes.",
+            selectedText: "const draft = drafts.get(session)",
+          },
+          {
+            id: "pr-kilo",
+            origin: "pr",
+            author: "kilo-code-bot",
+            file: "src/review.ts",
+            line: 12,
+            side: "additions",
+            body: "This request needs a guard against stale session state.",
+            replies: [{ author: "octocat", body: "Keep the draft scoped to the original session." }],
+          },
+          {
+            id: "pr-reviewer",
+            origin: "pr",
+            author: "octocat",
+            file: "src/comments.ts",
+            line: 28,
+            side: "deletions",
+            body: "Check the existing callers before removing this branch.",
+          },
+        ])}
+      </div>
+    </StoryProviders>
+  ),
 }
 
 /**

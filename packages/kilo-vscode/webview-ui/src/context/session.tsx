@@ -175,6 +175,7 @@ export const SessionProvider: ParentComponent = (props) => {
   }
   const clearClose = (id: string) => {
     recoveries.delete(id)
+    if (!closeMap[id]) return
     setCloseMap(
       produce((map) => {
         delete map[id]
@@ -2555,7 +2556,7 @@ export const SessionProvider: ParentComponent = (props) => {
       vscode.postMessage({
         type: "loadMessages",
         sessionID: id,
-        mode: "replace",
+        mode: ready ? "reconcile" : "replace",
         focus: false,
         limit: MESSAGE_PAGE_LIMIT,
       })

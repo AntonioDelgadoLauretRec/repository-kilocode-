@@ -69,17 +69,61 @@
   flex-shrink: 0;
 }
 
-.session-dock[data-goal] {
-  position: relative;
-}
-
-.session-goal-action[data-component="button"] {
+.session-goal-status {
   position: absolute;
-  inset-inline-end: 0;
+  inset-inline-start: calc(100% - 8px);
   top: 50%;
   transform: translateY(-50%);
-  min-width: 64px;
-  min-height: 28px;
+  display: flex;
+  width: max-content;
+  max-width: none;
+  border-radius: var(--radius-sm);
+}
+
+.session-goal-status-content {
+  --goal-label-gap: 4px;
+  --icon-base: currentColor;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--goal-label-gap);
+  padding: 4px 6px;
+  border-radius: var(--radius-sm);
+  color: var(--vscode-descriptionForeground);
+  font-size: var(--kilo-font-size-12);
+  white-space: nowrap;
+  cursor: help;
+}
+
+.session-goal-status-content:hover {
+  background: var(--vscode-toolbar-hoverBackground);
+}
+
+.session-goal-status:focus-visible {
+  outline: 1px solid var(--vscode-focusBorder);
+  outline-offset: 2px;
+}
+
+.session-goal-status-label {
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.session-goal-status-content[data-compact] {
+  gap: 0;
+}
+
+.session-goal-status-content[data-compact] .session-goal-status-label {
+  width: 0;
+  opacity: 0;
+  overflow: hidden;
+}
+
+.session-goal-tooltip {
+  display: grid;
+  gap: 4px;
+  max-width: min(320px, calc(100vw - 24px));
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .session-goal-menu[data-component="dropdown-menu-content"] {
@@ -320,10 +364,16 @@
    caps how far a long status label may stretch before it ellipsizes, so the
    indicator stays a centered cluster on the same axis as the actions row instead
    of reaching for both edges. */
-.session-dock-state > .working-indicator {
-  width: 100%;
+.session-working {
+  position: relative;
+  width: fit-content;
+  min-width: 0;
   max-width: var(--session-dock-lane);
   margin-inline: auto;
+}
+
+.session-working[data-goal] {
+  max-width: min(var(--session-dock-lane), calc(100% - 40px));
 }
 
 /* The hidden state stays laid out to reserve the row height, so the spinner and
