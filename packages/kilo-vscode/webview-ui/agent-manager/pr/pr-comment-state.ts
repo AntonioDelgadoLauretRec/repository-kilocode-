@@ -23,6 +23,8 @@ export interface CommentState {
   open: boolean
   doneOpen: boolean
   conversationOpen: boolean
+  checksOpen: boolean
+  checkGroups: Record<string, boolean>
 }
 
 export interface CommentAnchor {
@@ -39,6 +41,8 @@ const BLANK: CommentState = Object.freeze({
   open: true,
   doneOpen: false,
   conversationOpen: true,
+  checksOpen: true,
+  checkGroups: {},
 })
 
 const [all, setAll] = createSignal<Record<string, CommentState>>({})
