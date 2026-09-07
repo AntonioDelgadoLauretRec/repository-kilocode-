@@ -1384,6 +1384,74 @@ try {
     sent.some((item) => (item as { type?: string }).type === "sendMessage"),
     true,
   )
+  // A trimmed cold page must not reduce older-history page size or lose messages.
+  await emit({ type: "sessionsLoaded", sessions: [...unwrap(value.sessions()), info("pagination")] })
+  value.selectSession("pagination")
+  assert.equal(value.loading(), true)
+  assert.deepEqual(
+    sent.findLast((item) => item.type === "loadMessages"),
+    {
+      type: "loadMessages",
+      sessionID: "pagination",
+      mode: "replace",
+      limit: 80,
+    },
+  )
+  const history = Array.from({ length: 100 }, (_, index) => {
+    const id = `history-${String(index).padStart(3, "0")}`
+    return {
+      id,
+      sessionID: "pagination",
+      role: "user",
+      createdAt: new Date(index).toISOString(),
+      parts: [{ id: `${id}-text`, messageID: id, sessionID: "pagination", type: "text", text: id }],
+    }
+  })
+  await emit({
+    type: "messagesLoaded",
+    sessionID: "pagination",
+    mode: "replace",
+    messages: history.slice(80),
+    cursor: "older",
+    hasMore: true,
+  })
+  assert.equal(value.loading(), false)
+  assert.equal(value.messages().length, 20)
+  assert.equal(value.loadOlderMessages(), true)
+  assert.equal(value.loadOlderMessages(), false)
+  assert.deepEqual(
+    sent.findLast((item) => item.type === "loadMessages"),
+    {
+      type: "loadMessages",
+      sessionID: "pagination",
+      mode: "prepend",
+      before: "older",
+      limit: 80,
+    },
+  )
+  await emit({
+    type: "messagesLoaded",
+    sessionID: "pagination",
+    mode: "prepend",
+    messages: history.slice(0, 80),
+    hasMore: false,
+  })
+  assert.deepEqual(
+    value.messages().map((item) => item.id),
+    history.map((item) => item.id),
+  )
+  for (const item of history) assert.equal(value.getParts(item.id).at(0)?.id, `${item.id}-text`)
+  assert.equal(value.loadOlderMessages(), false)
+  value.selectSession("pagination")
+  assert.equal(value.loading(), false)
+  assert.deepEqual(
+    sent.findLast((item) => item.type === "loadMessages"),
+    {
+      type: "loadMessages",
+      sessionID: "pagination",
+      mode: "focus",
+    },
+  )
   assert.deepEqual(failures, [])
 } finally {
   const before = state("background")
