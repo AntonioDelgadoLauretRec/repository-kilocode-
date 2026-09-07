@@ -40,7 +40,8 @@ describe("open_plan", () => {
       const tool = yield* Tool.init(info)
       const result = yield* tool.execute({ path: ".plans/fix.md" }, ctx(session.id))
 
-      expect(result.metadata).toMatchObject({ plan: ".plans/fix.md", open: true })
+      expect(result.metadata.plan.replaceAll(path.sep, "/")).toBe(".plans/fix.md")
+      expect(result.metadata.open).toBe(true)
       expect(result.output).toContain(".plans/fix.md")
     }),
     { git: true },
