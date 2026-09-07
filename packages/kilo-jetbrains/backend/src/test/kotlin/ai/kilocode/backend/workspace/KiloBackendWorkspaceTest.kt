@@ -206,6 +206,68 @@ class KiloBackendWorkspaceTest {
         assertIs<KiloWorkspaceState.Ready>(ws.state.value)
     }
 
+    // ------ Config warnings ------
+
+    @Test
+    fun `workspace warnings are loaded into Ready`() = runBlocking {
+        mock.warnings = """[{"path":".kilo/kilo.json","message":"Invalid JSON","detail":"CloseBraceExpected"}]"""
+
+        val app = setup()
+        val ws = ready(app)
+        loaded(ws)
+
+        val state = ws.state.value as KiloWorkspaceState.Ready
+        assertEquals(1, state.warnings.size)
+        assertEquals(".kilo/kilo.json", state.warnings.first().path)
+        assertEquals("Invalid JSON", state.warnings.first().message)
+        assertEquals("CloseBraceExpected", state.warnings.first().detail)
+    }
+
+    @Test
+    fun `workspace warnings default to empty`() = runBlocking {
+        mock.warnings = "[]"
+
+        val app = setup()
+        val ws = ready(app)
+        loaded(ws)
+
+        val state = ws.state.value as KiloWorkspaceState.Ready
+        assertTrue(state.warnings.isEmpty())
+    }
+
+    @Test
+    fun `failing warnings fetch does not fail workspace load`() = runBlocking {
+        mock.warningsStatus = 500
+
+        val app = setup()
+        val ws = ready(app)
+        loaded(ws)
+
+        val state = ws.state.value as KiloWorkspaceState.Ready
+        assertTrue(state.warnings.isEmpty())
+    }
+
+    @Test
+    fun `config updated SSE refreshes workspace warnings`() = runBlocking {
+        mock.warnings = """[{"path":".kilo/kilo.json","message":"Invalid JSON","detail":"CloseBraceExpected"}]"""
+
+        val app = setup()
+        val ws = ready(app)
+        loaded(ws)
+
+        assertEquals(1, (ws.state.value as KiloWorkspaceState.Ready).warnings.size)
+
+        mock.warnings = "[]"
+        val before = mock.requestCount("/config/warnings")
+        mock.awaitSseConnection()
+        mock.pushEvent("global.config.updated", """{"type":"global.config.updated"}""")
+
+        assertTrue(mock.awaitRequestCount("/config/warnings", before + 1))
+        withTimeout(5_000) {
+            ws.state.first { it is KiloWorkspaceState.Ready && it.warnings.isEmpty() }
+        }
+    }
+
     // ------ Error handling ------
 
     @Test

@@ -1,5 +1,6 @@
 package ai.kilocode.backend.workspace
 
+import ai.kilocode.backend.app.ConfigWarning
 import ai.kilocode.backend.app.KiloBackendSessionManager
 import ai.kilocode.backend.app.LoadError
 import ai.kilocode.backend.app.SseEvent
@@ -150,12 +151,15 @@ class KiloBackendWorkspace(
                     }
 
                     ensureActive()
+                    val warns = warnings()
+                    ensureActive()
                     startWatchingGlobalSseEvents()
                     _state.value = KiloWorkspaceState.Ready(
                         providers = prov!!,
                         agents = ag!!,
                         commands = cmd!!,
                         skills = sk!!,
+                        warnings = warns,
                     )
                     log.info("Workspace data loaded for $directory")
                 } catch (e: CancellationException) {
@@ -198,6 +202,8 @@ class KiloBackendWorkspace(
      *
      * - `global.disposed` — CLI server context torn down, all data stale.
      * - `server.instance.disposed` — server instance disposed, reload.
+     * - `global.config.updated` — project config changed on disk or via CLI; refresh only
+     *   config warnings in-place, without reloading providers/agents/commands/skills.
      *
      * Idempotent — only one watcher runs at a time.
      */
@@ -216,13 +222,39 @@ class KiloBackendWorkspace(
                             log.info("SSE server.instance.disposed — reloading workspace data for $directory")
                             load()
                         }
+                        "global.config.updated" -> {
+                            log.info("SSE global.config.updated — refreshing config warnings for $directory")
+                            refreshWarnings()
+                        }
                     }
                 }
             }
         }
     }
 
+    /** Refetches config warnings and updates [Ready][KiloWorkspaceState.Ready] in-place, if still current. */
+    private suspend fun refreshWarnings() {
+        val current = _state.value
+        if (current !is KiloWorkspaceState.Ready) return
+        val next = warnings()
+        val latest = _state.value
+        if (latest === current) _state.value = current.copy(warnings = next)
+    }
+
     // ------ fetch methods ------
+
+    private suspend fun warnings(): List<ConfigWarning> = withContext(Dispatchers.IO) {
+        try {
+            api.configWarnings(directory = directory).map {
+                ConfigWarning(path = it.path, message = it.message, detail = it.detail)
+            }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            log.warn("Config warnings fetch failed for $directory: ${e.message}", e)
+            emptyList()
+        }
+    }
 
     private suspend fun fetchProviders(): FetchResult<ProviderData> = withContext(Dispatchers.IO) {
         try {
