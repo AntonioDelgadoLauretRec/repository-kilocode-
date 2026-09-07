@@ -220,7 +220,7 @@ describe("agent manager tool start", () => {
       tasks: [
         {
           prompt: "Fix",
-          branchName: "fix/one",
+          branchName: "fix/One_two.3",
           model: { providerID: "test", modelID: "reasoning/model" },
           variant: "low",
         },
@@ -228,7 +228,7 @@ describe("agent manager tool start", () => {
     })
 
     expect(c.createWorktree).toHaveBeenCalledWith(
-      expect.objectContaining({ branchName: "fix-one", name: "fix-one", label: "one" }),
+      expect.objectContaining({ branchName: "fix/One_two.3", name: "fix/One_two.3", label: "one two 3" }),
     )
     expect(c.setup).toHaveBeenCalled()
     expect(c.createSessionInWorktree).toHaveBeenCalledWith("/repo/.kilo/worktrees/wt-1", "kilo/test", "wt-1", {
@@ -350,7 +350,7 @@ describe("agent manager tool start", () => {
     })
     expect(normal.createWorktree).toHaveBeenNthCalledWith(
       2,
-      expect.objectContaining({ branchName: "fix-two", label: "two" }),
+      expect.objectContaining({ branchName: "fix/two", label: "two" }),
     )
 
     const grouped = deps()
@@ -365,11 +365,11 @@ describe("agent manager tool start", () => {
     })
     expect(grouped.createWorktree).toHaveBeenNthCalledWith(
       2,
-      expect.objectContaining({ branchName: "try-work_v2", label: "try work v2" }),
+      expect.objectContaining({ branchName: "try/work_v2", label: "try work v2" }),
     )
   })
 
-  it("sanitizes branch names and keeps card labels short", async () => {
+  it("passes invalid explicit names to worktree validation and keeps card labels short", async () => {
     const c = deps()
     await startFromTool(c, {
       requestID: "am-name",
@@ -385,10 +385,20 @@ describe("agent manager tool start", () => {
 
     expect(c.createWorktree).toHaveBeenCalledWith(
       expect.objectContaining({
-        branchName: "fix-command-permissions-persistence",
+        branchName: "fix command permissions @#$ persistence",
         label: "command permissions",
       }),
     )
+  })
+
+  it("still sanitizes display names used as automatic branch seeds", async () => {
+    const c = deps()
+    await startFromTool(c, {
+      requestID: "am-seed",
+      mode: "worktree",
+      tasks: [{ name: "My Feature" }],
+    })
+    expect(c.createWorktree).toHaveBeenCalledWith(expect.objectContaining({ branchName: "my-feature" }))
   })
 
   it("rejects local sessions for unknown worktree directories", async () => {

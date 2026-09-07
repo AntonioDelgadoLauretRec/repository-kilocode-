@@ -6,6 +6,12 @@ export const dict = {
   "agentManager.section.sessions": "SESSIONER",
   "agentManager.projects": "PROJEKTER",
   "agentManager.settings.title": "Agent Manager",
+  "agentManager.settings.autoBranchNaming.title": "Automatisk navngivning af grene",
+  "agentManager.settings.autoBranchNaming.description":
+    "Navngiv automatisk grene, når samtalen beskriver en klar opgave. Gælder alle projekter. Eksplicit navngivne og publicerede grene omdøbes aldrig.",
+  "agentManager.settings.branchPrefix.title": "Grenpræfiks",
+  "agentManager.settings.branchPrefix.description":
+    "Præfiks for automatisk navngivne grene i alle projekter, for eksempel feature/. Gælder ikke eksplicitte grennavne. Lad feltet være tomt for intet præfiks.",
   "agentManager.settings.project.title": "Projekt",
   "agentManager.settings.project.description": "Vælg det repository, hvis worktree-indstillinger du vil redigere.",
   "agentManager.settings.project.empty": "Der er ingen tilgængelige projekter i Agent Manager.",

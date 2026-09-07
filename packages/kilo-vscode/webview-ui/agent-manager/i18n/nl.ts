@@ -6,6 +6,12 @@ export const dict = {
   "agentManager.section.sessions": "SESSIES",
   "agentManager.projects": "PROJECTEN",
   "agentManager.settings.title": "Agent Manager",
+  "agentManager.settings.autoBranchNaming.title": "Automatische branchnamen",
+  "agentManager.settings.autoBranchNaming.description":
+    "Geef branches automatisch een naam wanneer het gesprek een duidelijke taak beschrijft. Geldt voor alle projecten. Expliciet benoemde en gepubliceerde branches worden nooit hernoemd.",
+  "agentManager.settings.branchPrefix.title": "Branchprefix",
+  "agentManager.settings.branchPrefix.description":
+    "Prefix voor automatisch benoemde branches in alle projecten, bijvoorbeeld feature/. Geldt niet voor expliciete branchnamen. Laat leeg om geen prefix te gebruiken.",
   "agentManager.settings.project.title": "Project",
   "agentManager.settings.project.description": "Kies de repository waarvan je de worktree-instellingen wilt bewerken.",
   "agentManager.settings.project.empty": "Er zijn geen Agent Manager-projecten beschikbaar.",

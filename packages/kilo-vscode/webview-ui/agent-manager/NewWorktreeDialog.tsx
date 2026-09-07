@@ -93,28 +93,6 @@ function restoreAgent(value: string | undefined, list: Array<{ name: string }>, 
 
 const isMac = typeof navigator !== "undefined" && /Mac|iPhone|iPad/.test(navigator.userAgent)
 
-function sanitizeSegment(text: string, maxLength = 50): string {
-  return text
-    .toLowerCase()
-    .trim()
-    .replace(/\s+/g, "-")
-    .replace(/[^a-z0-9._+@-]/g, "")
-    .replace(/\.{2,}/g, ".")
-    .replace(/@\{/g, "@")
-    .replace(/-+/g, "-")
-    .replace(/^[-.]|[-.]+$/g, "")
-    .replace(/\.lock$/g, "")
-    .slice(0, maxLength)
-}
-
-function sanitizeBranchName(name: string): string {
-  return name
-    .split("/")
-    .map((s) => sanitizeSegment(s))
-    .filter(Boolean)
-    .join("/")
-}
-
 export const NewWorktreeDialog: Component<{
   onClose: () => void
   defaultBase?: (projectId: string) => string | undefined
@@ -423,7 +401,7 @@ export const NewWorktreeDialog: Component<{
     const defaultAgent = session.agents()[0]?.name
     const selectedAgent = agent() !== defaultAgent ? agent() : undefined
     const advanced = showAdvanced()
-    const customBranch = advanced ? branchName().trim() || undefined : undefined
+    const customBranch = advanced ? branchName() || undefined : undefined
     const imgs = imageAttach.images()
     const imgFiles = imgs.length > 0 ? imgs.map((img) => ({ mime: img.mime, url: img.dataUrl })) : undefined
 
@@ -927,7 +905,7 @@ export const NewWorktreeDialog: Component<{
                     type="text"
                     placeholder={t("agentManager.dialog.branchNamePlaceholder")}
                     value={branchName()}
-                    onInput={(e) => setBranchName(sanitizeBranchName(e.currentTarget.value))}
+                    onInput={(e) => setBranchName(e.currentTarget.value)}
                   />
                 </div>
                 <div class="am-advanced-field">

@@ -3906,11 +3906,14 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
   }
 
   private configSettings() {
+    const naming = vscode.workspace.getConfiguration("kilo-code.new.agentManager")
     return {
       maxCost: this.maxCostSetting(),
       languageCommitMessage: this.commitMessageLanguageSetting(),
       multiProject: this.multiProjectSetting(),
       browserAutomation: this.browserAutomationSetting(),
+      "agentManager.autoBranchNaming": naming.get<boolean>("autoBranchNaming", true),
+      "agentManager.branchPrefix": naming.get<string>("branchPrefix", ""),
     }
   }
 

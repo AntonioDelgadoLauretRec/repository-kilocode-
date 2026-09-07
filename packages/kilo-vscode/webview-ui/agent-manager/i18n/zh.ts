@@ -6,6 +6,12 @@ export const dict = {
   "agentManager.section.sessions": "会话",
   "agentManager.projects": "项目",
   "agentManager.settings.title": "Agent Manager",
+  "agentManager.settings.autoBranchNaming.title": "自动命名分支",
+  "agentManager.settings.autoBranchNaming.description":
+    "当对话描述了明确的任务时，自动为分支命名。适用于所有项目。明确命名的分支和已发布的分支永远不会被重命名。",
+  "agentManager.settings.branchPrefix.title": "分支前缀",
+  "agentManager.settings.branchPrefix.description":
+    "所有项目中自动命名分支的前缀，例如 feature/。不适用于明确指定的分支名称。留空则不使用前缀。",
   "agentManager.settings.project.title": "项目",
   "agentManager.settings.project.description": "选择要编辑其 worktree 设置的 repository。",
   "agentManager.settings.project.empty": "没有可用的 Agent Manager 项目。",

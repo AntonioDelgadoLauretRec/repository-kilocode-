@@ -263,6 +263,40 @@ describe("WorktreeStateManager.updateWorktreeLabel", () => {
 // ---------------------------------------------------------------------------
 
 describe("WorktreeManager.createWorktree", () => {
+  it.each([
+    "Feature/My_fix.v2",
+    "Release_" + "a".repeat(60),
+    ...(process.platform === "win32" ? [] : ["CON", 'fix/a"b<c>d|e']),
+  ])("preserves explicit branch %s with a safe directory", async (branch) => {
+    const root = await createTempRepo()
+    const result = await createManager(root).createWorktree({ branchName: branch })
+    expect(result.branch).toBe(branch)
+    expect((await simpleGit(result.path).raw(["symbolic-ref", "--short", "HEAD"])).trim()).toBe(branch)
+    expect(path.dirname(result.path)).toBe(path.join(root, ".kilo", "worktrees"))
+    expect(path.basename(result.path)).toMatch(/^[a-zA-Z0-9_-][a-zA-Z0-9._-]*$/)
+    expect(path.basename(result.path)).not.toBe("CON")
+  })
+
+  it.each(["../escape", "bad name", "bad..name", "bad.lock", "-option", "@{-1}", "HEAD", ""])(
+    "rejects invalid explicit branch %s before creating directories",
+    async (branchName) => {
+      const root = await createTempRepo()
+      await expect(createManager(root).createWorktree({ branchName })).rejects.toThrow()
+      expect(existsSync(path.join(root, ".kilo", "worktrees"))).toBe(false)
+    },
+  )
+
+  it("keeps slash refs independent from flat refs and preserves collision suffixes", async () => {
+    const root = await createTempRepo()
+    const manager = createManager(root)
+    const first = await manager.createWorktree({ branchName: "Feature/My_fix.v2" })
+    const flat = await manager.createWorktree({ branchName: "Feature-My_fix.v2" })
+    const second = await manager.createWorktree({ branchName: "Feature/My_fix.v2" })
+    expect(flat.branch).toBe("Feature-My_fix.v2")
+    expect(second.branch).toBe("Feature/My_fix.v2-2")
+    expect(new Set([first.path, flat.path, second.path]).size).toBe(3)
+  })
+
   it("uses a configured Git executable for worktree creation", async () => {
     const root = await createTempRepo()
     gitExec(["git", "-C", root, "config", "core.autocrlf", "false"])

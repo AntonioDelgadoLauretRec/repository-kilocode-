@@ -6,6 +6,12 @@ export const dict = {
   "agentManager.section.sessions": "SESJE",
   "agentManager.projects": "PROJEKTY",
   "agentManager.settings.title": "Agent Manager",
+  "agentManager.settings.autoBranchNaming.title": "Automatyczne nazwy gałęzi",
+  "agentManager.settings.autoBranchNaming.description":
+    "Automatycznie nadawaj nazwy gałęziom, gdy rozmowa opisuje konkretne zadanie. Dotyczy wszystkich projektów. Nazwy gałęzi nazwanych jawnie i opublikowanych nigdy nie są zmieniane.",
+  "agentManager.settings.branchPrefix.title": "Prefiks gałęzi",
+  "agentManager.settings.branchPrefix.description":
+    "Prefiks automatycznie nazywanych gałęzi we wszystkich projektach, na przykład feature/. Nie dotyczy jawnych nazw gałęzi. Pozostaw puste, aby nie używać prefiksu.",
   "agentManager.settings.project.title": "Projekt",
   "agentManager.settings.project.description": "Wybierz repository, którego ustawienia worktree chcesz edytować.",
   "agentManager.settings.project.empty": "Brak dostępnych projektów Agent Manager.",

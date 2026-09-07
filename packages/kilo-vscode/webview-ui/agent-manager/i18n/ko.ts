@@ -6,6 +6,12 @@ export const dict = {
   "agentManager.section.sessions": "세션",
   "agentManager.projects": "프로젝트",
   "agentManager.settings.title": "Agent Manager",
+  "agentManager.settings.autoBranchNaming.title": "자동 브랜치 이름 지정",
+  "agentManager.settings.autoBranchNaming.description":
+    "대화에서 명확한 작업을 설명하면 브랜치 이름을 자동으로 지정합니다. 모든 프로젝트에 적용됩니다. 명시적으로 이름을 지정한 브랜치와 게시된 브랜치의 이름은 변경되지 않습니다.",
+  "agentManager.settings.branchPrefix.title": "브랜치 접두사",
+  "agentManager.settings.branchPrefix.description":
+    "모든 프로젝트에서 자동으로 이름이 지정되는 브랜치의 접두사입니다(예: feature/). 명시적인 브랜치 이름에는 적용되지 않습니다. 접두사를 사용하지 않으려면 비워 두세요.",
   "agentManager.settings.project.title": "프로젝트",
   "agentManager.settings.project.description": "편집하려는 worktree 설정의 repository를 선택하세요.",
   "agentManager.settings.project.empty": "사용 가능한 Agent Manager 프로젝트가 없습니다.",

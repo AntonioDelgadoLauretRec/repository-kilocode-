@@ -6,6 +6,12 @@ export const dict = {
   "agentManager.section.sessions": "СЕССИИ",
   "agentManager.projects": "ПРОЕКТЫ",
   "agentManager.settings.title": "Agent Manager",
+  "agentManager.settings.autoBranchNaming.title": "Автоматическое именование веток",
+  "agentManager.settings.autoBranchNaming.description":
+    "Автоматически именовать ветки, когда в разговоре описана чёткая задача. Применяется ко всем проектам. Ветки с явно заданными именами и опубликованные ветки никогда не переименовываются.",
+  "agentManager.settings.branchPrefix.title": "Префикс ветки",
+  "agentManager.settings.branchPrefix.description":
+    "Префикс автоматически именуемых веток во всех проектах, например feature/. Не применяется к явно заданным именам веток. Оставьте пустым, чтобы не использовать префикс.",
   "agentManager.settings.project.title": "Проект",
   "agentManager.settings.project.description": "Выберите repository, настройки worktree которого хотите изменить.",
   "agentManager.settings.project.empty": "Нет доступных проектов Agent Manager.",

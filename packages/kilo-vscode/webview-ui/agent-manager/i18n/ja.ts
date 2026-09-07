@@ -6,6 +6,12 @@ export const dict = {
   "agentManager.section.sessions": "セッション",
   "agentManager.projects": "プロジェクト",
   "agentManager.settings.title": "Agent Manager",
+  "agentManager.settings.autoBranchNaming.title": "ブランチの自動命名",
+  "agentManager.settings.autoBranchNaming.description":
+    "会話で明確なタスクが説明されると、ブランチに自動で名前を付けます。すべてのプロジェクトに適用されます。明示的に命名されたブランチと公開済みのブランチは変更されません。",
+  "agentManager.settings.branchPrefix.title": "ブランチのプレフィックス",
+  "agentManager.settings.branchPrefix.description":
+    "すべてのプロジェクトで自動命名されるブランチのプレフィックスです（例：feature/）。明示的なブランチ名には適用されません。プレフィックスを使わない場合は空欄にしてください。",
   "agentManager.settings.project.title": "プロジェクト",
   "agentManager.settings.project.description": "編集する worktree 設定の repository を選択してください。",
   "agentManager.settings.project.empty": "利用可能な Agent Manager プロジェクトはありません。",

@@ -6,6 +6,12 @@ export const dict = {
   "agentManager.section.sessions": "เซสชัน",
   "agentManager.projects": "โปรเจกต์",
   "agentManager.settings.title": "Agent Manager",
+  "agentManager.settings.autoBranchNaming.title": "ตั้งชื่อบรานช์อัตโนมัติ",
+  "agentManager.settings.autoBranchNaming.description":
+    "ตั้งชื่อบรานช์โดยอัตโนมัติเมื่อบทสนทนาอธิบายงานที่ชัดเจน ใช้กับทุกโปรเจกต์ บรานช์ที่ตั้งชื่อไว้อย่างชัดเจนและบรานช์ที่เผยแพร่แล้วจะไม่ถูกเปลี่ยนชื่อ",
+  "agentManager.settings.branchPrefix.title": "คำนำหน้าบรานช์",
+  "agentManager.settings.branchPrefix.description":
+    "คำนำหน้าสำหรับบรานช์ที่ตั้งชื่ออัตโนมัติในทุกโปรเจกต์ เช่น feature/ ไม่ใช้กับชื่อบรานช์ที่ระบุไว้อย่างชัดเจน เว้นว่างไว้หากไม่ต้องการคำนำหน้า",
   "agentManager.settings.project.title": "โปรเจกต์",
   "agentManager.settings.project.description": "เลือก repository ที่มีการตั้งค่า worktree ที่คุณต้องการแก้ไข",
   "agentManager.settings.project.empty": "ไม่มีโปรเจกต์ Agent Manager ที่พร้อมใช้งาน",

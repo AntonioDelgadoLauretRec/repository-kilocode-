@@ -159,6 +159,8 @@ describe("KiloProvider indexing refresh", () => {
       languageCommitMessage: "sync",
       multiProject: false,
       browserAutomation: false,
+      "agentManager.autoBranchNaming": true,
+      "agentManager.branchPrefix": "",
     })
     const snapshot = await fetchSnapshot(conn.client as never, "/repo", settings)
     const provider = new KiloProvider({} as never, conn.service as never)
