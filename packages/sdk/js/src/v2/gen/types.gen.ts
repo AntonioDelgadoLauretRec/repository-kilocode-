@@ -369,6 +369,7 @@ export type AgentManagerPromptRequest = {
   operation: "prompt"
   targetSessionID: string
   prompt: string
+  replyTo?: AgentManagerRequestId
 }
 
 export type AgentManagerStopRequest = {

@@ -27855,6 +27855,9 @@
             "type": "string",
             "minLength": 1,
             "maxLength": 100000
+          },
+          "replyTo": {
+            "$ref": "#/components/schemas/AgentManagerRequestID"
           }
         },
         "required": ["id", "sessionID", "operation", "targetSessionID", "prompt"],
