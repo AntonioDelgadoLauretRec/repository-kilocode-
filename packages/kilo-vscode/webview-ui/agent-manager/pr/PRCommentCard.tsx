@@ -7,6 +7,7 @@ import { Markdown } from "@kilocode/kilo-ui/markdown"
 import { Spinner } from "@kilocode/kilo-ui/spinner"
 import { Tooltip } from "@kilocode/kilo-ui/tooltip"
 import { useLanguage } from "../../src/context/language"
+import { formatRelativeDate } from "../../src/utils/date"
 import { PRCommentDiff } from "../../diff-viewer/PRCommentDiff"
 import { CopyButton } from "./CopyButton"
 import { prMarkdown, preview } from "./pr-comment-payload"
@@ -50,12 +51,17 @@ export function PRCommentCard(props: Props) {
         <Show when={props.open} fallback={<span class="am-pr-comment-preview">{preview(props.comment.body)}</span>}>
           <Show when={location()}>{(value) => <span class="am-pr-comment-file">{value()}</span>}</Show>
         </Show>
-        <Show when={props.comment.outdated}>
-          <span class="am-pr-comment-tag">{t("agentManager.pr.comment.outdated")}</span>
-        </Show>
-        <Show when={props.sent}>
-          <span class="am-pr-comment-tag am-pr-comment-tag-sent">{t("agentManager.pr.comment.sent")}</span>
-        </Show>
+        <div class="am-pr-comment-tags">
+          <Show when={props.comment.outdated}>
+            <span class="am-pr-comment-tag">{t("agentManager.pr.comment.outdated")}</span>
+          </Show>
+          <Show when={props.sent}>
+            <span class="am-pr-comment-tag am-pr-comment-tag-sent">{t("agentManager.pr.comment.sent")}</span>
+          </Show>
+          <Show when={props.comment.createdAt}>
+            {(time) => <span class="am-pr-comment-time">{formatRelativeDate(new Date(time()).toISOString())}</span>}
+          </Show>
+        </div>
       </button>
 
       <Show when={props.open}>
