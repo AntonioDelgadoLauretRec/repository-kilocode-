@@ -370,6 +370,7 @@ export type AgentManagerPromptRequest = {
   targetSessionID: string
   sourceSessionID?: string
   prompt: string
+  replyTo?: AgentManagerRequestId
 }
 
 export type AgentManagerStopRequest = {

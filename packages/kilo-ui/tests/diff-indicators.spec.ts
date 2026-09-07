@@ -14,6 +14,7 @@ for (const scheme of ["light", "dark"]) {
       for (const type of ["deletion", "addition"]) {
         const gutter = page.locator(`[data-column-number][data-line-type='change-${type}']`).first()
         await expect(gutter).toBeVisible()
+        await expect.poll(() => gutter.evaluate((element) => getComputedStyle(element, "::before").width)).toBe("4px")
         const bar = await gutter.evaluate((element) => {
           const style = getComputedStyle(element, "::before")
           return {

@@ -7,6 +7,7 @@ import {
   ghErrorReason,
   parseComments,
   parseConversation,
+  parseReactions,
   parseReviewers,
   signature,
   summarize,
@@ -222,6 +223,32 @@ describe("parsePRResult", () => {
     expect(result?.checks?.failed).toBe(1)
   })
 
+  it("keeps the latest duplicate check run", () => {
+    const result = parsePRResult(
+      JSON.stringify({
+        number: 12,
+        statusCheckRollup: [
+          { name: "build", conclusion: "FAILURE", startedAt: "2024-01-01T00:00:00Z" },
+          { name: "build", conclusion: "SUCCESS", startedAt: "2024-01-01T00:01:00Z" },
+        ],
+      }),
+    )
+    expect(result?.checks?.checks).toEqual([{ name: "build", status: "success", url: undefined, duration: undefined }])
+  })
+
+  it("prefers a queued rerun without a start time", () => {
+    const result = parsePRResult(
+      JSON.stringify({
+        number: 12,
+        statusCheckRollup: [
+          { name: "build", conclusion: "SUCCESS", startedAt: "2024-01-01T00:00:00Z" },
+          { name: "build", status: "QUEUED" },
+        ],
+      }),
+    )
+    expect(result?.checks?.checks).toEqual([{ name: "build", status: "pending", url: undefined, duration: undefined }])
+  })
+
   it("keeps CI running when cancelled checks coexist with pending checks", () => {
     const result = parsePRResult(
       JSON.stringify({
@@ -277,9 +304,9 @@ describe("checkStatus", () => {
   it("maps WAITING to pending", () => expect(checkStatus("WAITING")).toBe("pending"))
   it("maps SKIPPED", () => expect(checkStatus("SKIPPED")).toBe("skipped"))
   it("maps CANCELLED", () => expect(checkStatus("CANCELLED")).toBe("cancelled"))
-  it("maps TIMED_OUT to cancelled", () => expect(checkStatus("TIMED_OUT")).toBe("cancelled"))
+  it("maps TIMED_OUT to failure", () => expect(checkStatus("TIMED_OUT")).toBe("failure"))
   it("maps STALE to cancelled", () => expect(checkStatus("STALE")).toBe("cancelled"))
-  it("maps STARTUP_FAILURE to cancelled", () => expect(checkStatus("STARTUP_FAILURE")).toBe("cancelled"))
+  it("maps STARTUP_FAILURE to failure", () => expect(checkStatus("STARTUP_FAILURE")).toBe("failure"))
   it("maps unknown state to pending", () => expect(checkStatus("WHATEVER")).toBe("pending"))
   it("is case-insensitive", () => expect(checkStatus("success")).toBe("success"))
 })
@@ -366,6 +393,34 @@ describe("parseComments", () => {
         replies: undefined,
       },
     ])
+  })
+
+  it("parses reaction groups and ignores empty or unknown reactions", () => {
+    expect(
+      parseReactions([
+        { content: "HEART", reactors: { totalCount: 3 }, viewerHasReacted: true },
+        { content: "THUMBS_UP", users: { totalCount: 0 }, viewerHasReacted: false },
+        { content: "NOT_A_REACTION", users: { totalCount: 2 }, viewerHasReacted: false },
+      ]),
+    ).toEqual([{ content: "HEART", count: 3, viewerHasReacted: true }])
+  })
+
+  it("includes reactions on the top-level review comment", () => {
+    const result = parseComments([
+      {
+        id: "thread",
+        comments: {
+          nodes: [
+            {
+              id: "comment",
+              body: "note",
+              reactionGroups: [{ content: "ROCKET", users: { totalCount: 1 }, viewerHasReacted: false }],
+            },
+          ],
+        },
+      },
+    ])
+    expect(result[0]?.reactions).toEqual([{ content: "ROCKET", count: 1, viewerHasReacted: false }])
   })
 
   it("uses comment id as threadId fallback when thread has no id", () => {

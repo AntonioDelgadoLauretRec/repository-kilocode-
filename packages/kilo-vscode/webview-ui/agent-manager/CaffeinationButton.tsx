@@ -26,7 +26,7 @@ export const CaffeinationButton: Component<{ t: LanguageContextValue["t"] }> = (
   return (
     <Tooltip value={label()} placement="bottom">
       <IconButton
-        icon="coffee"
+        icon={state().enabled || state().active ? "coffee-filled" : "coffee"}
         size="small"
         variant="ghost"
         classList={{ "am-caffeination-active": state().active }}
