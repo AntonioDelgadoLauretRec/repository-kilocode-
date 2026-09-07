@@ -60,6 +60,7 @@ const { NotificationsProvider } = await import("../../webview-ui/src/context/not
 const { ProviderProvider } = await import("../../webview-ui/src/context/provider")
 const { SessionProvider, useSession, useSessionVisibility } = await import("../../webview-ui/src/context/session")
 const { initialMessage } = await import("../../webview-ui/agent-manager/initial-message")
+const { useBaseUpdate } = await import("../../webview-ui/agent-manager/update-from-base")
 const { post } = await import("../../webview-ui/src/utils/webview-message")
 const { terminal } = await import("../../webview-ui/src/context/session-outcome")
 const { PromptInput } = await import("../../webview-ui/src/components/chat/PromptInput")
@@ -100,6 +101,8 @@ const language = {
 }
 
 const ref = { value: undefined as ReturnType<typeof useSession> | undefined }
+const update = { value: undefined as ReturnType<typeof useBaseUpdate> | undefined }
+const menu = { value: undefined as ReturnType<typeof useBaseUpdate> | undefined }
 const observed: (ModelSelection | null)[] = []
 const [operation, setOperation] = createSignal(false)
 const [run, setRun] = createSignal(false)
@@ -118,6 +121,8 @@ const Probe = () => {
   const session = useSession()
   useSessionVisibility(() => (review() ? undefined : session.currentSessionID()))
   ref.value = session
+  update.value = useBaseUpdate(session)
+  menu.value = useBaseUpdate()
   createEffect(() => observed.push(session.selected()))
   const ids = ["root", "background"]
   const deps = {
@@ -541,11 +546,54 @@ try {
   })
   assert.equal(requests().length, before)
   assert.deepEqual(writes(), remembered)
+  value.selectVariant(undefined, "selection")
+  const captured = value.submission("selection")
+  assert.deepEqual(captured.model, recommended)
+  assert.equal(captured.variant, "")
+  assert(update.value)
+  update.value("worktree", "project", "selection")
+  const updated = sent.at(-1)
+  assert.deepEqual(updated, {
+    type: "agentManager.updateFromBase",
+    worktreeId: "worktree",
+    projectId: "project",
+    sessionId: "selection",
+    ...captured,
+  })
   assert.equal(value.sendMessage("effective model"), true)
   const message = requests().at(-1)
   assert(message?.type === "sendMessage")
   assert.equal(message.providerID, recommended.providerID)
   assert.equal(message.modelID, recommended.modelID)
+  assert.equal(message.agent, captured.agent)
+  assert.equal(message.variant, captured.variant)
+  value.selectVariant("high", "selection")
+  assert.equal(captured.variant, "")
+  assert(updated?.type === "agentManager.updateFromBase")
+  assert.equal(updated.variant, "")
+  assert.equal(message.variant, "")
+  update.value("worktree", "project", "selection")
+  assert.deepEqual(sent.at(-1), { ...updated, variant: "high" })
+
+  assert(menu.value)
+  for (const send of [update.value, menu.value]) {
+    for (const id of [undefined, "background"]) {
+      send("other-worktree", "other-project", id)
+      assert.deepEqual(sent.at(-1), {
+        type: "agentManager.updateFromBase",
+        worktreeId: "other-worktree",
+        projectId: "other-project",
+        sessionId: id,
+      })
+    }
+  }
+  menu.value("worktree", "project", "selection")
+  assert.deepEqual(sent.at(-1), {
+    type: "agentManager.updateFromBase",
+    worktreeId: "worktree",
+    projectId: "project",
+    sessionId: "selection",
+  })
   await emit({
     type: "messageCreated",
     message: {
@@ -558,6 +606,10 @@ try {
   })
   await catalog(null, [auto.modelID, personal.modelID])
   choice(value.selected(), personal)
+  update.value("worktree", "project", "selection")
+  const live = sent.at(-1)
+  assert(live?.type === "agentManager.updateFromBase" && live.model)
+  choice(live.model, personal)
   await catalog("org-a", [first.modelID, recommended.modelID], recommended.modelID)
   await emit({ type: "sessionStatus", sessionID: "selection", status: "idle" })
   assert.equal(value.sendCommand("effective", ""), true)
@@ -565,6 +617,8 @@ try {
   assert(command?.type === "sendCommand")
   assert.equal(command.providerID, recommended.providerID)
   assert.equal(command.modelID, recommended.modelID)
+  assert.equal(command.agent, value.submission("selection").agent)
+  assert.equal(command.variant, value.submission("selection").variant)
   value.setCurrentSessionID("cloud:preview")
   assert.equal(value.sendMessage("cloud effective model"), true)
   const cloud = requests().at(-1)

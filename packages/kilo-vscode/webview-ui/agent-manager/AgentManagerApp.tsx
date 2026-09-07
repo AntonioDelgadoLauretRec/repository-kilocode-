@@ -244,7 +244,7 @@ const AgentManagerContent: Component = () => {
   const session = useSession()
   const vscode = useVSCode()
   const dialog = useDialog()
-  const updateBase = useBaseUpdate()
+  const updateBase = useBaseUpdate(session)
   const update = () =>
     updateBase(
       selection(),
