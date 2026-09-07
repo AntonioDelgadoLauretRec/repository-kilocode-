@@ -76,13 +76,30 @@ test("warm npm launcher and real CLI startup stay below 3 seconds", async () => 
     const elapsed = performance.now() - start
     expect(code, stderr).toBe(0)
     expect(stdout.trim()).toMatch(/^(local|\d+\.\d+\.\d+.*)$/)
-    if (i > 0) samples.push(elapsed)
+    samples.push(elapsed)
   }
   // One warm-up, then a median with headroom for shared CI runners. The old
   // Windows probe alone took about 3.3s; warm native --version took 0.6s.
-  const median = samples.toSorted((a, b) => a - b).at(1) ?? Infinity
+  const warm = samples.slice(1)
+  const median = warm.toSorted((a, b) => a - b).at(1) ?? Infinity
   console.log(
-    `Startup (${process.platform}): ${samples.map((value) => value.toFixed(0)).join(", ")} ms; median ${median.toFixed(0)} ms`,
+    `Startup (${process.platform}): ${warm.map((value) => value.toFixed(0)).join(", ")} ms; median ${median.toFixed(0)} ms`,
+  )
+  await Bun.write(
+    path.join(root, ".artifacts/unit/startup.json"),
+    JSON.stringify(
+      {
+        platform: process.platform,
+        arch: process.arch,
+        bun: Bun.version,
+        warmup: samples.at(0),
+        samples: warm,
+        median,
+        budget: 3000,
+      },
+      null,
+      2,
+    ),
   )
   expect(median).toBeLessThan(3000)
 }, 60_000)
