@@ -56,6 +56,7 @@ const active = new Set([
   "typecheck.yml",
   "visual-regression.yml",
   "watch-opencode-releases.yml",
+  "windows-startup.yml",
 ])
 
 // GitHub picks up both .yml and .yaml in .github/workflows/. We accept both so

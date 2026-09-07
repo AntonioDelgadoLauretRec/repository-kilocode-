@@ -49,6 +49,7 @@ kiloChild.spawn = (target) => {
         cwd: root,
         env: {
           PATH: process.env.PATH ?? "",
+          XDG_CACHE_HOME: join(root, "cache"),
           ...(bin ? { KILO_BIN_PATH: bin } : {}),
         },
       },
