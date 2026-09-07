@@ -9,6 +9,7 @@ import {
   blobOid,
   blobSize,
   applyGeneratedAttributes,
+  createFileEntry,
   INDEX_REF,
   MAX_DETAIL_BYTES,
   parseNameStatus,
@@ -204,14 +205,7 @@ async function fileEntry(
     dir,
   )
   const stats = parseNumstat(counts.code === 0 ? counts.stdout : "")
-  const entry = {
-    file: item.file,
-    status: item.status,
-    additions: stats.get(item.file)?.additions ?? 0,
-    deletions: stats.get(item.file)?.deletions ?? 0,
-    tracked: true,
-    binary: stats.get(item.file)?.binary ?? false,
-  }
+  const entry = createFileEntry(item, stats)
   const marked = (await applyGeneratedAttributes(git, dir, [entry], true)).at(0)
   if (!marked) return undefined
   if (!imageMime(item.file)) return marked

@@ -41,6 +41,21 @@ export async function applyGeneratedAttributes(
   }))
 }
 
+export function createFileEntry(
+  item: { file: string; status: Status },
+  stats: Map<string, { additions: number; deletions: number; binary: boolean }>,
+): FileEntry {
+  const stat = stats.get(item.file)
+  return {
+    file: item.file,
+    status: item.status,
+    additions: stat?.additions ?? 0,
+    deletions: stat?.deletions ?? 0,
+    tracked: true,
+    binary: stat?.binary ?? false,
+  }
+}
+
 /** Parse `git diff --name-status` output into entries (status code + path). */
 export function parseNameStatus(stdout: string): { file: string; status: Status }[] {
   const out: { file: string; status: Status }[] = []
