@@ -476,12 +476,23 @@ describe("createLocalDiff summary cache", () => {
       await fs.utimes(file, time, time)
       await fs.writeFile(path.join(dir, "stable.txt"), "stable\n")
       const local = createLocalDiff(git())
-      const first = await local.summary(dir, base)
+      const lstat = fs.lstat
+      let ctime = 1n
+      // Control ctime only: rapid same-size writes can share a filesystem timestamp.
+      const stat = spyOn(fs, "lstat").mockImplementation(async (...args) => {
+        const value = await lstat(...args)
+        if (args[0] === file && "ctimeNs" in value) value.ctimeNs = ctime
+        return value
+      })
       const read = spyOn(fs, "readFile")
       const probe = spyOn(fs, "open")
       try {
+        const first = await local.summary(dir, base)
+        read.mockClear()
+        probe.mockClear()
         await fs.writeFile(file, Buffer.from([0, 1, 2, 3, 4, 5, 6, 7]))
         await fs.utimes(file, time, time)
+        ctime++
         const changed = await local.summary(dir, base)
         expect(changed.find((entry) => entry.file === "changing.txt")).toMatchObject({
           additions: 0,
@@ -500,6 +511,7 @@ describe("createLocalDiff summary cache", () => {
 
         await fs.writeFile(file, "new\ntext")
         await fs.utimes(file, time, time)
+        ctime++
         const replaced = await local.summary(dir, base)
         expect(replaced.at(0)).toMatchObject({ file: "changing.txt", additions: 2, summarized: true })
         expect(replaced.at(0)?.stamp).not.toBe(changed.at(0)?.stamp)
@@ -513,6 +525,7 @@ describe("createLocalDiff summary cache", () => {
         expect(read).not.toHaveBeenCalled()
         expect(probe).not.toHaveBeenCalled()
       } finally {
+        stat.mockRestore()
         read.mockRestore()
         probe.mockRestore()
       }
