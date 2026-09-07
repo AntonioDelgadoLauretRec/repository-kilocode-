@@ -368,10 +368,8 @@ export const WorktreeItem: Component<WorktreeItemProps> = (props) => {
                       </Show>
                       <div class="am-wt-hover-actions">
                         <Show when={props.completed}>
-                          <span class="am-worktree-finished">
-                            <span class="am-worktree-finish-box" aria-hidden="true">
-                              <Icon name="check-small" size="small" />
-                            </span>
+                          <span class="am-worktree-finish-box" aria-hidden="true">
+                            <Icon name="check-small" size="small" />
                           </span>
                         </Show>
                         <Show
@@ -717,7 +715,7 @@ export const WorktreeItem: Component<WorktreeItemProps> = (props) => {
       </ContextMenu>
       <Show when={props.completed}>
         <span class="am-worktree-completion-status" role="status">
-          {t("agentManager.worktree.finishedAnnouncement", { name: props.label })}
+          {props.label}: {t("ui.patch.action.deleted")}
         </span>
       </Show>
     </Completion>

@@ -2359,10 +2359,6 @@ const AgentManagerContent: Component = () => {
             projectId={activeProjectId()}
             sections={sections}
             sortedWorktrees={sortedWorktrees}
-            worktrees={worktrees}
-            ungrouped={ungrouped}
-            topLevelItems={topLevelItems}
-            worktreesInSection={worktreesInSection}
             sidebarOrder={sidebarOrder}
             sidebarWorktreeOrder={sidebarWorktreeOrder}
             setSidebarWorktreeOrder={setSidebarWorktreeOrder}

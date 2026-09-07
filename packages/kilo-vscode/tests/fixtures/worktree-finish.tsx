@@ -1,7 +1,6 @@
 import assert from "node:assert/strict"
 import { Window } from "happy-dom"
-import type { Activity } from "../../webview-ui/src/utils/session-activity"
-import type { RunStatus, WorktreeState } from "../../webview-ui/src/types/messages"
+import type { WorktreeState } from "../../webview-ui/src/types/messages"
 
 const window = new Window({ url: "http://localhost" })
 Object.defineProperty(window, "origin", { value: window.location.origin })
@@ -36,10 +35,7 @@ const { post: message } = await import("../../webview-ui/src/utils/webview-messa
 const root = document.createElement("div")
 document.body.append(root)
 const [pending, setPending] = createSignal(false)
-const [activity, setActivity] = createSignal<Activity>("idle")
 const [busy, setBusy] = createSignal(false)
-const [blocked, setBlocked] = createSignal(false)
-const [run, setRun] = createSignal<RunStatus>()
 const worktree: WorktreeState = {
   id: "wt-test",
   branch: "task",
@@ -66,9 +62,7 @@ const Items = () => {
           active={false}
           pendingDelete={pending()}
           busy={busy()}
-          blocked={blocked()}
-          activity={activity()}
-          runStatus={run()}
+          activity="idle"
           stale={false}
           sessions={1}
           grouped={false}
@@ -128,8 +122,6 @@ const arm = async () => {
   assert.equal(pending(), true)
   assert.equal(deletes, 0)
   assert.ok(button("Delete?"))
-  assert.equal(root.querySelector(".am-worktree-confirm"), null)
-  assert.doesNotMatch(root.textContent!, /Finish|Cancel|This deletes its worktree/)
 }
 await arm()
 root.querySelector<HTMLElement>(".am-worktree-branch")!.click()
@@ -143,29 +135,11 @@ await arm()
 document.body.dispatchEvent(new window.PointerEvent("pointerdown", { bubbles: true }))
 assert.equal(pending(), false)
 
-for (const state of ["busy", "retry", "done"] as const) {
-  setActivity(state)
-  assert.ok(root.querySelector(`.am-wt-icon[data-activity="${state}"]`))
-  assert.equal(!!root.querySelector('button[aria-label="Delete worktree"]'), state === "done")
-}
-setActivity("idle")
-for (const block of [() => setBusy(true), () => setBlocked(true), () => setActivity("busy")]) {
-  await arm()
-  block()
-  assert.equal(pending(), false)
-  assert.equal(root.querySelector(".am-worktree-delete-hint"), null)
-  assert.equal(root.querySelector('button[aria-label="Delete worktree"]'), null)
-  setBusy(false)
-  setBlocked(false)
-  setActivity("idle")
-}
-for (const state of ["running", "stopping"] as const) {
-  await arm()
-  setRun({ worktreeId: "wt-test", state })
-  assert.equal(pending(), false)
-  assert.equal(root.querySelector('button[aria-label="Delete worktree"]'), null)
-  setRun(undefined)
-}
+await arm()
+setBusy(true)
+assert.equal(pending(), false, "cancel confirmation when the worktree becomes busy")
+assert.equal(root.querySelector(".am-worktree-delete-hint"), null)
+setBusy(false)
 await arm()
 button("Delete?").click()
 assert.equal(deletes, 1)
@@ -181,43 +155,31 @@ assert.ok(button("Delete worktree"))
 
 for (const id of ["legacy", "project-two"]) {
   setProject(id)
-  setWorktrees([worktree])
+  setWorktrees([worktree, sibling])
   message({ type: "agentManager.worktreeDeleted", projectId: "unrelated", worktreeId: worktree.id })
   assert.equal(root.querySelector(".am-worktree-completed"), null, "project IDs isolate completion")
+  if (id === "project-two") setWorktrees([sibling])
   message({ type: "agentManager.worktreeDeleted", projectId: id, worktreeId: worktree.id })
-  setWorktrees([])
-  assert.ok(
-    root.querySelector(".am-worktree-completed"),
-    `${id}: acknowledged card survives state removal (${window.origin})`,
-  )
-  assert.equal(
-    root.querySelector(".am-worktree-branch")!.textContent,
-    "Test task",
-    "retain the task title after session removal",
-  )
-  assert.ok(root.querySelector(".am-worktree-finished .am-worktree-finish-box [data-component=icon]"))
-  assert.equal(root.querySelector("[data-sidebar-id]"), null, "completed cards are not navigation targets")
-  assert.ok(root.querySelector(".am-worktree-item")!.hasAttribute("inert"))
-  assert.match(root.querySelector("[role=status]")!.textContent!, /Worktree deleted/)
+  setWorktrees([sibling])
+  const completed = root.querySelector(".am-worktree-completed")!
+  assert.ok(completed, `${id}: retain success in either event order`)
+  assert.equal(completed.querySelector(".am-worktree-branch")!.textContent, "Test task")
+  assert.ok(completed.querySelector(".am-worktree-finish-box [data-component=icon]"))
+  assert.equal(completed.querySelector("[data-sidebar-id]"), null)
+  assert.ok(completed.querySelector(".am-worktree-item")!.hasAttribute("inert"))
+  assert.equal(completed.querySelector("[role=status]")!.textContent, "Test task: Deleted")
+  assert.equal(root.querySelector('[data-sidebar-id="wt-sibling"]')!.closest(".am-worktree-completed"), null)
   root.querySelector(".am-worktree-finish-box")!.dispatchEvent(new window.Event("animationend", { bubbles: true }))
-  assert.ok(root.querySelector(".am-worktree-item"), "check animation must not end the card animation")
+  assert.ok(root.querySelector(".am-worktree-completed"), "ignore child animation events")
   root.querySelector(".am-worktree-exit")!.dispatchEvent(new window.Event("animationend", { bubbles: true }))
-  assert.equal(root.querySelector(".am-worktree-item"), null, "card is released after collapse")
+  assert.equal(root.querySelector(".am-worktree-completed"), null, "release after collapse")
 }
-setWorktrees([worktree, sibling])
-message({ type: "agentManager.worktreeDeleted", projectId: project(), worktreeId: worktree.id })
-setWorktrees([sibling])
-assert.ok(root.querySelector(".am-worktree-completed"), "state may arrive before the delete event")
-assert.ok(root.querySelector('[data-sidebar-id="wt-sibling"]'), "remaining sibling stays visible")
-assert.equal(
-  root.querySelector('[data-sidebar-id="wt-sibling"]')!.closest(".am-worktree-completed"),
-  null,
-  "remaining sibling is not animated",
-)
-root.querySelector(".am-worktree-exit")!.dispatchEvent(new window.Event("animationend", { bubbles: true }))
 setWorktrees([worktree])
 setWorktrees([])
 assert.equal(root.querySelector(".am-worktree-item"), null, "unacknowledged removal has no completion feedback")
+setProject("project-three")
+message({ type: "agentManager.worktreeDeleted", projectId: project(), worktreeId: worktree.id })
+assert.equal(root.querySelector(".am-worktree-item"), null, "do not retain rows from the previous project")
 setWorktrees([worktree])
 message({ type: "agentManager.worktreeDeleted", projectId: project(), worktreeId: worktree.id })
 setWorktrees([])

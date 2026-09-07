@@ -19,6 +19,7 @@ export function createWorktreeCompletion(
   }
   createEffect(() => {
     const id = project()
+    known.clear()
     setRetained(new Map())
     onCleanup(
       vscode.onMessage((message) => {

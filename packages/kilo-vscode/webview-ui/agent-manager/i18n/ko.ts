@@ -26,7 +26,6 @@ export const dict = {
   "agentManager.worktree.setupScript": "Worktree 설정 스크립트",
   "agentManager.worktree.delete": "Worktree 삭제",
   "agentManager.worktree.confirmDelete": "삭제하시겠습니까?",
-  "agentManager.worktree.finishedAnnouncement": "{{name}} 완료. Worktree가 삭제되었습니다.",
   "agentManager.worktree.stale": "오래됨",
   "agentManager.worktree.staleTooltip": "디스크에 없거나 더 이상 git worktree에서 추적되지 않습니다",
   "agentManager.worktree.removeStale": "오래된 Worktree 제거",

@@ -299,10 +299,7 @@ export const ProjectSidebarBody: Component<Props> = (props) => {
             post({ type: "agentManager.moveToSection", worktreeIds: [worktree.id], sectionId })
           }
           onMoveToNewSection={() => createSection([worktree.id])}
-          onClick={() => {
-            setPending(undefined)
-            props.onSelectWorktree(props.project.id, worktree.id)
-          }}
+          onClick={() => props.onSelectWorktree(props.project.id, worktree.id)}
           onCancelDelete={() => setPending(undefined)}
           onDelete={(event) => {
             event.stopPropagation()
