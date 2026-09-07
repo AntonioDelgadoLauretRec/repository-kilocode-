@@ -34,6 +34,7 @@ import "./styles/chat.css"
 
 type ViewType = "newTask" | "history" | "profile" | "settings" | "subAgentViewer"
 const VALID_VIEWS = new Set<string>(["newTask", "history", "profile", "settings", "subAgentViewer"])
+const opened = new Set<string>()
 
 /**
  * Bridge our session store to the DataProvider's expected Data shape.
@@ -137,7 +138,6 @@ export const DataBridge: Component<{ children: any }> = (props) => {
     vscode.postMessage({ type: "openFile", filePath, line, column, sessionID })
   }
 
-  const opened = new Set<string>()
   const unsubscribePlans = vscode.onMessage((message) => {
     for (const plan of planOpens(message)) {
       const id = `${plan.sessionID}:${plan.id}`
