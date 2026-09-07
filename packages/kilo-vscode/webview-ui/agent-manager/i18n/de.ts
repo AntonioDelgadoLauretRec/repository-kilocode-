@@ -1,4 +1,6 @@
 export const dict = {
+  "agentManager.dialog.invalidBranch":
+    "Gib einen gültigen Git-Branch-Namen ein. Dein Prompt und deine Anhänge wurden beibehalten.",
   "agentManager.local": "lokal",
   "agentManager.sidebar.collapse": "Seitenleiste einklappen",
   "agentManager.sidebar.expand": "Seitenleiste anzeigen",
@@ -6,6 +8,12 @@ export const dict = {
   "agentManager.section.sessions": "SITZUNGEN",
   "agentManager.projects": "PROJEKTE",
   "agentManager.settings.title": "Agent Manager",
+  "agentManager.settings.autoBranchNaming.title": "Automatische Branch-Benennung",
+  "agentManager.settings.autoBranchNaming.description":
+    "Branches automatisch benennen, wenn die Unterhaltung eine klare Aufgabe beschreibt. Gilt für alle Projekte. Explizit benannte und veröffentlichte Branches werden nie umbenannt.",
+  "agentManager.settings.branchPrefix.title": "Branch-Präfix",
+  "agentManager.settings.branchPrefix.description":
+    "Präfix für automatisch benannte Branches in allen Projekten, zum Beispiel feature/. Gilt nicht für explizite Branch-Namen. Für kein Präfix leer lassen.",
   "agentManager.settings.project.title": "Projekt",
   "agentManager.settings.project.description":
     "Wählen Sie das repository aus, dessen worktree-Einstellungen Sie bearbeiten möchten.",
@@ -214,11 +222,14 @@ export const dict = {
   "agentManager.pr.checks.fix": "Mit Kilo beheben",
   "agentManager.pr.checks.terminal": "Fehler an das Terminal senden",
   "agentManager.pr.checks.feedback": "CI-Rückmeldung",
+  "agentManager.pr.fixWithKilo": "Mit Kilo beheben",
+  "agentManager.pr.fixWithKiloCount": "{{count}} mit Kilo beheben",
   "agentManager.pr.comment.unresolvedCount": "{{count}} ungelöst",
   "agentManager.pr.comment.unresolvedThread": "{{count}} ungelöster Review-Thread",
   "agentManager.pr.comment.unresolvedThreads": "{{count}} ungelöste Review-Threads",
   "agentManager.pr.comment.resolvedGroup": "Gelöst ({{count}})",
   "agentManager.pr.comment.sendAllToTerminal": "{{count}} ungelöste an das Terminal senden",
+  "agentManager.pr.comment.sendToTerminal": "An das Terminal senden",
   "agentManager.pr.comment.resolve": "Auflösen",
   "agentManager.pr.comment.unresolve": "Auflösung aufheben",
   "agentManager.pr.comment.outdated": "Veraltet",
@@ -234,7 +245,7 @@ export const dict = {
   "agentManager.pr.conversation.title": "PR-Kommentare",
   "agentManager.pr.conversation.dismiss": "Verwerfen",
   "agentManager.pr.conversation.restore": "Wiederherstellen",
-  "agentManager.pr.conversation.sendAll": "{{count}} an Agent senden",
+  "agentManager.pr.conversation.sendAll": "{{count}} mit Kilo beheben",
   "agentManager.pr.conversation.sendAllToTerminal": "{{count}} an das Terminal senden",
   "agentManager.review.collapsedOnly": "{{count}} eingeklappt",
   "agentManager.review.collapsedWithLarge": "{{collapsed}} eingeklappt, {{large}} groß",

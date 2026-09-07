@@ -1,4 +1,6 @@
 export const dict = {
+  "agentManager.dialog.invalidBranch":
+    "Saisissez un nom de branche Git valide. Votre prompt et vos pièces jointes ont été conservés.",
   "agentManager.local": "local",
   "agentManager.sidebar.collapse": "Réduire la barre latérale",
   "agentManager.sidebar.expand": "Afficher la barre latérale",
@@ -6,6 +8,12 @@ export const dict = {
   "agentManager.section.sessions": "SESSIONS",
   "agentManager.projects": "PROJETS",
   "agentManager.settings.title": "Agent Manager",
+  "agentManager.settings.autoBranchNaming.title": "Nommage automatique des branches",
+  "agentManager.settings.autoBranchNaming.description":
+    "Nomme automatiquement les branches lorsque la conversation décrit une tâche claire. S’applique à tous les projets. Les branches nommées explicitement et les branches publiées ne sont jamais renommées.",
+  "agentManager.settings.branchPrefix.title": "Préfixe de branche",
+  "agentManager.settings.branchPrefix.description":
+    "Préfixe des branches nommées automatiquement dans tous les projets, par exemple feature/. Ne s’applique pas aux noms de branches explicites. Laissez vide pour ne pas utiliser de préfixe.",
   "agentManager.settings.project.title": "Projet",
   "agentManager.settings.project.description":
     "Choisissez le repository dont vous souhaitez modifier les paramètres du worktree.",
@@ -214,11 +222,14 @@ export const dict = {
   "agentManager.pr.checks.fix": "Corriger avec Kilo",
   "agentManager.pr.checks.terminal": "Envoyer les échecs au terminal",
   "agentManager.pr.checks.feedback": "Retour de la CI",
+  "agentManager.pr.fixWithKilo": "Corriger avec Kilo",
+  "agentManager.pr.fixWithKiloCount": "Corriger {{count}} avec Kilo",
   "agentManager.pr.comment.unresolvedCount": "{{count}} non résolus",
   "agentManager.pr.comment.unresolvedThread": "{{count}} discussion de révision non résolue",
   "agentManager.pr.comment.unresolvedThreads": "{{count}} discussions de révision non résolues",
   "agentManager.pr.comment.resolvedGroup": "Résolus ({{count}})",
   "agentManager.pr.comment.sendAllToTerminal": "Envoyer {{count}} non résolus au terminal",
+  "agentManager.pr.comment.sendToTerminal": "Envoyer au terminal",
   "agentManager.pr.comment.resolve": "Résoudre",
   "agentManager.pr.comment.unresolve": "Annuler la résolution",
   "agentManager.pr.comment.outdated": "Obsolète",
@@ -234,7 +245,7 @@ export const dict = {
   "agentManager.pr.conversation.title": "Commentaires de la PR",
   "agentManager.pr.conversation.dismiss": "Ignorer",
   "agentManager.pr.conversation.restore": "Restaurer",
-  "agentManager.pr.conversation.sendAll": "Envoyer {{count}} à l’agent",
+  "agentManager.pr.conversation.sendAll": "Corriger {{count}} avec Kilo",
   "agentManager.pr.conversation.sendAllToTerminal": "Envoyer {{count}} au terminal",
   "agentManager.review.collapsedOnly": "{{count}} repliés",
   "agentManager.review.collapsedWithLarge": "{{collapsed}} repliés, {{large}} volumineux",

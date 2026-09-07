@@ -1,4 +1,6 @@
 export const dict = {
+  "agentManager.dialog.invalidBranch":
+    "Inserisci un nome di ramo Git valido. Il prompt e gli allegati sono stati conservati.",
   "agentManager.local": "locale",
   "agentManager.sidebar.collapse": "Comprimi barra laterale",
   "agentManager.sidebar.expand": "Mostra barra laterale",
@@ -6,6 +8,12 @@ export const dict = {
   "agentManager.section.sessions": "SESSIONI",
   "agentManager.projects": "PROGETTI",
   "agentManager.settings.title": "Agent Manager",
+  "agentManager.settings.autoBranchNaming.title": "Denominazione automatica dei branch",
+  "agentManager.settings.autoBranchNaming.description":
+    "Assegna automaticamente un nome ai branch quando la conversazione descrive un'attività chiara. Si applica a tutti i progetti. I branch denominati esplicitamente e quelli pubblicati non vengono mai rinominati.",
+  "agentManager.settings.branchPrefix.title": "Prefisso del branch",
+  "agentManager.settings.branchPrefix.description":
+    "Prefisso per i branch denominati automaticamente in tutti i progetti, ad esempio feature/. Non si applica ai nomi espliciti dei branch. Lascia vuoto per non usare un prefisso.",
   "agentManager.settings.project.title": "Progetto",
   "agentManager.settings.project.description":
     "Scegli il repository di cui vuoi modificare le impostazioni del worktree.",
@@ -218,11 +226,14 @@ export const dict = {
   "agentManager.pr.checks.fix": "Correggi con Kilo",
   "agentManager.pr.checks.terminal": "Invia gli errori al terminale",
   "agentManager.pr.checks.feedback": "Feedback CI",
+  "agentManager.pr.fixWithKilo": "Correggi con Kilo",
+  "agentManager.pr.fixWithKiloCount": "Correggi {{count}} con Kilo",
   "agentManager.pr.comment.unresolvedCount": "{{count}} non risolti",
   "agentManager.pr.comment.unresolvedThread": "{{count}} discussione di revisione non risolta",
   "agentManager.pr.comment.unresolvedThreads": "{{count}} discussioni di revisione non risolte",
   "agentManager.pr.comment.resolvedGroup": "Risolti ({{count}})",
   "agentManager.pr.comment.sendAllToTerminal": "Invia {{count}} non risolti al terminale",
+  "agentManager.pr.comment.sendToTerminal": "Invia al terminale",
   "agentManager.pr.comment.resolve": "Risolvi",
   "agentManager.pr.comment.unresolve": "Annulla risoluzione",
   "agentManager.pr.comment.outdated": "Obsoleto",
@@ -238,7 +249,7 @@ export const dict = {
   "agentManager.pr.conversation.title": "Commenti della PR",
   "agentManager.pr.conversation.dismiss": "Ignora",
   "agentManager.pr.conversation.restore": "Ripristina",
-  "agentManager.pr.conversation.sendAll": "Invia {{count}} all'agente",
+  "agentManager.pr.conversation.sendAll": "Correggi {{count}} con Kilo",
   "agentManager.pr.conversation.sendAllToTerminal": "Invia {{count}} al terminale",
   "agentManager.review.collapsedOnly": "{{count}} compressi",
   "agentManager.review.collapsedWithLarge": "{{collapsed}} compressi, {{large}} grandi",

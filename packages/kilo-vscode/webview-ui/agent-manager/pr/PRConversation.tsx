@@ -104,7 +104,7 @@ function PRConversationCard(props: CardProps) {
           <Button variant="primary" size="small" disabled={props.sent} onClick={props.onSend}>
             {props.sent
               ? t("agentManager.pr.comment.sent")
-              : t(props.activeTerminalId ? "agentManager.pr.comment.sendToTerminal" : "agentManager.pr.comment.send")}
+              : t(props.activeTerminalId ? "agentManager.pr.comment.sendToTerminal" : "agentManager.pr.fixWithKilo")}
           </Button>
           <Button variant="secondary" size="small" class="am-pr-comment-btn" onClick={props.onDismiss}>
             {props.dismissed ? t("agentManager.pr.conversation.restore") : t("agentManager.pr.conversation.dismiss")}
