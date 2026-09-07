@@ -13,6 +13,7 @@ import type { AnacondaDesktopWebviewMessage } from "../../../../src/shared/anaco
 import type { RequestMigrationDataMessage, StartMigrationMessage } from "./migration"
 import type { MemoryShowMessage, MemoryOperationMessage, RequestMemoryMessage } from "./memory"
 import type { Activity } from "../../utils/session-activity"
+import type { PRReactionContent } from "../../../agent-manager/pr/pr-types"
 
 // ============================================
 // Messages FROM webview TO extension
@@ -1124,6 +1125,15 @@ export interface CommentActionMessage {
   threadId: string
 }
 
+export interface CommentReactionMessage {
+  type: "agentManager.commentReaction"
+  projectId?: string
+  worktreeId: string
+  commentId: string
+  reaction: PRReactionContent
+  add: boolean
+}
+
 export interface ApplyWorktreeDiffMessage {
   type: "agentManager.applyWorktreeDiff"
   projectId?: string
@@ -1715,6 +1725,7 @@ export type WebviewMessage =
   | RefreshPRMessage
   | OpenPRMessage
   | CommentActionMessage
+  | CommentReactionMessage
   | RequestMigrationDataMessage
   | StartMigrationMessage
   | ApplyWorktreeDiffMessage

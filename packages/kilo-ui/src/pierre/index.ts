@@ -36,6 +36,9 @@ const css = `
   --diffs-computed-diff-line-bg: var(--surface-diff-delete-base, var(--diffs-bg-deletion));
   --diffs-computed-selected-line-bg: var(--surface-diff-delete-base, var(--diffs-bg-deletion));
 }
+[data-diff] [data-column-number][data-line-type='change-deletion'] {
+  color: inherit;
+}
 [data-diff][data-background] [data-column-number][data-line-type='change-deletion'] {
   --diffs-computed-diff-line-bg: var(--surface-diff-delete-weaker, var(--diffs-bg-deletion-number));
   --diffs-computed-selected-line-bg: var(--surface-diff-delete-weaker, var(--diffs-bg-deletion-number));
