@@ -400,7 +400,8 @@ export class PRStatusPoller {
       if (!head) return null
 
       const stdout = await this.query(
-        ["pr", "list", "--state", "all", "--search", `${head} is:pr`, "--limit", "5"],
+        // New branches can share HEAD with a merged PR without belonging to it.
+        ["pr", "list", "--state", "open", "--search", `${head} is:pr`, "--limit", "5"],
         cwd,
       )
       const items = JSON.parse(stdout) as unknown[]

@@ -21,6 +21,9 @@ export const LINE_DIFF_TYPE = "word-alt" as const
 // Pierre 1.1 treats its changed-line override properties as tint targets. Apply
 // Kilo semantic surfaces at the computed row level so host diff colors stay final.
 const css = `
+[data-indicators='bars'] [data-column-number][data-line-type='change-deletion'] {
+  --diffs-deletion-base: var(--surface-diff-delete-strong, #ff6762);
+}
 [data-diff][data-background] [data-line][data-line-type='change-addition'] {
   --diffs-computed-diff-line-bg: var(--surface-diff-add-base, var(--diffs-bg-addition));
   --diffs-computed-selected-line-bg: var(--surface-diff-add-base, var(--diffs-bg-addition));

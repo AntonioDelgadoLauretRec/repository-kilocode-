@@ -5,6 +5,9 @@ export interface BaseUpdateRequest {
   projectId?: string
   worktreeId: string
   sessionId?: string
+  model?: { providerID: string; modelID: string }
+  variant?: string
+  agent?: string
 }
 
 export interface TerminalFont {

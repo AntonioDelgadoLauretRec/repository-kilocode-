@@ -84,6 +84,7 @@ const [comments, setComments] = createSignal({
       line: 14,
       resolved: false,
       outdated: false,
+      createdAt: Date.now() - 5 * 60 * 1000,
       diffHunk: HUNK,
       // Read from the worktree by the extension: a hunk stops at the commented line.
       after: ["  return <View {...options} />", "}", ""],
@@ -128,6 +129,8 @@ const comment = shadow?.querySelector('[data-content] span[style*="--syntax-comm
 const code = shadow?.querySelectorAll("[data-content] [data-line]")
 assert.match(root.textContent ?? "", /comment body survives Pierre rendering/)
 assert.match(root.textContent ?? "", /reply body is visible/)
+assert.equal(root.querySelector('[data-thread-id="PRRT_open"] .am-pr-comment-time')?.textContent, "5 min ago")
+assert.equal(root.querySelector('[data-thread-id="PRRT_done"] .am-pr-comment-time'), null)
 assert.equal(root.querySelectorAll('[data-component="diff"]').length, 1)
 // Four hunk lines ending at the commented line, like the GitHub comment
 // snippet, then the worktree lines below it so a comment about what happens
@@ -183,7 +186,7 @@ assert.equal(refreshedRow?.getAttribute("aria-expanded"), "true")
 assert.match(root.textContent ?? "", /second paragraph only shows when expanded/)
 
 const send = [...root.querySelectorAll('[data-component="button"]')].find((node) =>
-  /Send to chat/.test(node.textContent ?? ""),
+  /Fix with Kilo/.test(node.textContent ?? ""),
 )
 assert.ok(send, "send button is rendered")
 ;(send as HTMLButtonElement).click()
@@ -712,3 +715,59 @@ for (const file of ["old.ts", "renamed.ts"]) {
   assert.equal(navigation.review.focus(scope), focused)
 }
 navigation.dispose()
+
+const { PRChecks } = await import("../../webview-ui/agent-manager/pr/PRChecks")
+const { summarize } = await import("../../src/agent-manager/pr/am-pr-utils")
+const third = document.createElement("div")
+document.body.append(third)
+const [prState, setPrState] = createSignal<PRStatus>({
+  ...base,
+  checks: summarize([
+    { name: "Typecheck", status: "failure", url: "https://github.com/example/repo/actions/runs/100/job/200" },
+    { name: "Tests", status: "success" },
+    { name: "Lint", status: "pending" },
+  ]),
+})
+const cleanup = render(
+  () => (
+    <VSCodeProvider>
+      <LanguageProvider>
+        <PRChecks pr={prState()} />
+      </LanguageProvider>
+    </VSCodeProvider>
+  ),
+  third,
+)
+await window.happyDOM.waitUntilComplete()
+const fix = () => third.querySelector<HTMLButtonElement>(".am-pr-checks-fix")
+assert.equal(fix()?.textContent?.trim(), "Fix with Kilo")
+assert.equal(fix()?.querySelector('[data-component="icon"]'), null)
+const before = sent.length
+fix()!.click()
+const feedback = sent.at(-1) as {
+  autoSend: boolean
+  comments: import("../../src/shared/review-comments").CIReviewCommentData[]
+}
+assert.equal(sent.length, before + 1)
+assert.equal(feedback.autoSend, true)
+assert.equal(feedback.comments[0]?.origin, "ci")
+// Draft removal and session changes are outside PRChecks. Unchanged checks
+// must remain sendable without remounting or waiting for another CI run.
+assert.equal(fix()?.disabled, false)
+assert.equal(fix()?.textContent?.trim(), "Fix with Kilo")
+fix()!.click()
+assert.equal(sent.length, before + 2)
+assert.deepEqual(sent.at(-1), feedback)
+fix()!.click()
+assert.equal(sent.length, before + 3)
+assert.deepEqual(sent.at(-1), feedback)
+setPrState((prev) => ({
+  ...prev,
+  checks: summarize([
+    { name: "Typecheck", status: "failure", url: "https://github.com/example/repo/actions/runs/100/job/201" },
+  ]),
+}))
+assert.equal(fix()?.disabled, false)
+setPrState((prev) => ({ ...prev, checks: summarize([{ name: "Tests", status: "success" }]) }))
+assert.equal(fix(), null)
+cleanup()

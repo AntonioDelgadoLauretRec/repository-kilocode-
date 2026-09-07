@@ -66,6 +66,83 @@ function harness(opts: { hasPersisted?: boolean; projectId?: string } = {}) {
 }
 
 describe("PRStatusPoller batched GitHub queries", () => {
+  it.each([
+    { lookup: "sha", state: "MERGED", exact: true, expected: null },
+    { lookup: "sha", state: "CLOSED", exact: true, expected: null },
+    { lookup: "sha", state: "OPEN", exact: true, expected: "open" },
+    { lookup: "sha", state: "OPEN", exact: false, expected: null },
+    { lookup: "tracking", state: "MERGED", exact: true, expected: "merged" },
+    { lookup: "tracking", state: "CLOSED", exact: true, expected: "closed" },
+    { lookup: "branch", state: "MERGED", exact: true, expected: "merged" },
+    { lookup: "branch", state: "CLOSED", exact: true, expected: "closed" },
+  ])("resolves $lookup PRs in state $state (exact SHA: $exact)", async ({ lookup, state, exact, expected }) => {
+    const poller = new PRStatusPoller({
+      getWorktrees: () => [],
+      getWorkspaceRoot: () => "/repo",
+      onStatus: () => undefined,
+      log: () => undefined,
+    })
+    const calls: string[][] = []
+    const internal = poller as unknown as {
+      fetchPRForBranch: (branch: string, cwd: string) => Promise<{ state: string } | null>
+      gh: (args: string[]) => Promise<{ stdout: string; stderr: string }>
+      shell: (command: string, args: string[]) => Promise<{ stdout: string; stderr: string }>
+    }
+    internal.shell = async (command, args) => {
+      expect(command).toBe("git")
+      expect(args).toEqual(["rev-parse", "HEAD"])
+      return { stdout: refs.headRefOid, stderr: "" }
+    }
+    internal.gh = async (args) => {
+      calls.push(args)
+      const data = {
+        number: 1,
+        title: "Example change",
+        url: "https://github.com/example/project/pull/1",
+        state,
+        headRefName: lookup === "sha" ? "contributor-change" : "feature",
+        headRefOid: exact ? refs.headRefOid : refs.baseRefOid,
+      }
+      if (args.at(1) === "view") {
+        if (lookup === "tracking" || (lookup === "branch" && args.at(2) === "feature"))
+          return { stdout: JSON.stringify(data), stderr: "" }
+        throw new Error("no pull requests found for branch")
+      }
+      const filter = args.at(args.indexOf("--state") + 1)
+      return { stdout: JSON.stringify(filter === "all" || filter === state.toLowerCase() ? [data] : []), stderr: "" }
+    }
+
+    const result = await internal.fetchPRForBranch("feature", "/repo")
+    expect(result?.state ?? null).toBe(expected)
+    expect(calls.map((args) => args.slice(0, 3))).toEqual(
+      lookup === "tracking"
+        ? [["pr", "view", "--json"]]
+        : lookup === "branch"
+          ? [
+              ["pr", "view", "--json"],
+              ["pr", "view", "feature"],
+            ]
+          : [
+              ["pr", "view", "--json"],
+              ["pr", "view", "feature"],
+              ["pr", "list", "--state"],
+            ],
+    )
+    if (lookup === "sha") {
+      expect(calls.at(-1)?.slice(0, 8)).toEqual([
+        "pr",
+        "list",
+        "--state",
+        "open",
+        "--search",
+        `${refs.headRefOid} is:pr`,
+        "--limit",
+        "5",
+      ])
+    }
+    poller.stop()
+  })
+
   it("forwards the actual branch for null PR results", async () => {
     const values: Array<{ pr: PRStatus | null; branch?: string }> = []
     const branches: string[] = []
