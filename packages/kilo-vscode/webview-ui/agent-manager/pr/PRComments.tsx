@@ -10,7 +10,6 @@ import { SEND_LIMIT, githubUrl, prPayload } from "./pr-comment-payload"
 import { commentState, omit, patchCommentState } from "./pr-comment-state"
 import type { PRComment } from "./pr-types"
 import { SectionHeading } from "./SectionHeading"
-import { PRCommentDiff } from "../../diff-viewer/PRCommentDiff"
 
 interface Props {
   comments: NonNullable<PRStatus["comments"]>
@@ -128,12 +127,12 @@ export function PRComments(props: Props) {
 
   // `For` over stable thread ids: the DOM survives a poll, so Pierre and
   // Markdown are not torn down and an open card stays open and clickable.
-  const content = (id: string, inline = false) => (
+  const card = (id: string) => (
     <Show when={index().get(id)}>
       {(comment) => (
         <PRCommentCard
           comment={comment()}
-          inline={inline}
+          preview={comment().outdated ? undefined : comment().preview}
           resolved={resolved(comment())}
           pending={state().pending[id] !== undefined}
           sent={state().sent[id] === true}
@@ -159,31 +158,6 @@ export function PRComments(props: Props) {
             githubUrl(comment().url) && props.onOpenUrl ? () => props.onOpenUrl?.(githubUrl(comment().url)!) : undefined
           }
         />
-      )}
-    </Show>
-  )
-
-  const card = (id: string) => (
-    <Show when={index().get(id)}>
-      {(comment) => (
-        <Show
-          when={!comment().outdated && expandedFor(comment()) ? comment().preview : undefined}
-          fallback={content(id)}
-        >
-          {(preview) => (
-            <PRCommentDiff
-              file={comment().file ?? ""}
-              line={preview().line}
-              side={preview().side}
-              hunk={preview().patch}
-              top={preview().top}
-              bottom={preview().bottom}
-              inline
-            >
-              {content(id, true)}
-            </PRCommentDiff>
-          )}
-        </Show>
       )}
     </Show>
   )
