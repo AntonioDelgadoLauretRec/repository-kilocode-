@@ -1999,6 +1999,7 @@ const prComments: NonNullable<PRStatus["comments"]> = {
       url: "https://github.com/org/repo/pull/8594#discussion_r1",
       resolved: false,
       outdated: false,
+      createdAt: Date.now() - 5 * 60 * 1000,
       diffHunk:
         '@@ -39,7 +39,7 @@ export function execGhRead(args: string[]) {\n-  return execWithShellEnv("gh", args, options)\n+  return execWithShellEnv("gh", args, { ...options, env: env(options) })',
       side: "additions",

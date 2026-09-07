@@ -84,6 +84,7 @@ const [comments, setComments] = createSignal({
       line: 14,
       resolved: false,
       outdated: false,
+      createdAt: Date.now() - 5 * 60 * 1000,
       diffHunk: HUNK,
       // Read from the worktree by the extension: a hunk stops at the commented line.
       after: ["  return <View {...options} />", "}", ""],
@@ -128,6 +129,8 @@ const comment = shadow?.querySelector('[data-content] span[style*="--syntax-comm
 const code = shadow?.querySelectorAll("[data-content] [data-line]")
 assert.match(root.textContent ?? "", /comment body survives Pierre rendering/)
 assert.match(root.textContent ?? "", /reply body is visible/)
+assert.equal(root.querySelector('[data-thread-id="PRRT_open"] .am-pr-comment-time')?.textContent, "5 min ago")
+assert.equal(root.querySelector('[data-thread-id="PRRT_done"] .am-pr-comment-time'), null)
 assert.equal(root.querySelectorAll('[data-component="diff"]').length, 1)
 // Four hunk lines ending at the commented line, like the GitHub comment
 // snippet, then the worktree lines below it so a comment about what happens
