@@ -157,7 +157,7 @@ export function mapRemoteComments(comments: PRComment[], diffs: WorktreeFileDiff
   for (const comment of comments) {
     if (seen.has(comment.threadId)) continue
     seen.add(comment.threadId)
-    const diff = !comment.previewUnavailable && comment.file ? files.get(comment.file) : undefined
+    const diff = !comment.unmapped && comment.file ? files.get(comment.file) : undefined
     const line = comment.line ?? comment.startLine
     if (
       diff?.summarized === true &&

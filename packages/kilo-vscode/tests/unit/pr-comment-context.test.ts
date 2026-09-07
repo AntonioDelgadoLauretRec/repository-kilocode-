@@ -8,6 +8,7 @@ import { parseComments } from "../../src/agent-manager/pr/am-pr-utils"
 import { parse, PATCH_LIMIT, preview } from "../../src/shared/pr-comment-preview"
 import { exec } from "../../src/util/process"
 import { prPayload } from "../../webview-ui/agent-manager/pr/pr-comment-payload"
+import { mapRemoteComments } from "../../webview-ui/diff-viewer/remote-comments"
 
 const roots: string[] = []
 const original = Array.from({ length: 30 }, (_, index) => `line ${index + 1}`)
@@ -191,7 +192,7 @@ describe("committed PR comment context", () => {
     const items = await withContext(refs.dir, inputs, opts)
     expect(items.map((item) => item.body)).toEqual(inputs.map((item) => item.body))
     expect(items.every((item) => !item.preview && item.previewUnavailable && !item.after)).toBe(true)
-    expect(items.at(2)?.line).toBe(11)
+    expect(items.at(2)).toMatchObject({ line: 11, unmapped: true })
   })
 
   it("does not expose a truncated or oversized local patch", async () => {
@@ -265,14 +266,18 @@ describe("committed PR comment context", () => {
     opts.gh = async () => ({ stdout: JSON.stringify({ base: refs.base, merge: refs.base, files }), stderr: "" })
     const items = await withContext(
       refs.dir,
-      files.map((file) => thread({ file: file.filename, line: 1 })),
+      files.map((file) => thread({ file: file.filename, line: 1, originalLine: 1, diffHunk: file.patch })),
       opts,
     )
     expect(items.filter((item) => item.preview)).toHaveLength(32)
-    expect(items.at(-1)?.previewUnavailable).toBe(true)
+    const capped = items.at(-1)!
+    expect(capped.previewUnavailable).toBe(true)
+    const source = { file: capped.file!, before: "", after: "committed", additions: 1, deletions: 0 }
+    expect(mapRemoteComments([capped], [source]).outside).toEqual([])
 
     clearContextCache()
-    files.at(0)!.patch = `@@ -0,0 +1,1 @@\n+${"界".repeat(2_000)}`
+    const text = "界".repeat(2_000)
+    files.at(0)!.patch = `@@ -0,0 +1,1 @@\n+${text}`
     const crowded = await withContext(
       refs.dir,
       Array.from({ length: 200 }, (_, index) =>
@@ -280,6 +285,8 @@ describe("committed PR comment context", () => {
           id: `comment-${index}`,
           file: files.at(0)!.filename,
           line: 1,
+          originalLine: 1,
+          diffHunk: files.at(0)!.patch,
         }),
       ),
       opts,
@@ -287,18 +294,34 @@ describe("committed PR comment context", () => {
     expect(
       crowded.reduce((total, item) => total + Buffer.byteLength(item.preview?.patch ?? ""), 0),
     ).toBeLessThanOrEqual(1024 * 1024)
-    expect(crowded.some((item) => item.previewUnavailable)).toBe(true)
+    const exhausted = crowded.find((item) => item.previewUnavailable)!
+    expect(exhausted).toBeDefined()
+    expect(mapRemoteComments([exhausted], [{ ...source, file: exhausted.file!, after: text }]).outside).toEqual([])
     expect(crowded.every((item) => item.body === thread().body)).toBe(true)
   })
 
-  it("keeps comment bodies when both immutable sources are unavailable", async () => {
+  it.each([false, true])("keeps current anchors when previews fail with missing refs=%s", async (missing) => {
     const refs = await repo()
-    const { opts } = options({ base: refs.base, head: "f".repeat(40) })
-    const [item] = await withContext(refs.dir, [thread({ after: ["old disk context"] })], opts)
-    expect(item?.body).toBe(thread().body)
-    expect(item?.diffHunk).toBe(hunk)
-    expect(item?.after).toBeUndefined()
-    expect(item?.previewUnavailable).toBe(true)
+    const { opts } = options({ base: missing ? "" : refs.base, head: missing ? "" : "f".repeat(40) })
+    const input = thread({
+      line: 1,
+      originalLine: 1,
+      diffHunk: "@@ -0,0 +1 @@\n+inserted before",
+      after: ["old disk context"],
+    })
+    const items = await withContext(refs.dir, [input], opts)
+    expect(items.at(0)).toMatchObject({ body: input.body, diffHunk: input.diffHunk, previewUnavailable: true })
+    expect(items.at(0)?.after).toBeUndefined()
+    const source = {
+      file: refs.file,
+      before: original.join("\n"),
+      after: changed.join("\n"),
+      additions: 2,
+      deletions: 1,
+    }
+    expect(mapRemoteComments(items, [source]).outside).toEqual([])
+    const [retried] = await withContext(refs.dir, items, options(refs).opts)
+    expect(retried?.preview).toBeDefined()
   })
 })
 

@@ -30,6 +30,7 @@ export interface PRComment {
   line?: number
   originalLine?: number
   startLine?: number
+  unmapped?: boolean
   url?: string
   resolved: boolean
   outdated: boolean

@@ -173,7 +173,7 @@ function parseThread(thread: GhThread): PRComment | undefined {
     outdated: thread.isOutdated ?? false,
     createdAt: first.createdAt ? new Date(first.createdAt).getTime() : undefined,
     diffHunk: first.diffHunk,
-    ...(typeof current === "number" ? {} : { previewUnavailable: true }),
+    ...(typeof current === "number" ? {} : { unmapped: true, previewUnavailable: true }),
     replies: parseReplies(nodes),
   }
 }

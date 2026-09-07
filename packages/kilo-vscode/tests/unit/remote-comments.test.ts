@@ -41,8 +41,8 @@ describe("remote diff comments", () => {
     ["additions", patch],
     ["deletions", patch],
     ["additions", undefined],
-  ] as const)("anchors explicit %s with optional patch metadata", (side, source) => {
-    const value = comment({ file: diff.file, line: 2, originalLine: 2, side })
+  ] as const)("anchors current %s even without a committed preview", (side, source) => {
+    const value = comment({ file: diff.file, line: 2, originalLine: 2, side, previewUnavailable: true })
     const result = mapRemoteComments([value], [{ ...diff, patch: source }])
     expect(result.anchors.get(diff.file)?.at(0)).toMatchObject({ side, line: 2 })
     expect(result.outside).toHaveLength(0)
@@ -156,7 +156,7 @@ describe("remote diff comments", () => {
 
   it("keeps summarized-file threads pending until detail is available", () => {
     const comments = [
-      comment({ file: diff.file, line: 2, side: "additions" }),
+      comment({ file: diff.file, line: 2, side: "additions", previewUnavailable: true }),
       comment({ threadId: "range", file: diff.file, startLine: 2, side: "additions" }),
     ]
     const pending = mapRemoteComments(comments, [

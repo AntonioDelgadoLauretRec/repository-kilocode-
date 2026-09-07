@@ -187,7 +187,7 @@ function eligible(
 ): item is PRComment & { file: string; side: "additions" | "deletions"; line: number } {
   return (
     !item.outdated &&
-    !item.previewUnavailable &&
+    !item.unmapped &&
     path(item.file) &&
     (item.side === "additions" || item.side === "deletions") &&
     Number.isSafeInteger(item.line) &&
