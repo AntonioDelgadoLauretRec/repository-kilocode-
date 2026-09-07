@@ -42,7 +42,7 @@ describe("open_plan", () => {
 
       expect(result.metadata.plan.replaceAll(path.sep, "/")).toBe(".plans/fix.md")
       expect(result.metadata.open).toBe(true)
-      expect(result.output).toContain(".plans/fix.md")
+      expect(result.output.replaceAll(path.sep, "/")).toContain(".plans/fix.md")
     }),
     { git: true },
   )
