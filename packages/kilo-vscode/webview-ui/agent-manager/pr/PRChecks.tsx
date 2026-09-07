@@ -22,20 +22,50 @@ const CHECK: Record<CheckStatus, { icon: string; key: string }> = {
   pending: { icon: "play", key: "pending" },
 }
 
-const GROUP_KEYS: Record<CheckBucket, string> = {
-  failure: "agentManager.pr.checks.group.failure",
-  pending: "agentManager.pr.checks.group.pending",
-  cancelled: "agentManager.pr.checks.group.cancelled",
-  skipped: "agentManager.pr.checks.group.skipped",
-  success: "agentManager.pr.checks.group.success",
+const GROUP_KEYS: Record<CheckBucket, { one: string; other: string }> = {
+  failure: {
+    one: "agentManager.pr.checks.group.failure.one",
+    other: "agentManager.pr.checks.group.failure.other",
+  },
+  pending: {
+    one: "agentManager.pr.checks.group.pending.one",
+    other: "agentManager.pr.checks.group.pending.other",
+  },
+  cancelled: {
+    one: "agentManager.pr.checks.group.cancelled.one",
+    other: "agentManager.pr.checks.group.cancelled.other",
+  },
+  skipped: {
+    one: "agentManager.pr.checks.group.skipped.one",
+    other: "agentManager.pr.checks.group.skipped.other",
+  },
+  success: {
+    one: "agentManager.pr.checks.group.success.one",
+    other: "agentManager.pr.checks.group.success.other",
+  },
 }
 
-const TALLY_KEYS: Record<CheckBucket, string> = {
-  failure: "agentManager.pr.checks.tally.failure",
-  pending: "agentManager.pr.checks.tally.pending",
-  cancelled: "agentManager.pr.checks.tally.cancelled",
-  skipped: "agentManager.pr.checks.tally.skipped",
-  success: "agentManager.pr.checks.tally.success",
+const TALLY_KEYS: Record<CheckBucket, { one: string; other: string }> = {
+  failure: {
+    one: "agentManager.pr.checks.tally.failure.one",
+    other: "agentManager.pr.checks.tally.failure.other",
+  },
+  pending: {
+    one: "agentManager.pr.checks.tally.pending.one",
+    other: "agentManager.pr.checks.tally.pending.other",
+  },
+  cancelled: {
+    one: "agentManager.pr.checks.tally.cancelled.one",
+    other: "agentManager.pr.checks.tally.cancelled.other",
+  },
+  skipped: {
+    one: "agentManager.pr.checks.tally.skipped.one",
+    other: "agentManager.pr.checks.tally.skipped.other",
+  },
+  success: {
+    one: "agentManager.pr.checks.tally.success.one",
+    other: "agentManager.pr.checks.tally.success.other",
+  },
 }
 
 export function PRChecks(props: { pr: PRStatus; worktreeId?: string; activeTerminalId?: string }) {
@@ -47,10 +77,10 @@ export function PRChecks(props: { pr: PRStatus; worktreeId?: string; activeTermi
   const open = () => state()?.checksOpen ?? localOpen()
   const grouped = createMemo(() => groups(props.pr.checks.checks))
   function groupLabel(bucket: CheckBucket, count: number) {
-    return t(`${GROUP_KEYS[bucket]}.${count === 1 ? "one" : "other"}`, { count })
+    return t(GROUP_KEYS[bucket][count === 1 ? "one" : "other"], { count })
   }
   function tallyLabel(bucket: CheckBucket, count: number) {
-    return t(`${TALLY_KEYS[bucket]}.${count === 1 ? "one" : "other"}`, { count })
+    return t(TALLY_KEYS[bucket][count === 1 ? "one" : "other"], { count })
   }
   const count = createMemo(() => {
     const all = counts(props.pr.checks.checks)
