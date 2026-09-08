@@ -786,6 +786,9 @@ export const dict = {
   "settings.sandboxing.writablePaths.description":
     "Percorsi aggiuntivi del file system in cui la sandbox consente la scrittura (es. /tmp, /var/log). Vengono uniti con i percorsi di scrittura predefiniti quando la sandbox è attiva.",
   "settings.experimental.multiProject.title": "Agent Manager Multi-Progetto",
+  "settings.experimental.claudeMigration.title": "Migrazione Claude Code (Sperimentale)",
+  "settings.experimental.claudeMigration.description":
+    "Importa una volta le istruzioni globali CLAUDE.md supportate, le competenze semplici e le definizioni MCP disabilitate. I file Claude originali restano invariati; riavvia il backend dopo l'attivazione.",
   "settings.experimental.multiProject.description":
     "Abilita la gestione di sessioni e worktree su più repository in Agent Manager. Il repository dell'area di lavoro corrente è sempre il progetto predefinito.",
   "settings.experimental.taskModelSelection.title": "Selezione del modello del sub-agent Task",

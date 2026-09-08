@@ -1082,6 +1082,12 @@
           "scope": "application",
           "description": "Enable the experimental Agent Manager browser panel and browser_open tool."
         },
+        "kilo-code.new.experimental.claudeMigration": {
+          "type": "boolean",
+          "default": false,
+          "scope": "application",
+          "description": "Experimental one-time import of supported global Claude Code instructions, simple skills, and disabled MCP definitions into Kilo. The original Claude files are never changed."
+        },
         "kilo-code.new.agentManager.terminalButtonDestination": {
           "type": "string",
           "scope": "application",
