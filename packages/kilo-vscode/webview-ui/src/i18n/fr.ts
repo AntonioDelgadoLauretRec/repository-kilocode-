@@ -887,7 +887,17 @@ export const dict = {
   "settings.notifications.enable.title": "Activer les notifications sonores",
   "settings.notifications.enable.description":
     "Lire des sons lorsque les sessions se terminent, rencontrent une erreur ou nécessitent votre intervention",
+  "settings.notifications.workbench.title": "Activer les notifications VS Code",
+  "settings.notifications.workbench.description":
+    "Afficher des notifications VS Code lorsque Kilo termine une tâche ou nécessite votre intervention",
+  "settings.notifications.os.title": "Activer les notifications du système d'exploitation",
+  "settings.notifications.os.description":
+    "Afficher des alertes de notification natives du système d'exploitation lorsque Kilo termine une tâche ou nécessite votre intervention alors que VS Code n'est pas actif.",
   "settings.notifications.testSound": "Tester",
+  "settings.notifications.testOS": "Tester",
+  "settings.notifications.testOS.testing": "Envoi de la notification de test…",
+  "settings.notifications.testOS.success": "Notification de test envoyée.",
+  "settings.notifications.testOS.error": "Échec de l'envoi de la notification de test",
   "settings.notifications.sound.default": "Par défaut",
   "settings.notifications.sound.system": "Système",
   "settings.notifications.sound.description":

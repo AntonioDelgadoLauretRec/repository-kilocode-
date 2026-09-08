@@ -861,7 +861,17 @@ export const dict = {
   "settings.notifications.enable.title": "サウンド通知を有効にする",
   "settings.notifications.enable.description":
     "セッションの完了時、エラーの発生時、またはユーザー入力が必要なときにサウンドを再生します",
+  "settings.notifications.workbench.title": "VS Code 通知を有効にする",
+  "settings.notifications.workbench.description":
+    "Kilo がタスクを完了したとき、またはユーザー入力が必要なときに VS Code の通知を表示します",
+  "settings.notifications.os.title": "OS 通知を有効にする",
+  "settings.notifications.os.description":
+    "VS Code が非アクティブのときに Kilo がタスクを完了した場合、またはユーザー入力が必要な場合にネイティブ OS 通知を表示します。",
   "settings.notifications.testSound": "テスト",
+  "settings.notifications.testOS": "テスト",
+  "settings.notifications.testOS.testing": "テスト通知を送信しています…",
+  "settings.notifications.testOS.success": "テスト通知を送信しました。",
+  "settings.notifications.testOS.error": "テスト通知の送信に失敗しました",
   "settings.notifications.sound.default": "デフォルト",
   "settings.notifications.sound.system": "システム",
   "settings.notifications.sound.description":

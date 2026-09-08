@@ -864,7 +864,17 @@ export const dict = {
   "settings.notifications.enable.title": "Включить звуковые уведомления",
   "settings.notifications.enable.description":
     "Воспроизводить звуки при завершении сеансов, возникновении ошибки или необходимости вашего участия",
+  "settings.notifications.workbench.title": "Включить уведомления VS Code",
+  "settings.notifications.workbench.description":
+    "Показывать уведомления VS Code, когда Kilo завершает задачу или требуется ваше участие",
+  "settings.notifications.os.title": "Включить уведомления операционной системы",
+  "settings.notifications.os.description":
+    "Показывать нативные уведомления операционной системы, когда Kilo завершает задачу или требуется ваше участие, а VS Code неактивен.",
   "settings.notifications.testSound": "Тест",
+  "settings.notifications.testOS": "Тест",
+  "settings.notifications.testOS.testing": "Отправка тестового уведомления…",
+  "settings.notifications.testOS.success": "Тестовое уведомление отправлено.",
+  "settings.notifications.testOS.error": "Не удалось отправить тестовое уведомление",
   "settings.notifications.sound.default": "По умолчанию",
   "settings.notifications.sound.system": "Системный",
   "settings.notifications.sound.description":

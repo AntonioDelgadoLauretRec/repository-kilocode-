@@ -850,7 +850,17 @@ export const dict = {
   "settings.notifications.sounds": "صداها",
   "settings.notifications.enable.title": "فعال‌سازی اعلان‌های صوتی",
   "settings.notifications.enable.description": "پخش صدا هنگام تکمیل جلسات، بروز خطا یا نیاز به ورودی شما",
+  "settings.notifications.workbench.title": "فعال‌سازی اعلان‌های VS Code",
+  "settings.notifications.workbench.description":
+    "نمایش اعلان‌های VS Code هنگام تکمیل یک وظیفه توسط Kilo یا نیاز به ورودی شما",
+  "settings.notifications.os.title": "فعال‌سازی اعلان‌های سیستم‌عامل",
+  "settings.notifications.os.description":
+    "نمایش هشدارهای اعلان بومی سیستم‌عامل هنگام تکمیل یک وظیفه توسط Kilo یا نیاز به ورودی شما در زمانی که VS Code فعال نیست.",
   "settings.notifications.testSound": "آزمایش",
+  "settings.notifications.testOS": "آزمایش",
+  "settings.notifications.testOS.testing": "در حال ارسال اعلان آزمایشی…",
+  "settings.notifications.testOS.success": "اعلان آزمایشی ارسال شد.",
+  "settings.notifications.testOS.error": "ارسال اعلان آزمایشی ناموفق بود",
   "settings.notifications.sound.default": "پیش‌فرض",
   "settings.notifications.sound.system": "سیستم",
   "settings.notifications.sound.description":
