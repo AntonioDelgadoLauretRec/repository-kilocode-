@@ -46,7 +46,9 @@ function text(notice: AttentionNotice) {
  * running host's `product.json` keeps Cursor, Antigravity, and other forks
  * working without a hardcoded editor-name mapping.
  */
-export async function readAppID(root: string): Promise<string | undefined> {
+export async function readAppID(root: string | undefined): Promise<string | undefined> {
+  // `appRoot` is not guaranteed to be populated on every host.
+  if (!root) return undefined
   const raw = await fs.readFile(path.join(root, "product.json"), "utf8").catch((err) => {
     console.debug("[Kilo New] could not read product.json for the notification identity", { root, err })
     return undefined

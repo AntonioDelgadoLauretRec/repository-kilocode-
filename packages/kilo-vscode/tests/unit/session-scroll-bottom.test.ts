@@ -99,6 +99,19 @@ describe("the openSession webview message requests scroll-to-bottom", () => {
   })
 })
 
+describe("the Storybook session mock satisfies what MessageList reads", () => {
+  // Stories render MessageList against a hand-written mock cast to `any`, so
+  // TypeScript cannot catch a missing member. `scrollBottomID` in particular has
+  // to be an accessor, since it is passed to `on(...)`: leaving it out throws on
+  // mount and takes down every chat story in the visual regression suite.
+  const providers = fs.readFileSync(path.join(ROOT, "webview-ui/src/stories/StoryProviders.tsx"), "utf-8")
+
+  it("provides scrollBottomID as an accessor and consumeScrollBottom", () => {
+    expect(providers).toMatch(/scrollBottomID: \(\) =>/)
+    expect(providers).toMatch(/consumeScrollBottom: \(\) =>/)
+  })
+})
+
 describe("MessageList arms a restore pass for the already-selected session", () => {
   it("watches scrollBottomID, not just currentSessionID", () => {
     // Clicking Show on the session that is already current does not change

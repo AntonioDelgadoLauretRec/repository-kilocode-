@@ -128,6 +128,11 @@ describe("readAppID", () => {
     expect(await withProduct(JSON.stringify({ nameLong: "Some Editor" }))).toBeUndefined()
   })
 
+  it("returns undefined without throwing when the host reports no appRoot", async () => {
+    expect(await readAppID(undefined)).toBeUndefined()
+    expect(await readAppID("")).toBeUndefined()
+  })
+
   it("rejects values that are not usable identities", async () => {
     expect(await withProduct(JSON.stringify({ win32AppUserModelId: "   " }))).toBeUndefined()
     expect(await withProduct(JSON.stringify({ win32AppUserModelId: 42 }))).toBeUndefined()
@@ -143,12 +148,25 @@ describe("testOSNotification", () => {
   })
 
   it("reports a real failure when the native command binary is absent on this host", async () => {
-    // Pick a supported platform different from the one running these tests, so
-    // its native binary is guaranteed missing here — a genuine failure from the
-    // real exec() path, not a mocked one.
-    const foreign = process.platform === "win32" ? "linux" : "win32"
+    // Pick a supported platform other than the one running these tests, so its
+    // binary is guaranteed missing — a genuine failure from the real exec()
+    // path, not a mocked one. Deliberately never win32: that path needs an app
+    // identity first and would report the identity error instead of an exec
+    // failure, which is not what this test is about.
+    const foreign = process.platform === "darwin" ? "linux" : "darwin"
     const result = await testOSNotification(foreign)
     expect(result.ok).toBe(false)
     expect(result.error).toBeTruthy()
+  })
+
+  it("reports the identity error on Windows when the host identity is unavailable", async () => {
+    // `vscode.env.appRoot` is not set in this harness, so this exercises the
+    // fail-safe path: no command is spawned and the reason is explicit.
+    const result = await testOSNotification("win32")
+    expect(result).toEqual({
+      ok: false,
+      error:
+        "Could not determine this editor's notification identity, so native notifications are unavailable. VS Code notifications still work.",
+    })
   })
 })
