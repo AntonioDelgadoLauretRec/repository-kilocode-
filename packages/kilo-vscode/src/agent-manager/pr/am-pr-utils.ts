@@ -39,6 +39,7 @@ export function parsePRResult(json: string): PRResult | null {
           ? "pending"
           : null
   const result: PRResult = {
+    id: data.id,
     number: data.number,
     ...(typeof data.baseRefOid === "string" ? { baseRefOid: data.baseRefOid } : {}),
     ...(typeof data.headRefOid === "string" ? { headRefOid: data.headRefOid } : {}),
@@ -200,6 +201,8 @@ function parseReply(node: GhComment): PRCommentReply {
   const reactions = parseReactions(node.reactionGroups)
   return {
     id: node.id,
+    canEdit: node.viewerDidAuthor === true && node.viewerCanUpdate === true,
+    canDelete: node.viewerDidAuthor === true && node.viewerCanDelete === true,
     author: node.author?.login ?? "unknown",
     body: node.body ?? "",
     ...(node.author?.avatarUrl ? { avatar: node.author.avatarUrl } : {}),
@@ -215,13 +218,18 @@ function parseReplies(nodes: GhComment[]): PRComment["replies"] {
 }
 
 function parseThread(thread: GhThread): PRComment | undefined {
-  const nodes = thread.comments?.nodes ?? []
+  // Keep the root and include recent replies beyond the first page.
+  const original = thread.comments?.nodes ?? []
+  const ids = new Set(original.map((node) => node.id))
+  const nodes = [...original, ...(thread.latest?.nodes ?? []).filter((node) => !ids.has(node.id))]
   const first = nodes.at(0)
   if (!first) return undefined
   const current = thread.line === undefined ? first.line : thread.line
   const reactions = parseReactions(first.reactionGroups)
   return {
     id: first.id,
+    canEdit: first.viewerDidAuthor === true && first.viewerCanUpdate === true,
+    canDelete: first.viewerDidAuthor === true && first.viewerCanDelete === true,
     threadId: thread.id ?? first.id,
     author: first.author?.login ?? "unknown",
     avatar: first.author?.avatarUrl,
@@ -275,6 +283,9 @@ function commentItem(node: GhConversationComment): PRConversationComment | null 
   const reactions = parseReactions(node.reactionGroups)
   return {
     id: node.id,
+    kind: "issue",
+    canEdit: node.viewerDidAuthor === true && node.viewerCanUpdate === true,
+    canDelete: node.viewerDidAuthor === true && node.viewerCanDelete === true,
     author: node.author?.login ?? "unknown",
     avatar: node.author?.avatarUrl,
     body: node.body,
@@ -290,6 +301,9 @@ function reviewItem(node: GhReviewWithBody): PRConversationComment | null {
   const reactions = parseReactions(node.reactionGroups)
   return {
     id: node.id,
+    kind: "review",
+    canEdit: false,
+    canDelete: false,
     author: node.author?.login ?? "unknown",
     avatar: node.author?.avatarUrl,
     body: node.body,
@@ -341,6 +355,8 @@ export function mergePRStatus(prev: PRStatus | undefined, next: PRStatus): PRSta
   const current = prev.baseRefOid === next.baseRefOid && prev.headRefOid === next.headRefOid ? prev : undefined
   return {
     ...next,
+    viewerDidAuthor: next.viewerDidAuthor ?? prev.viewerDidAuthor,
+    id: next.id ?? prev.id,
     comments: next.comments ?? current?.comments,
     unresolvedThreads: next.unresolvedThreads ?? next.comments?.unresolved ?? current?.unresolvedThreads,
     conversation: next.conversation ?? prev.conversation,
@@ -349,6 +365,8 @@ export function mergePRStatus(prev: PRStatus | undefined, next: PRStatus): PRSta
 
 export function signature(pr: PRStatus): string {
   return serialize([
+    pr.viewerDidAuthor,
+    pr.id,
     pr.url,
     pr.number,
     pr.baseRefOid ?? null,
@@ -377,6 +395,9 @@ export function signature(pr: PRStatus): string {
       c.state ?? "",
       c.isBot ? 1 : 0,
       c.reactions?.map((reaction) => [reaction.content, reaction.count, reaction.viewerHasReacted]) ?? [],
+      c.kind,
+      c.canEdit,
+      c.canDelete,
     ]) ?? [],
   ])
 }
