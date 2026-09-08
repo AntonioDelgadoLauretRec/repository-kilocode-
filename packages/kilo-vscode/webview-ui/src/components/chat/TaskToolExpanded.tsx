@@ -11,6 +11,7 @@ import { Component, createEffect, createMemo, createSignal, Index, Show, on, onC
 import { ToolRegistry, ToolProps, getToolInfo } from "@kilocode/kilo-ui/message-part"
 import { BasicTool, initialOpen } from "@kilocode/kilo-ui/basic-tool"
 import { Icon } from "@kilocode/kilo-ui/icon"
+import { AgentAvatar } from "@kilocode/kilo-ui/agent-avatar"
 import { IconButton } from "@kilocode/kilo-ui/icon-button"
 import { Markdown } from "@kilocode/kilo-ui/markdown"
 import { Tooltip } from "@kilocode/kilo-ui/tooltip"
@@ -161,14 +162,14 @@ const TaskToolRenderer: Component<ToolProps> = (props) => {
   }
 
   const trigger = () => (
-    <div data-slot="basic-tool-tool-info-structured">
+    <div data-slot="basic-tool-tool-info-structured" data-component="task-tool-heading">
       <div data-slot="basic-tool-tool-info-main">
-        <span data-slot="basic-tool-tool-title" class="capitalize">
-          {title()}
+        <span data-slot="basic-tool-tool-title" title={description() || title()}>
+          {description() || title()}
         </span>
         <Show when={description() || childToolCount() > 0}>
           <span data-slot="basic-tool-tool-subtitle">
-            {description()}
+            {description() ? title() : undefined}
             <Show when={childToolCount() > 0}>
               {description() ? " " : ""}({childToolCount()})
             </Show>
@@ -202,6 +203,7 @@ const TaskToolRenderer: Component<ToolProps> = (props) => {
     <div data-component="tool-part-wrapper">
       <BasicTool
         icon="task"
+        iconNode={<AgentAvatar id={childSessionId() ?? ""} running={running()} />}
         status={props.status}
         tool={props.tool}
         partID={props.partID}

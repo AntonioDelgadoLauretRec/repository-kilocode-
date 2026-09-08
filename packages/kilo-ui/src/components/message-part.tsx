@@ -36,6 +36,7 @@ import { useClipboard } from "../context/clipboard"
 import { type UiI18n, useI18n } from "../context/i18n"
 import { BasicTool, useToolApprovalLine } from "./basic-tool"
 import { BoardMessage, BoardRoute } from "./board-message"
+import { AgentAvatar } from "./agent-avatar"
 import { Accordion } from "./accordion"
 import { StickyAccordionHeader } from "./sticky-accordion-header"
 import { Card } from "./card"
@@ -2457,6 +2458,9 @@ ToolRegistry.register({
         hideDetails
         approvalPlacement="hidden"
         icon="task"
+        iconNode={
+          <AgentAvatar id={childSessionId() ?? ""} running={props.status === "running" || props.status === "pending"} />
+        }
         status={props.status}
         trigger={trigger()}
         animated

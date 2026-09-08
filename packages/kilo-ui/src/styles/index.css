@@ -6,6 +6,7 @@
 
 /* Per-component Kilo overrides */
 @import "../components/accordion.css";
+@import "../components/agent-avatar.css";
 @import "../components/basic-tool.css";
 @import "../components/board-message.css";
 @import "../components/auto-approve-bar.css";

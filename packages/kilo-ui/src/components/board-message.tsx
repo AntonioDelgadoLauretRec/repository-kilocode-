@@ -1,6 +1,7 @@
 import { Show } from "solid-js"
 import { useI18n } from "../context/i18n"
 import { Icon } from "./icon"
+import { AgentAvatar } from "./agent-avatar"
 import { Markdown } from "./markdown"
 import { Tooltip } from "./tooltip"
 
@@ -35,7 +36,7 @@ export function BoardRoute(props: Route) {
       role="group"
       aria-label={i18n.t("ui.messagePart.board.route", { from: sender(), to: recipient() })}
     >
-      <Icon name="task" size="small" />
+      <AgentAvatar id={from()} />
       <Tooltip
         class="board-route-member board-route-sender"
         contentClass="board-route-tooltip"
@@ -45,8 +46,8 @@ export function BoardRoute(props: Route) {
       </Tooltip>
       <Icon name="arrow-right" size="small" />
       <span data-slot="board-route-recipient-icon" data-broadcast={to() === "ALL"}>
-        <Icon name="task" size="small" />
-        <Show when={to() === "ALL"}>
+        <Show when={to() === "ALL"} fallback={<AgentAvatar id={to()} />}>
+          <Icon name="task" size="small" />
           <Icon name="task" size="small" />
         </Show>
       </span>

@@ -1,0 +1,54 @@
+[data-component="agent-avatar"] {
+  display: inline-block;
+  flex: 0 0 20px;
+  width: 20px;
+  height: 20px;
+  vertical-align: middle;
+  color: var(--icon-weak-base);
+  fill: currentColor;
+  shape-rendering: crispEdges;
+
+  &[data-running] rect {
+    animation: agent-avatar-shimmer 1.6s ease-in-out infinite;
+  }
+
+  &[data-color="0"] {
+    color: var(--vscode-charts-blue, var(--icon-info-base));
+  }
+
+  &[data-color="1"] {
+    color: var(--vscode-charts-green, var(--icon-success-base));
+  }
+
+  &[data-color="2"] {
+    color: var(--vscode-charts-yellow, var(--icon-warning-base));
+  }
+
+  &[data-color="3"] {
+    color: var(--vscode-charts-orange, var(--icon-warning-base));
+  }
+
+  &[data-color="4"] {
+    color: var(--vscode-charts-purple, var(--icon-info-base));
+  }
+
+  &[data-color="5"] {
+    color: var(--vscode-charts-red, var(--icon-critical-base));
+  }
+}
+
+@keyframes agent-avatar-shimmer {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-component="agent-avatar"][data-running] rect {
+    animation: none;
+  }
+}
