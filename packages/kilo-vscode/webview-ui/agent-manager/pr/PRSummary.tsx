@@ -37,8 +37,6 @@ const JUMP_KEY: Record<JumpTarget, string> = {
 export function PRSummary(props: PRSummaryProps) {
   const { t } = useLanguage()
   const state = () => commentState(props.worktreeId)
-  const plural = (key: string, count: number) => t(`${key}.${count === 1 ? "one" : "other"}`, { count })
-
   const statusIcon = (status: string) =>
     status === "success" ? "circle-check" : status === "failure" ? "circle-x-outline" : "play"
 
@@ -87,8 +85,16 @@ export function PRSummary(props: PRSummaryProps) {
       icon: "comment",
       label:
         value.unresolved > 0
-          ? plural("agentManager.pr.summary.unresolved", value.unresolved)
-          : plural("agentManager.pr.summary.comments", value.total),
+          ? t(
+              value.unresolved === 1
+                ? "agentManager.pr.summary.unresolved.one"
+                : "agentManager.pr.summary.unresolved.other",
+              { count: value.unresolved },
+            )
+          : t(
+              value.total === 1 ? "agentManager.pr.summary.comments.one" : "agentManager.pr.summary.comments.other",
+              { count: value.total },
+            ),
       status: value.unresolved > 0 ? "warning" : "success",
       target: "comments",
       action:
@@ -110,7 +116,12 @@ export function PRSummary(props: PRSummaryProps) {
     const ids = actionableConversation(value, state())
     return {
       icon: "comment",
-      label: plural("agentManager.pr.summary.conversation", value.length),
+      label: t(
+        value.length === 1
+          ? "agentManager.pr.summary.conversation.one"
+          : "agentManager.pr.summary.conversation.other",
+        { count: value.length },
+      ),
       status: ids.length > 0 ? "warning" : "success",
       target: "conversation",
       action:
