@@ -143,6 +143,10 @@ export function PRComments(props: Props) {
           reactions={reactions.list(comment().id, comment().reactions)}
           reactionPending={(content) => reactions.pending(comment().id, content)}
           onReaction={(content, add) => reactions.toggle(comment().id, content, add)}
+          replyReactionError={(id) => reactions.error(id)}
+          replyReactions={(id, values) => reactions.list(id, values)}
+          replyReactionPending={(id, content) => reactions.pending(id, content)}
+          onReplyReaction={(id, content, add) => reactions.toggle(id, content, add)}
           onToggleOpen={() => {
             const next = !expandedFor(comment())
             patch((prev) => ({ expanded: { ...prev.expanded, [id]: next } }))

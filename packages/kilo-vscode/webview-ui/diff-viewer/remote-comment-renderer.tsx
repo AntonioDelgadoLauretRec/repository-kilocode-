@@ -16,7 +16,7 @@ import type { AnnotationSide, DiffLineAnnotation } from "@pierre/diffs"
 import { PRCommentCard } from "../agent-manager/pr/PRCommentCard"
 import { githubUrl, prPayload } from "../agent-manager/pr/pr-comment-payload"
 import type { ReactionController } from "../agent-manager/pr/pr-comment-state"
-import type { PRComment } from "../agent-manager/pr/pr-types"
+import type { PRComment, PRReactionContent } from "../agent-manager/pr/pr-types"
 import type { PRTarget } from "../../src/shared/pr-comment-actions"
 import { useVSCode } from "../src/context/vscode"
 import { useLanguage } from "../src/context/language"
@@ -85,6 +85,19 @@ interface Options {
 interface CardProps {
   item: Entry
   inline: boolean
+}
+
+function reactionProps(ctrl: ReactionController | undefined, comment: PRComment) {
+  return {
+    reactionError: ctrl?.error(comment.id),
+    reactions: ctrl?.list(comment.id, comment.reactions),
+    reactionPending: ctrl ? (content: PRReactionContent) => ctrl.pending(comment.id, content) : undefined,
+    onReaction: ctrl ? (content: PRReactionContent, add: boolean) => ctrl.toggle(comment.id, content, add) : undefined,
+    replyReactionError: ctrl?.error,
+    replyReactions: ctrl?.list,
+    replyReactionPending: ctrl?.pending,
+    onReplyReaction: ctrl?.toggle,
+  }
 }
 
 function findTarget(container: HTMLElement, id: string, place: "inline" | "outside"): HTMLElement | undefined {
@@ -226,7 +239,8 @@ export function createRemoteCommentController(options: Options): RemoteCommentCo
   const RemoteCard: Component<CardProps> = (props) => {
     const comment = () => props.item.comment()
     const target = () => options.target?.(comment())
-    const reactions = () => (options.reactions?.enabled() ? options.reactions : undefined)
+    const ctrl = options.reactions?.enabled() ? options.reactions : undefined
+    const reactions = reactionProps(ctrl, comment())
     return (
       <PRCommentCard
         projectId={target()?.projectId}
@@ -278,10 +292,7 @@ export function createRemoteCommentController(options: Options): RemoteCommentCo
             ? () => options.onOpenUrl?.(githubUrl(comment().url)!)
             : undefined
         }
-        reactionError={reactions()?.error(comment().id)}
-        reactions={reactions()?.list(comment().id, comment().reactions)}
-        reactionPending={reactions() ? (content) => reactions()?.pending(comment().id, content) ?? false : undefined}
-        onReaction={reactions() ? (content, add) => reactions()?.toggle(comment().id, content, add) : undefined}
+        {...reactions}
       />
     )
   }

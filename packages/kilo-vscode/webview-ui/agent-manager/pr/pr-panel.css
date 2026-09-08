@@ -358,6 +358,10 @@
   padding-left: 0;
 }
 
+.am-pr-comment-reactions {
+  padding-top: 4px;
+}
+
 .am-pr-comment [data-component="avatar"] {
   border-radius: 50%;
 }

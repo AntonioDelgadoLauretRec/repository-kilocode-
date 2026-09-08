@@ -37,6 +37,9 @@ export interface PRCommentReply {
   author: string
   body: string
   avatar?: string
+  createdAt?: number
+  url?: string
+  reactions?: PRReaction[]
 }
 
 export interface PRComment {

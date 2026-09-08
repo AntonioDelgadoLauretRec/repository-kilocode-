@@ -4,6 +4,7 @@ import type {
   CheckStatus,
   PRCheck,
   PRComment,
+  PRCommentReply,
   PRConversationComment,
   PRReaction,
   PRReactionContent,
@@ -196,15 +197,23 @@ function location(
   }
 }
 
-function parseReplies(nodes: GhComment[]): PRComment["replies"] {
-  const list = nodes.slice(1).map((node) => ({
+function parseReply(node: GhComment): PRCommentReply {
+  const reactions = parseReactions(node.reactionGroups)
+  return {
     id: node.id,
     canEdit: node.viewerDidAuthor === true && node.viewerCanUpdate === true,
     canDelete: node.viewerDidAuthor === true && node.viewerCanDelete === true,
     author: node.author?.login ?? "unknown",
     body: node.body ?? "",
     ...(node.author?.avatarUrl ? { avatar: node.author.avatarUrl } : {}),
-  }))
+    ...(node.createdAt ? { createdAt: new Date(node.createdAt).getTime() } : {}),
+    ...(node.url ? { url: node.url } : {}),
+    ...(reactions.length > 0 ? { reactions } : {}),
+  }
+}
+
+function parseReplies(nodes: GhComment[]): PRComment["replies"] {
+  const list = nodes.slice(1).map(parseReply)
   return list.length > 0 ? list : undefined
 }
 

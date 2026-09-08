@@ -1286,6 +1286,52 @@ describe("PRStatusBridge.handleMessage commentReaction", () => {
     )
   })
 
+  it("adds a reaction to a cached thread reply and reports success", async () => {
+    const { bridge, sent, onStatus } = harness()
+    onStatus("wt1", {
+      ...pr,
+      comments: {
+        total: 1,
+        unresolved: 1,
+        comments: [
+          {
+            id: "PRRC_1",
+            threadId: "PRRT_1",
+            author: "alice",
+            body: "note",
+            resolved: false,
+            outdated: false,
+            replies: [{ id: "PRRC_2", author: "bob", body: "reply" }],
+          },
+        ],
+      },
+    })
+    addCommentReaction.mockResolvedValueOnce(undefined)
+
+    expect(
+      bridge.handleMessage({
+        type: "agentManager.commentReaction",
+        worktreeId: "wt1",
+        commentId: "PRRC_2",
+        reaction: "HEART",
+        add: true,
+      }),
+    ).toBe(true)
+    await Promise.resolve()
+
+    expect(addCommentReaction).toHaveBeenCalledWith("PRRC_2", "HEART", "/repo/wt1")
+    expect(sent).toContainEqual(
+      expect.objectContaining({
+        type: "agentManager.commentReactionResult",
+        worktreeId: "wt1",
+        commentId: "PRRC_2",
+        reaction: "HEART",
+        add: true,
+        success: true,
+      }),
+    )
+  })
+
   it("removes a reaction and reports a failure", async () => {
     const { bridge, sent, onStatus } = harness()
     onStatus("wt1", {

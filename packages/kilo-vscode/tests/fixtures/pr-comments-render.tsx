@@ -129,7 +129,17 @@ const [comments, setComments] = createSignal({
       diffHunk: HUNK,
       // Read from the worktree by the extension: a hunk stops at the commented line.
       after: ["  return <View {...options} />", "}", ""],
-      replies: [{ id: "PRRC_reply", author: "marius", body: "reply body is visible", canEdit: true, canDelete: true }],
+      replies: [
+        {
+          id: "PRRC_reply",
+          author: "marius",
+          body: "reply body is visible",
+          canEdit: true,
+          canDelete: true,
+          createdAt: Date.now() - 2 * 60 * 1000,
+          reactions: [{ content: "ROCKET", count: 1, viewerHasReacted: false }],
+        },
+      ],
       reactions: [
         { content: "THUMBS_UP", count: 2, viewerHasReacted: false },
         { content: "HEART", count: 1, viewerHasReacted: true },
@@ -179,7 +189,7 @@ const comment = shadow?.querySelector('[data-content] span[style*="--syntax-comm
 const code = shadow?.querySelectorAll("[data-content] [data-line]")
 assert.match(root.textContent ?? "", /comment body survives Pierre rendering/)
 assert.match(root.textContent ?? "", /reply body is visible/)
-const reactionButtons = [...root.querySelectorAll<HTMLButtonElement>(".am-pr-reaction")]
+const reactionButtons = [...root.querySelectorAll<HTMLButtonElement>('[data-comment-id="PRRC_open"] .am-pr-reaction')]
 const addReaction = reactionButtons.at(0)
 const removeReaction = reactionButtons.at(1)
 assert.ok(addReaction, "add reaction control is rendered")
@@ -204,12 +214,12 @@ assert.equal(addReaction!.getAttribute("aria-busy"), "true")
 assert.equal(removeReaction!.querySelector('[data-component="spinner"]'), null)
 assert.equal(removeReaction!.getAttribute("aria-busy"), "false")
 assert.ok(pickerTrigger(), "the picker trigger stays in place while an update runs")
-const reactionResult = (reaction: string, add: boolean, success: boolean) => {
+const reactionResult = (reaction: string, add: boolean, success: boolean, id = "PRRC_open") => {
   post(
     {
       type: "agentManager.commentReactionResult",
       worktreeId: "wt-test",
-      commentId: "PRRC_open",
+      commentId: id,
       reaction,
       add,
       success,
@@ -275,6 +285,22 @@ assert.deepEqual(reactions[4], {
   reaction: "HEART",
   add: false,
 })
+const replyReaction = root.querySelector<HTMLButtonElement>('[data-comment-id="PRRC_reply"] .am-pr-reaction')
+assert.ok(replyReaction, "reply reaction control is rendered")
+assert.equal(reactionCount(replyReaction!), "1")
+replyReaction!.click()
+await window.happyDOM.waitUntilComplete()
+assert.deepEqual(reactions[5], {
+  type: "agentManager.commentReaction",
+  projectId: undefined,
+  worktreeId: "wt-test",
+  commentId: "PRRC_reply",
+  reaction: "ROCKET",
+  add: true,
+})
+reactionResult("ROCKET", true, true, "PRRC_reply")
+await window.happyDOM.waitUntilComplete()
+assert.ok(root.querySelector(".am-pr-comment-reply .am-pr-comment-time"))
 assert.equal(root.querySelector('[data-thread-id="PRRT_open"] .am-pr-comment-time')?.textContent, "5 min ago")
 assert.equal(root.querySelector('[data-thread-id="PRRT_done"] .am-pr-comment-time'), null)
 assert.equal(root.querySelectorAll('[data-component="diff"]').length, 1)
@@ -756,7 +782,7 @@ const inlineReaction = first.host.querySelector<HTMLButtonElement>(".am-pr-react
 assert.ok(inlineReaction, "inline reaction control is rendered")
 inlineReaction!.click()
 await window.happyDOM.waitUntilComplete()
-assert.deepEqual(reactions.at(5), {
+assert.deepEqual(reactions.at(6), {
   type: "agentManager.commentReaction",
   projectId: undefined,
   worktreeId: "wt-test",
@@ -873,7 +899,7 @@ const navigation = createRoot((dispose) => ({
   dispose,
 }))
 let jumps = 0
-window.HTMLElement.prototype.scrollIntoView = () => {
+window.HTMLElement.prototype.scrollBy = () => {
   jumps++
 }
 patchCommentState(target.worktreeId, () => ({ open: false }))
