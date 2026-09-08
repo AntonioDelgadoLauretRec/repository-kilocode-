@@ -1,5 +1,5 @@
 import type { PRStatus } from "../types"
-import { execGhRead } from "../gh"
+import { execGhInput } from "./PRActions"
 import { GH_MUTATION_TIMEOUT } from "./pr-constants"
 
 /** Resolve IDs and comment kinds only from the host's PR snapshot. */
@@ -21,16 +21,9 @@ export async function mutateComment(m: Record<string, unknown>, pr: PRStatus, cw
   const query = `mutation($id: ID!${action === "delete" ? "" : ", $body: String!"}) {
     ${operation}(input: { ${field}: $id${action === "delete" ? "" : ", body: $body"} }) { ${selection} }
   }`
-  const { stdout } = await execGhRead(
-    [
-      "api",
-      "graphql",
-      "-f",
-      `query=${query}`,
-      "-f",
-      `id=${id}`,
-      ...(action === "delete" ? [] : ["-f", `body=${m.body}`]),
-    ],
+  const { stdout } = await execGhInput(
+    ["api", "graphql", "--method", "POST"],
+    { query, variables: { id, ...(action === "delete" ? {} : { body: m.body }) } },
     { cwd, timeout: GH_MUTATION_TIMEOUT },
   )
   validate(stdout, operation, action, !!issue, id)

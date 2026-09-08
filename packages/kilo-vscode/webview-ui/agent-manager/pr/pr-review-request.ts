@@ -5,7 +5,31 @@ export function reviewRequest(
   message: PRCommentRequest,
   post: (message: never) => void,
   settle: (result: PRCommentResult) => void,
+  timeout = 30_000,
 ) {
+  let timer: ReturnType<typeof setTimeout> | undefined
+  let done = false
+  const failure = {
+    type: `${message.type}Result`,
+    ...(message.projectId === undefined ? {} : { projectId: message.projectId }),
+    worktreeId: message.worktreeId,
+    requestId: message.requestId,
+    ...(message.type === "agentManager.replyComment"
+      ? { threadId: message.threadId }
+      : message.type === "agentManager.mutateComment"
+        ? {}
+        : { prNumber: message.prNumber, prUrl: message.prUrl }),
+    success: false,
+    error: "Request timed out",
+  } as PRCommentResult
+  const finish = (result: PRCommentResult) => {
+    if (done) return
+    done = true
+    window.removeEventListener("message", handler)
+    if (timer !== undefined) clearTimeout(timer)
+    timer = undefined
+    settle(result)
+  }
   const handler = (event: MessageEvent<PRCommentResult>) => {
     const result = event.data
     if (
@@ -24,9 +48,10 @@ export function reviewRequest(
       return
     if (!legacy && (!("prNumber" in result) || result.prNumber !== message.prNumber || result.prUrl !== message.prUrl))
       return
-    window.removeEventListener("message", handler)
-    settle(result)
+    finish(result)
   }
   window.addEventListener("message", handler)
+  timer = setTimeout(() => finish(failure), timeout)
   post(message as never)
+  return () => finish(failure)
 }

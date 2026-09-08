@@ -1,4 +1,4 @@
-import { For, Show, createMemo, createSignal } from "solid-js"
+import { For, Show, createEffect, createMemo, createSignal, on } from "solid-js"
 import { Button } from "@kilocode/kilo-ui/button"
 import { Diff } from "@kilocode/kilo-ui/diff"
 import { Spinner } from "@kilocode/kilo-ui/spinner"
@@ -13,16 +13,51 @@ import { reviewRequest } from "./pr-review-request"
 
 type Anchor = { path: string; side: "LEFT" | "RIGHT"; startLine: number; endLine: number; source?: string }
 type State = { snapshot?: PRDiffSnapshot; pending?: boolean; error?: string; file?: string; anchor?: Anchor }
-const [states, setStates] = createSignal<Record<string, State>>({})
+const MAX_ROUTES = 4
+const [states, setStates] = createSignal(new Map<string, State>())
+const virtualized = typeof Document !== "undefined" && typeof globalThis.innerHeight === "number"
+
+function trim(next: Map<string, State>, active: string) {
+  if (next.size <= MAX_ROUTES) return
+  for (const [id, value] of next) {
+    if (next.size <= MAX_ROUTES) return
+    if (id === active || value.pending) continue
+    next.delete(id)
+  }
+}
 
 export function PRFiles(props: PRTarget & { own?: boolean; closed?: boolean; onRefresh: () => void }) {
   const { t } = useLanguage()
   const vscode = useVSCode()
   let composer: HTMLDivElement | undefined
   const key = () => JSON.stringify([props.projectId, props.worktreeId, props.prNumber, props.prUrl])
-  const state = () => states()[key()] ?? {}
+  const state = () => states().get(key()) ?? {}
+  const drop = (id: string) =>
+    setStates((prev) => {
+      const value = prev.get(id)
+      if (!value) return prev
+      const next = new Map(prev)
+      if (value.pending) {
+        next.set(id, { pending: true })
+        return next
+      }
+      next.delete(id)
+      return next
+    })
   const patch = (value: Partial<State>, id = key()) =>
-    setStates((prev) => ({ ...prev, [id]: { ...prev[id], ...value } }))
+    setStates((prev) => {
+      if (id !== key() && !prev.has(id)) return prev
+      const next = new Map(prev)
+      next.delete(id)
+      next.set(id, { ...prev.get(id), ...value })
+      trim(next, key())
+      return next
+    })
+  createEffect(
+    on(key, (id, previous) => {
+      if (previous && previous !== id) drop(previous)
+    }),
+  )
   const target = (): PRTarget => ({
     projectId: props.projectId,
     worktreeId: props.worktreeId,
@@ -50,6 +85,7 @@ export function PRFiles(props: PRTarget & { own?: boolean; closed?: boolean; onR
             : { pending: false, error: result.error || t("common.requestFailed") },
           id,
         )
+        if (id !== key()) drop(id)
       },
     )
   }
@@ -127,7 +163,7 @@ export function PRFiles(props: PRTarget & { own?: boolean; closed?: boolean; onR
                     fileDiff={value().fileDiff}
                     diffStyle="unified"
                     hunkSeparators="simple"
-                    virtualized={false}
+                    virtualized={virtualized}
                     disableLineNumbers={false}
                     enableLineSelection={!props.closed && !state().pending}
                     onLineSelectionEnd={select}

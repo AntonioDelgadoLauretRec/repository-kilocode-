@@ -1,8 +1,27 @@
+import type { ExecFileOptionsWithStringEncoding } from "node:child_process"
+import { mkdtemp, rm, writeFile } from "node:fs/promises"
+import { tmpdir } from "node:os"
+import { join } from "node:path"
 import { execGhRead } from "../gh"
 import { GH_MUTATION_TIMEOUT } from "./pr-constants"
 import { PR_REACTION_CONTENT, type PRReactionContent } from "../../../webview-ui/agent-manager/pr/pr-types"
 
 const REACTION_CONTENT = new Set<string>(PR_REACTION_CONTENT)
+
+export async function execGhInput(
+  args: string[],
+  input: Record<string, unknown>,
+  options?: Omit<ExecFileOptionsWithStringEncoding, "encoding">,
+): Promise<{ stdout: string; stderr: string }> {
+  const dir = await mkdtemp(join(tmpdir(), "kilo-gh-"))
+  const file = join(dir, "input.json")
+  try {
+    await writeFile(file, JSON.stringify(input), { encoding: "utf8", mode: 0o600 })
+    return await execGhRead([...args, "--input", file], options)
+  } finally {
+    await rm(dir, { recursive: true, force: true })
+  }
+}
 
 export function isPRReactionContent(value: unknown): value is PRReactionContent {
   return typeof value === "string" && REACTION_CONTENT.has(value)
@@ -45,8 +64,9 @@ export async function replyComment(threadId: string, body: string, cwd: string):
       comment { id }
     }
   }`
-  const { stdout } = await execGhRead(
-    ["api", "graphql", "-f", `query=${mutation}`, "-f", `id=${threadId}`, "-f", `body=${body}`],
+  const { stdout } = await execGhInput(
+    ["api", "graphql", "--method", "POST"],
+    { query: mutation, variables: { id: threadId, body } },
     { cwd, timeout: GH_MUTATION_TIMEOUT },
   )
   const result = JSON.parse(stdout) as {

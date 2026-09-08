@@ -67,12 +67,13 @@ function hasComment(pr: PRStatus, id: string): boolean {
 
 export class PRStatusBridge {
   readonly poller: PRStatusPoller
-  private readonly reviews: PRReviewActions
-  private readonly suggestions: PRSuggestionActions
+  private reviews: PRReviewActions
+  private suggestions: PRSuggestionActions
   private readonly cache = new Map<string, AgentManagerOutMessage>()
   /** Branch each cached PR was found on, so a branch switch still clears it. */
   private readonly branches = new Map<string, string>()
   private readonly host: PRBridgeHost
+  private readonly actionHost: PRReviewHost
   private lastErrorNotified: "gh_missing" | "gh_auth" | "fetch_failed" | undefined
 
   constructor(host: PRBridgeHost) {
@@ -86,6 +87,7 @@ export class PRStatusBridge {
       },
       dirtyFiles: () => host.dirtyFiles?.() ?? [],
     }
+    this.actionHost = actions
     this.reviews = new PRReviewActions(actions)
     this.suggestions = new PRSuggestionActions(actions)
   }
@@ -222,9 +224,10 @@ export class PRStatusBridge {
   ): boolean {
     const explicit =
       m.type === "agentManager.mutateComment" ? m.projectId !== undefined : typeof m.projectId === "string"
-    if (explicit && m.projectId !== this.host.projectId?.()) return true
     const id = m.worktreeId as string
-    const projectId = this.host.projectId?.()
+    const current = this.host.projectId?.()
+    const requested = typeof m.projectId === "string" ? m.projectId : undefined
+    const projectId = explicit ? requested : current
     const result = (success: boolean, error?: string) => {
       const route = {
         ...(projectId ? { projectId } : {}),
@@ -241,6 +244,10 @@ export class PRStatusBridge {
             ? { ...route, type, requestId, threadId }
             : { ...route, type, threadId },
       )
+    }
+    if (explicit && requested !== current) {
+      result(false, "Project changed. Reopen the PR review.")
+      return true
     }
     const fail = (err: unknown) => {
       const message = err instanceof Error ? err.message : String(err)
@@ -299,6 +306,9 @@ export class PRStatusBridge {
 
   reset(): void {
     this.poller.stop()
+    this.suggestions.dispose()
+    this.reviews = new PRReviewActions(this.actionHost)
+    this.suggestions = new PRSuggestionActions(this.actionHost)
     this.cache.clear()
     this.branches.clear()
     this.lastErrorNotified = undefined

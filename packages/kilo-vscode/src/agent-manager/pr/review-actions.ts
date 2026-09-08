@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto"
 import type { PRDiffSnapshot, PRReviewResult } from "../../shared/pr-comment-actions"
 import { execGhRead } from "../gh"
+import { execGhInput } from "./PRActions"
 import type { PRReviewContext, PRReviewHost } from "./review-context"
 import { parsePatch } from "../../shared/pr-patch"
 
@@ -40,15 +41,16 @@ function endpoint(context: PRReviewContext) {
   return `repos/${match[1]}/${match[2]}/pulls/${context.pr.number}`
 }
 
-async function api(context: PRReviewContext, path: string, fields: string[] = []) {
-  const { stdout } = await execGhRead(
-    ["api", "--hostname", "github.com", "--method", fields.length ? "POST" : "GET", path, ...fields],
-    {
-      cwd: context.directory,
-      timeout: 30_000,
-      maxBuffer: 16 * 1024 * 1024,
-    },
-  )
+async function api(context: PRReviewContext, path: string, fields: string[] = [], input?: Record<string, unknown>) {
+  const opts = {
+    cwd: context.directory,
+    timeout: 30_000,
+    maxBuffer: 16 * 1024 * 1024,
+  }
+  const method = fields.length || input !== undefined ? "POST" : "GET"
+  const args = ["api", "--hostname", "github.com", "--method", method, path]
+  const { stdout } =
+    input === undefined ? await execGhRead([...args, ...fields], opts) : await execGhInput(args, input, opts)
   return JSON.parse(stdout) as unknown
 }
 
@@ -230,20 +232,15 @@ export class PRReviewActions {
     this.current(context, message)
     if (fresh.head !== snapshot.data.head || fresh.base !== snapshot.base)
       throw new Error("Pull request changed. Reload the review before posting.")
-    const fields = [
-      "-f",
-      `body=${body}`,
-      "-f",
-      `commit_id=${snapshot.data.head}`,
-      "-f",
-      `path=${file.path}`,
-      "-f",
-      `side=${message.side}`,
-      "-F",
-      `line=${end}`,
-    ]
-    if (start !== end) fields.push("-F", `start_line=${start}`, "-f", `start_side=${message.side}`)
-    const data = object(await api(context, `${endpoint(context)}/comments`, fields))
+    const input = {
+      body,
+      commit_id: snapshot.data.head,
+      path: file.path,
+      side: message.side,
+      line: end,
+      ...(start !== end ? { start_line: start, start_side: message.side } : {}),
+    }
+    const data = object(await api(context, `${endpoint(context)}/comments`, [], input))
     if (
       !Number.isSafeInteger(data.id) ||
       Number(data.id) <= 0 ||
@@ -271,14 +268,11 @@ export class PRReviewActions {
       throw new Error("Pull request changed. Reload the review before submitting.")
     // GitHub enforces reviewer permissions, including the ban on approving your own PR.
     const data = object(
-      await api(context, `${endpoint(context)}/reviews`, [
-        "-f",
-        `body=${body}`,
-        "-f",
-        `commit_id=${fresh.head}`,
-        "-f",
-        `event=${event}`,
-      ]),
+      await api(context, `${endpoint(context)}/reviews`, [], {
+        body,
+        commit_id: fresh.head,
+        event,
+      }),
     )
     const state = { APPROVE: "APPROVED", REQUEST_CHANGES: "CHANGES_REQUESTED", COMMENT: "COMMENTED" }[event]
     if (!Number.isSafeInteger(data.id) || Number(data.id) <= 0 || data.commit_id !== fresh.head || data.state !== state)

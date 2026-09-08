@@ -1,3 +1,4 @@
+import { readFile } from "node:fs/promises"
 import { describe, expect, it, beforeEach, afterEach, afterAll, spyOn } from "bun:test"
 import * as actions from "../../src/agent-manager/pr/PRActions"
 import * as gh from "../../src/agent-manager/gh"
@@ -7,6 +8,14 @@ const unresolveComment = spyOn(actions, "unresolveComment").mockResolvedValue(un
 const addCommentReaction = spyOn(actions, "addCommentReaction").mockResolvedValue(undefined)
 const removeCommentReaction = spyOn(actions, "removeCommentReaction").mockResolvedValue(undefined)
 const execute = spyOn(gh, "execGhRead")
+
+async function readInput(args: string[]) {
+  const index = args.indexOf("--input")
+  const file = args.at(index + 1)
+  if (index < 0 || !file) throw new Error("Missing gh input file")
+  return JSON.parse(await readFile(file, "utf8")) as Record<string, unknown>
+}
+
 afterAll(() => {
   resolveComment.mockRestore()
   unresolveComment.mockRestore()
@@ -55,13 +64,17 @@ function harness(opts: { hasPersisted?: boolean; projectId?: string } = {}) {
   const sent: AgentManagerOutMessage[] = []
   const opened: string[] = []
   const reads: (string | undefined)[] = []
+  const done = Promise.withResolvers<void>()
   const worktrees: { id: string; path: string; branch: string; prUrl?: string }[] = [
     { id: "wt1", path: "/repo/wt1", branch: "feature" },
   ]
   const bridge = PRStatusBridge.create({
     getWorktrees: () => worktrees as never,
     getWorkspaceRoot: () => "/repo",
-    postToWebview: (msg) => sent.push(msg),
+    postToWebview: (msg) => {
+      sent.push(msg)
+      if (typeof msg.type === "string" && msg.type.endsWith("Result")) done.resolve()
+    },
     updateWorktreePR: () => {},
     hasPersistedPR: () => opts.hasPersisted ?? false,
     openExternal: (url) => opened.push(url),
@@ -72,7 +85,7 @@ function harness(opts: { hasPersisted?: boolean; projectId?: string } = {}) {
     },
   })
   const onStatus = (bridge.poller as unknown as { options: { onStatus: (...a: unknown[]) => void } }).options.onStatus
-  return { bridge, sent, opened, onStatus, worktrees, reads }
+  return { bridge, sent, opened, onStatus, worktrees, reads, done: done.promise }
 }
 
 describe("PRStatusPoller batched GitHub queries", () => {
@@ -512,7 +525,7 @@ describe("PRStatusBridge replies", () => {
     type: "agentManager.replyComment",
     worktreeId: "wt1",
     threadId: "PRT_1",
-    body: "@file\n'quoted' $(touch nope) `command` \\ true\n\n```suggestion\n  const value = \"$HOME\"\n  return value\n```\n",
+    body: "@.env\n@alice PTAL\n'quoted' $(touch nope) `command` \\ true\n\n```suggestion\n  const value = \"$HOME\"\n  return value\n```\n",
     requestId: "request-1",
   }
   const status: PRStatus = {
@@ -524,21 +537,33 @@ describe("PRStatusBridge replies", () => {
     },
   }
   const response = { data: { addPullRequestReviewThreadReply: { comment: { id: "reply" } } } }
-  beforeEach(() => execute.mockResolvedValue({ stdout: JSON.stringify(response), stderr: "" }))
+  const inputs: Record<string, unknown>[] = []
+  beforeEach(() => {
+    inputs.length = 0
+    execute.mockImplementation(async (args) => {
+      if (args.includes("--input")) inputs.push(await readInput(args))
+      return { stdout: JSON.stringify(response), stderr: "" }
+    })
+  })
   afterEach(() => execute.mockClear())
 
   it.each([undefined, "alpha"])(
     "replies with raw variables and refreshes the owning project (%s)",
     async (projectId) => {
-      const { bridge, sent, refresh } = cached(status, projectId)
+      const { bridge, sent, refresh, done } = cached(status, projectId)
       expect(bridge.handleMessage({ ...request, projectId })).toBe(true)
-      await new Promise<void>((resolve) => setImmediate(resolve))
+      await done
       expect(execute).toHaveBeenCalledTimes(1)
       const [args, opts] = execute.mock.calls.at(0)!
-      expect(args).toContain("body=" + request.body)
-      expect(args.at(-2)).toBe("-f")
-      expect(args).toContain("id=PRT_1")
-      expect(args.find((arg) => arg.startsWith("query="))).toContain("addPullRequestReviewThreadReply")
+      expect(args).toEqual(["api", "graphql", "--method", "POST", "--input", expect.any(String)])
+      expect(args.some((arg) => arg.startsWith("body=") || arg.includes(".env"))).toBe(false)
+      expect(inputs).toHaveLength(1)
+      expect(inputs[0]).toEqual(
+        expect.objectContaining({
+          query: expect.stringContaining("addPullRequestReviewThreadReply"),
+          variables: { id: "PRT_1", body: request.body },
+        }),
+      )
       expect(opts?.cwd).toBe("/repo/wt1")
       expect(sent).toEqual([
         {
@@ -569,7 +594,17 @@ describe("PRStatusBridge replies", () => {
         threadId: kind === "missing thread" ? "other" : request.threadId,
       })
       expect(execute).not.toHaveBeenCalled()
-      if (kind === "other project") expect(sent).toEqual([])
+      if (kind === "other project")
+        expect(sent).toEqual([
+          expect.objectContaining({
+            type: "agentManager.replyCommentResult",
+            projectId: "beta",
+            worktreeId: "wt1",
+            threadId: "PRT_1",
+            requestId: "request-1",
+            success: false,
+          }),
+        ])
       else
         expect(sent).toEqual([
           expect.objectContaining({ success: false, requestId: "request-1", error: expect.any(String) }),
@@ -578,7 +613,7 @@ describe("PRStatusBridge replies", () => {
   )
 
   it.each(["GraphQL", "missing data", "process"])("reports %s failure without refreshing", async (kind) => {
-    const { bridge, sent, refresh } = cached(status)
+    const { bridge, sent, refresh, done } = cached(status)
     if (kind === "process") execute.mockRejectedValueOnce(new Error("gh: Not Found"))
     else
       execute.mockResolvedValueOnce({
@@ -586,7 +621,7 @@ describe("PRStatusBridge replies", () => {
         stderr: "",
       })
     bridge.handleMessage(request)
-    await new Promise<void>((resolve) => setImmediate(resolve))
+    await done
     expect(sent).toEqual([
       expect.objectContaining({ success: false, requestId: "request-1", error: expect.any(String) }),
     ])
@@ -646,7 +681,7 @@ describe("PRStatusBridge comment mutations", () => {
     requestId: "request",
     prNumber: 1,
     prUrl: pr.url,
-    body: "@file\n'quoted' $(touch nope) `command` \\ true\n\n```suggestion\n  const value = \"$HOME\"\n  return value\n```\n",
+    body: "@.env\n@alice PTAL\n'quoted' $(touch nope) `command` \\ true\n\n```suggestion\n  const value = \"$HOME\"\n  return value\n```\n",
   }
   it.each([
     ["create", "ignored", "addComment", "subjectId", "PR_1", { commentEdge: { node: { id: "new" } } }],
@@ -670,15 +705,31 @@ describe("PRStatusBridge comment mutations", () => {
     ],
     ["delete", "reply", "deletePullRequestReviewComment", "id", "reply", { clientMutationId: null }],
   ] as const)("routes %s %s from cached metadata", async (action, commentId, operation, field, id, payload) => {
-    const { bridge, sent, refresh } = cached(status, "alpha")
-    execute.mockResolvedValueOnce({ stdout: JSON.stringify({ data: { [operation]: payload } }), stderr: "" })
+    const { bridge, sent, refresh, done } = cached(status, "alpha")
+    const inputs: Record<string, unknown>[] = []
+    execute.mockImplementation(async (args) => {
+      inputs.push(await readInput(args))
+      return { stdout: JSON.stringify({ data: { [operation]: payload } }), stderr: "" }
+    })
     expect(bridge.handleMessage({ ...request, projectId: "alpha", action, commentId, kind: "bogus" })).toBe(true)
-    await new Promise<void>((resolve) => setImmediate(resolve))
+    await done
     expect(execute).toHaveBeenCalledTimes(1)
     const [args, opts] = execute.mock.calls.at(0)!
-    expect(args).toContain(`id=${id}`)
-    expect(args.find((arg) => arg.startsWith("query="))).toContain(`${operation}(input: { ${field}: $id`)
-    expect(args.includes(`body=${request.body}`)).toBe(action !== "delete")
+    expect(args).toEqual(["api", "graphql", "--method", "POST", "--input", expect.any(String)])
+    expect(
+      args.some(
+        (arg) => arg.startsWith("body=") || arg.startsWith("id=") || arg.startsWith("query=") || arg.includes(".env"),
+      ),
+    ).toBe(false)
+    expect(inputs).toEqual([
+      expect.objectContaining({
+        query: expect.stringContaining(`${operation}(input: { ${field}: $id`),
+        variables: {
+          id,
+          ...(action === "delete" ? {} : { body: request.body }),
+        },
+      }),
+    ])
     expect(opts?.cwd).toBe("/repo/wt1")
     expect(sent).toEqual([
       {
@@ -728,7 +779,16 @@ describe("PRStatusBridge comment mutations", () => {
     await new Promise<void>((resolve) => setImmediate(resolve))
     expect(execute).not.toHaveBeenCalled()
     expect(refresh).not.toHaveBeenCalled()
-    if (kind === "project") expect(sent).toEqual([])
+    if (kind === "project")
+      expect(sent).toEqual([
+        expect.objectContaining({
+          type: "agentManager.mutateCommentResult",
+          projectId: "beta",
+          worktreeId: "wt1",
+          requestId: "request",
+          success: false,
+        }),
+      ])
     else
       expect(sent).toEqual([
         expect.objectContaining({ success: false, requestId: "request", error: expect.any(String) }),
@@ -746,7 +806,7 @@ describe("PRStatusBridge comment mutations", () => {
     ["process", new Error("gh: Forbidden")],
     ["invalid JSON", "not JSON"],
   ])("reports %s and retains cached UI", async (kind, response) => {
-    const { bridge, sent, refresh } = cached(status)
+    const { bridge, sent, refresh, done } = cached(status)
     if (response instanceof Error) execute.mockRejectedValueOnce(response)
     else
       execute.mockResolvedValueOnce({
@@ -754,10 +814,54 @@ describe("PRStatusBridge comment mutations", () => {
         stderr: "",
       })
     bridge.handleMessage({ ...request, action: kind === "empty delete" ? "delete" : "edit", commentId: "issue" })
-    await new Promise<void>((resolve) => setImmediate(resolve))
+    await done
     expect(sent).toEqual([expect.objectContaining({ success: false, requestId: "request", error: expect.any(String) })])
     expect(refresh).not.toHaveBeenCalled()
     expect(bridge.snapshot().get("wt1")).toEqual(status)
+  })
+})
+
+describe("PRStatusBridge project routing", () => {
+  it.each([
+    ["agentManager.loadPRFiles", {}],
+    [
+      "agentManager.createReviewComment",
+      { snapshotId: "snapshot", path: "file.ts", side: "RIGHT", startLine: 1, endLine: 1, body: "body" },
+    ],
+    ["agentManager.submitPRReview", { snapshotId: "snapshot", head: "head", event: "COMMENT", body: "body" }],
+    ["agentManager.previewPRSuggestion", { commentId: "comment", suggestion: 0 }],
+    ["agentManager.applyPRSuggestion", { token: "token" }],
+  ] as const)("acknowledges a %s mismatch on its original route", async (type, fields) => {
+    execute.mockClear()
+    const { bridge, sent } = harness({ projectId: "active" })
+    const refresh = spyOn(bridge.poller, "refresh").mockImplementation(() => {})
+    const requestId = `${type}-request`
+    expect(
+      bridge.handleMessage({
+        type,
+        projectId: "background",
+        worktreeId: "wt1",
+        requestId,
+        prNumber: 1,
+        prUrl: pr.url,
+        ...fields,
+      }),
+    ).toBe(true)
+    await new Promise<void>((resolve) => setImmediate(resolve))
+    expect(execute).not.toHaveBeenCalled()
+    expect(refresh).not.toHaveBeenCalled()
+    expect(sent).toEqual([
+      expect.objectContaining({
+        type: `${type}Result`,
+        projectId: "background",
+        worktreeId: "wt1",
+        requestId,
+        prNumber: 1,
+        prUrl: pr.url,
+        success: false,
+      }),
+    ])
+    expect(JSON.stringify(sent)).not.toContain("active")
   })
 })
 
@@ -1016,6 +1120,50 @@ describe("PRStatusBridge.reset", () => {
     sent.length = 0
     bridge.notifyError("gh_auth")
     expect(sent).toHaveLength(1)
+  })
+
+  it("disposes suggestions, drops review snapshots, and allows future actions", async () => {
+    const { bridge, sent } = harness()
+    const current = bridge as unknown as {
+      reviews: { snapshots: Map<string, unknown> }
+      suggestions: { tokens: Map<string, unknown>; disposed: boolean }
+    }
+    const reviews = current.reviews
+    const suggestions = current.suggestions
+    reviews.snapshots.set("snapshot", { data: "x" })
+    suggestions.tokens.set("token", { snapshot: "x" })
+
+    bridge.reset()
+
+    const next = bridge as unknown as {
+      reviews: { snapshots: Map<string, unknown> }
+      suggestions: { tokens: Map<string, unknown>; disposed: boolean }
+    }
+    expect(suggestions.disposed).toBe(true)
+    expect(suggestions.tokens.size).toBe(0)
+    expect(next.reviews).not.toBe(reviews)
+    expect(next.reviews.snapshots.size).toBe(0)
+    expect(next.suggestions).not.toBe(suggestions)
+    expect(next.suggestions.disposed).toBe(false)
+
+    bridge.handleMessage({
+      type: "agentManager.previewPRSuggestion",
+      worktreeId: "wt1",
+      requestId: "future",
+      prNumber: 1,
+      prUrl: pr.url,
+      commentId: "comment",
+      suggestion: 0,
+    })
+    await new Promise<void>((resolve) => setImmediate(resolve))
+    expect(sent.at(-1)).toEqual(
+      expect.objectContaining({
+        type: "agentManager.previewPRSuggestionResult",
+        requestId: "future",
+        success: false,
+      }),
+    )
+    expect((sent.at(-1) as { error?: string }).error).not.toContain("disposed")
   })
 })
 

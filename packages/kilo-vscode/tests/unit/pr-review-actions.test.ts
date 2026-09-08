@@ -1,3 +1,4 @@
+import { readFile } from "node:fs/promises"
 import { afterAll, beforeEach, describe, expect, it, spyOn } from "bun:test"
 import * as gh from "../../src/agent-manager/gh"
 import { PRReviewActions } from "../../src/agent-manager/pr/review-actions"
@@ -23,6 +24,13 @@ const meta = {
 }
 
 beforeEach(() => execute.mockReset())
+
+async function readInput(args: string[]) {
+  const index = args.indexOf("--input")
+  const file = args.at(index + 1)
+  if (index < 0 || !file) throw new Error("Missing gh input file")
+  return JSON.parse(await readFile(file, "utf8")) as Record<string, unknown>
+}
 
 it.each([
   ["RIGHT", 1, 4, "context\n  new\n\nend"],
@@ -108,11 +116,16 @@ function harness() {
   return { context, host, actions, sent, refresh, send, load, comment, review }
 }
 
-function transport(files: unknown[] = [file]) {
+function transport(
+  files: unknown[] = [file],
+  capture?: (input: Record<string, unknown>) => void,
+  reviewState = "APPROVED",
+) {
   execute.mockImplementation(async (args) => {
     if (args.includes("POST")) {
+      if (capture) capture(await readInput(args))
       if (args.some((arg) => arg.endsWith("/reviews")))
-        return { stdout: JSON.stringify({ id: 12, commit_id: head, state: "APPROVED" }), stderr: "" }
+        return { stdout: JSON.stringify({ id: 12, commit_id: head, state: reviewState }), stderr: "" }
       return {
         stdout: JSON.stringify({
           id: 11,
@@ -132,13 +145,16 @@ function transport(files: unknown[] = [file]) {
 
 describe("commit-bound PR review actions", () => {
   it("loads actual GitHub patches and posts exact raw body with a multiline range", async () => {
-    transport()
+    let input: Record<string, unknown> | undefined
+    transport([file], (value) => {
+      input = value
+    })
     const h = harness()
     expect(h.actions.handle({ type: "other" })).toBe(false)
     const snapshot = await h.load()
     expect(snapshot.files[0]?.patch).toBe(patch)
     expect(snapshot.head).toBe(head)
-    const body = "  ```suggestion\n@literal $(touch nope)\n```\n "
+    const body = '@.env\n@alice PTAL\n\n```suggestion\n  const value = "$HOME"\n  return value\n```\n'
     expect((await h.comment(snapshot, { body })).success).toBe(true)
     expect(execute.mock.calls.at(-1)?.[0]).toEqual([
       "api",
@@ -147,21 +163,18 @@ describe("commit-bound PR review actions", () => {
       "--method",
       "POST",
       "repos/owner/repo/pulls/7/comments",
-      "-f",
-      `body=${body}`,
-      "-f",
-      `commit_id=${head}`,
-      "-f",
-      `path=${file.filename}`,
-      "-f",
-      "side=RIGHT",
-      "-F",
-      "line=3",
-      "-F",
-      "start_line=2",
-      "-f",
-      "start_side=RIGHT",
+      "--input",
+      expect.any(String),
     ])
+    expect(input).toEqual({
+      body,
+      commit_id: head,
+      path: file.filename,
+      side: "RIGHT",
+      line: 3,
+      start_line: 2,
+      start_side: "RIGHT",
+    })
     expect(h.refresh).toHaveBeenCalledTimes(1)
   })
 
@@ -225,7 +238,7 @@ describe("commit-bound PR review actions", () => {
       stderr: "",
     })
     expect((await h.comment(snapshot, { side: "LEFT", startLine: 1, endLine: 1 })).success).toBe(true)
-    expect(execute.mock.calls.at(-1)?.[0]).toContain("side=LEFT")
+    expect(execute.mock.calls.at(-1)?.[0]).toContain("--input")
     expect(execute.mock.calls.at(-1)?.[0].some((arg) => arg.startsWith("start_"))).toBe(false)
   })
 
@@ -351,16 +364,37 @@ describe("commit-bound PR review actions", () => {
   })
 
   it.each(["REQUEST_CHANGES", "COMMENT"])("submits %s against the bound snapshot", async (event) => {
-    transport()
+    const state = event === "COMMENT" ? "COMMENTED" : "CHANGES_REQUESTED"
+    let input: Record<string, unknown> | undefined
+    transport([file], (value) => (input = value), state)
     const h = harness()
     const snapshot = await h.load()
-    const state = event === "COMMENT" ? "COMMENTED" : "CHANGES_REQUESTED"
-    execute
-      .mockResolvedValueOnce({ stdout: JSON.stringify(meta), stderr: "" })
-      .mockResolvedValueOnce({ stdout: JSON.stringify({ id: 12, commit_id: head, state }), stderr: "" })
     expect((await h.review(snapshot, { event, body: "  review draft\n" })).success).toBe(true)
-    expect(execute.mock.calls.at(-1)?.[0]).toContain(`event=${event}`)
-    expect(execute.mock.calls.at(-1)?.[0]).toContain("body=  review draft\n")
+    expect(input?.event).toBe(event)
+    expect(execute.mock.calls.at(-1)?.[0]).toContain("--input")
+    expect(input?.body).toBe("  review draft\n")
+  })
+
+  it("submits an @.env-like review body without a field-file lookup", async () => {
+    let input: Record<string, unknown> | undefined
+    transport([file], (value) => (input = value), "COMMENTED")
+    const h = harness()
+    const snapshot = await h.load()
+    const body = "@.env\n@alice PTAL\n\n```suggestion\n  keep this\n```\n"
+    expect((await h.review(snapshot, { event: "COMMENT", body })).success).toBe(true)
+    const args = execute.mock.calls.at(-1)?.[0] ?? []
+    expect(args).toEqual([
+      "api",
+      "--hostname",
+      "github.com",
+      "--method",
+      "POST",
+      "repos/owner/repo/pulls/7/reviews",
+      "--input",
+      expect.any(String),
+    ])
+    expect(args.some((arg) => arg.startsWith("body=") || arg.includes(".env"))).toBe(false)
+    expect(input?.body).toBe(body)
   })
 
   it("submits an explicit commit and checks review response", async () => {
@@ -375,12 +409,8 @@ describe("commit-bound PR review actions", () => {
       "--method",
       "POST",
       "repos/owner/repo/pulls/7/reviews",
-      "-f",
-      "body=",
-      "-f",
-      `commit_id=${head}`,
-      "-f",
-      "event=APPROVE",
+      "--input",
+      expect.any(String),
     ])
     execute
       .mockResolvedValueOnce({ stdout: JSON.stringify(meta), stderr: "" })
