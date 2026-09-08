@@ -4116,6 +4116,32 @@ export type CloudSessionImportError = {
   error: string
 }
 
+export type BoardMessage = {
+  id: string
+  timestamp: number
+  from: string
+  to: string
+  fromLabel?: string
+  toLabel?: string
+  type: "INFO" | "ASK" | "RESULT" | "HOLD" | "VETO"
+  body: string
+  reply_to?: string
+}
+
+export type SessionBoard = {
+  ownerSessionID: string
+  revision: number
+  messages: Array<BoardMessage>
+  cursor?: string
+  hasMore: boolean
+}
+
+export type UnknownError1 = {
+  _tag: "UnknownError"
+  message: string
+  ref?: string
+}
+
 export type CommandFile = {
   name: string
   description?: string
@@ -4605,7 +4631,7 @@ export type MessageNotFoundError = {
   message: string
 }
 
-export type UnknownError1 = {
+export type UnknownError2 = {
   _tag: "UnknownError"
   message: string
   ref?: string
@@ -16606,6 +16632,95 @@ export type KilocodeDrainSessionResponses = {
 
 export type KilocodeDrainSessionResponse = KilocodeDrainSessionResponses[keyof KilocodeDrainSessionResponses]
 
+export type KilocodeSessionBoardData = {
+  body?: never
+  path: {
+    sessionID: string
+  }
+  query?: {
+    directory?: string
+    workspace?: string
+    before?: string
+    limit?: number
+  }
+  url: "/kilocode/session/{sessionID}/board"
+}
+
+export type KilocodeSessionBoardErrors = {
+  /**
+   * InvalidRequestError
+   */
+  400: InvalidRequestError
+  /**
+   * NotFoundError
+   */
+  404: NotFoundError
+  /**
+   * ConflictError
+   */
+  409: ConflictError
+  /**
+   * UnknownError
+   */
+  500: UnknownError1
+}
+
+export type KilocodeSessionBoardError = KilocodeSessionBoardErrors[keyof KilocodeSessionBoardErrors]
+
+export type KilocodeSessionBoardResponses = {
+  /**
+   * Shared board snapshot
+   */
+  200: SessionBoard
+}
+
+export type KilocodeSessionBoardResponse = KilocodeSessionBoardResponses[keyof KilocodeSessionBoardResponses]
+
+export type KilocodeResetSessionBoardData = {
+  body?: {
+    revision: number
+  }
+  path: {
+    sessionID: string
+  }
+  query?: {
+    directory?: string
+    workspace?: string
+  }
+  url: "/kilocode/session/{sessionID}/board/reset"
+}
+
+export type KilocodeResetSessionBoardErrors = {
+  /**
+   * InvalidRequestError
+   */
+  400: InvalidRequestError
+  /**
+   * NotFoundError
+   */
+  404: NotFoundError
+  /**
+   * ConflictError
+   */
+  409: ConflictError
+  /**
+   * UnknownError
+   */
+  500: UnknownError1
+}
+
+export type KilocodeResetSessionBoardError = KilocodeResetSessionBoardErrors[keyof KilocodeResetSessionBoardErrors]
+
+export type KilocodeResetSessionBoardResponses = {
+  /**
+   * Shared board after reset
+   */
+  200: SessionBoard
+}
+
+export type KilocodeResetSessionBoardResponse =
+  KilocodeResetSessionBoardResponses[keyof KilocodeResetSessionBoardResponses]
+
 export type KilocodeHeapSnapshotData = {
   body?: never
   path?: never
@@ -19316,7 +19431,7 @@ export type V2SessionRevertStageErrors = {
   /**
    * UnknownError
    */
-  500: UnknownError1
+  500: UnknownError2
 }
 
 export type V2SessionRevertStageError = V2SessionRevertStageErrors[keyof V2SessionRevertStageErrors]
@@ -19357,7 +19472,7 @@ export type V2SessionRevertClearErrors = {
   /**
    * UnknownError
    */
-  500: UnknownError1
+  500: UnknownError2
 }
 
 export type V2SessionRevertClearError = V2SessionRevertClearErrors[keyof V2SessionRevertClearErrors]
@@ -19431,7 +19546,7 @@ export type V2SessionContextErrors = {
   /**
    * UnknownError
    */
-  500: UnknownError1
+  500: UnknownError2
 }
 
 export type V2SessionContextError = V2SessionContextErrors[keyof V2SessionContextErrors]
@@ -19631,7 +19746,7 @@ export type V2SessionMessagesErrors = {
   /**
    * UnknownError
    */
-  500: UnknownError1
+  500: UnknownError2
 }
 
 export type V2SessionMessagesError = V2SessionMessagesErrors[keyof V2SessionMessagesErrors]
