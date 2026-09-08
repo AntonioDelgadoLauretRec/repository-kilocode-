@@ -6,6 +6,7 @@
  * from either place marks the same items as sent.
  */
 import { sendReviewComments } from "../../diff-viewer/review-annotations"
+import type { PRReviewCommentData } from "../../../src/shared/review-comments"
 import { SEND_LIMIT, prConversationPayload, prPayload } from "./pr-comment-payload"
 import { type CommentState, patchCommentState } from "./pr-comment-state"
 import type { PRComment, PRConversationComment } from "./pr-types"
@@ -27,14 +28,16 @@ export function actionableConversation(comments: PRConversationComment[], state:
   return comments.filter((c) => !c.isBot && !state.sent[c.id] && !state.dismissed[c.id]).map((c) => c.id)
 }
 
-export function sendThreads(
+function send<T>(
   worktree: string,
-  comments: PRComment[],
+  comments: T[],
   ids: string[],
   state: CommentState,
+  key: (comment: T) => string,
+  payload: (comment: T) => PRReviewCommentData,
   terminal?: string,
 ): void {
-  const index = new Map(comments.map((item) => [item.threadId, item]))
+  const index = new Map(comments.map((item) => [key(item), item]))
   const batch = ids
     .flatMap((id) => {
       const comment = index.get(id)
@@ -42,12 +45,22 @@ export function sendThreads(
     })
     .slice(0, SEND_LIMIT)
   if (batch.length === 0) return
-  sendReviewComments(batch.map(prPayload), terminal)
+  sendReviewComments(batch.map(payload), terminal)
   patchCommentState(worktree, (prev) => {
     const sent = { ...prev.sent }
-    for (const item of batch) sent[item.threadId] = true
+    for (const item of batch) sent[key(item)] = true
     return { sent }
   })
+}
+
+export function sendThreads(
+  worktree: string,
+  comments: PRComment[],
+  ids: string[],
+  state: CommentState,
+  terminal?: string,
+): void {
+  send(worktree, comments, ids, state, (item) => item.threadId, prPayload, terminal)
 }
 
 export function sendConversation(
@@ -57,18 +70,5 @@ export function sendConversation(
   state: CommentState,
   terminal?: string,
 ): void {
-  const index = new Map(comments.map((c) => [c.id, c]))
-  const batch = ids
-    .flatMap((id) => {
-      const comment = index.get(id)
-      return comment && !state.sent[id] ? [comment] : []
-    })
-    .slice(0, SEND_LIMIT)
-  if (batch.length === 0) return
-  sendReviewComments(batch.map(prConversationPayload), terminal)
-  patchCommentState(worktree, (prev) => {
-    const sent = { ...prev.sent }
-    for (const item of batch) sent[item.id] = true
-    return { sent }
-  })
+  send(worktree, comments, ids, state, (item) => item.id, prConversationPayload, terminal)
 }
