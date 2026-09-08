@@ -1,5 +1,23 @@
 # kilo-code
 
+## 7.5.15
+
+## 7.5.14
+
+### Patch Changes
+
+- [#13796](https://github.com/Kilo-Org/kilocode/pull/13796) [`626d1cc`](https://github.com/Kilo-Org/kilocode/commit/626d1cc5777530f2785c34eadbe4faac02f7b13a) - Keep codebase indexing status current and support workspace paths with non-ASCII characters.
+
+- [#13795](https://github.com/Kilo-Org/kilocode/pull/13795) [`2fd7123`](https://github.com/Kilo-Org/kilocode/commit/2fd712321566699899ea44e54201add097cb9824) - Pause Changes, Review, and chat badge polling while their panels are hidden, and reuse unchanged file counts to reduce CPU use in large repositories.
+
+## 7.5.13
+
+### Patch Changes
+
+- [#13792](https://github.com/Kilo-Org/kilocode/pull/13792) [`5d2038d`](https://github.com/Kilo-Org/kilocode/commit/5d2038daa6f1c49b1e1c05891e97fedd9f97de2a) - Keep Shift+Tab available for reasoning variant cycling while the slash command menu is open, without selecting a command or changing the draft.
+
+- [#13791](https://github.com/Kilo-Org/kilocode/pull/13791) [`294219b`](https://github.com/Kilo-Org/kilocode/commit/294219be7d54f3f706501cb4357c4185a652e1a5) - Use consistent icon buttons with clear tooltips for Open, Apply, and Run in the Agent Manager toolbar.
+
 ## 7.5.12
 
 ### Patch Changes
