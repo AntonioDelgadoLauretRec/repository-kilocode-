@@ -1028,6 +1028,7 @@ export const layer = Layer.effect(
                 }
               }
             } else {
+              if (defer && isInterrupted(exit.cause)) return yield* Effect.interrupt // kilocode_change - preserve Goal admission cancellation
               const error = Cause.squash(exit.cause)
               if (defer) return yield* Effect.die(error) // kilocode_change - reject invalid Goal attachments during admission
               yield* Effect.logError("failed to read MCP resource", { error, clientName, uri })
@@ -1188,6 +1189,7 @@ export const layer = Layer.effect(
                     pieces.push({ ...part, mime, messageID: info.id, sessionID: input.sessionID })
                   }
                 } else {
+                  if (defer && isInterrupted(exit.cause)) return yield* Effect.interrupt // kilocode_change - preserve Goal admission cancellation
                   const error = Cause.squash(exit.cause)
                   if (defer) return yield* Effect.die(error) // kilocode_change - reject invalid Goal attachments during admission
                   yield* Effect.logError("failed to read file", { error, filepath })
@@ -1211,6 +1213,7 @@ export const layer = Layer.effect(
                 const args = { filePath: filepath }
                 const exit = yield* execRead(args).pipe(Effect.exit)
                 if (Exit.isFailure(exit)) {
+                  if (defer && isInterrupted(exit.cause)) return yield* Effect.interrupt // kilocode_change - preserve Goal admission cancellation
                   const error = Cause.squash(exit.cause)
                   if (defer) return yield* Effect.die(error) // kilocode_change - reject invalid Goal attachments during admission
                   yield* Effect.logError("failed to read directory", { error, filepath })
@@ -1304,6 +1307,7 @@ export const layer = Layer.effect(
                 )
               }).pipe(Effect.exit)
               if (Exit.isFailure(access)) {
+                if (defer && isInterrupted(access.cause)) return yield* Effect.interrupt
                 const error = Cause.squash(access.cause)
                 if (defer) return yield* Effect.die(error)
                 if (

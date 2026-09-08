@@ -8,6 +8,7 @@ import { FSUtil } from "@opencode-ai/core/fs-util"
 import { ModelV2 } from "@opencode-ai/core/model"
 import { ProviderV2 } from "@opencode-ai/core/provider"
 import { Agent } from "@/agent/agent"
+import * as MCP from "@/mcp"
 import { BackgroundJob } from "@/background/job"
 import { Command } from "@/command"
 import type { Config } from "@/config/config"
@@ -42,6 +43,7 @@ const it = testEffect(
       SessionRunState.node,
       SessionDrain.node,
       Agent.node,
+      MCP.node,
       BackgroundJob.node,
       Command.node,
       EventV2Bridge.node,
@@ -539,6 +541,44 @@ for (const kind of ["image", "file"] as const) {
     30_000,
   )
 }
+
+it.instance(
+  "preserves interruption during replacement attachment admission",
+  Effect.gen(function* () {
+    const run = yield* setup()
+    yield* run.llm.push(reply().hang())
+    yield* run.command(objective)
+    yield* run.wait(1)
+    const mcp = yield* MCP.Service
+    using read = spyOn(mcp, "readResource").mockReturnValue(Effect.interrupt)
+    const result = yield* run.prompt
+      .command({
+        sessionID: run.session.id,
+        command: "goal",
+        arguments: "-- Replacement",
+        parts: [
+          {
+            type: "file",
+            mime: "text/plain",
+            url: "mcp://fixture/context",
+            filename: "context.txt",
+            source: {
+              type: "resource",
+              clientName: "fixture",
+              uri: "fixture://context",
+              text: { value: "context", start: 0, end: 7 },
+            },
+          },
+        ],
+      })
+      .pipe(Effect.exit)
+    expect(read).toHaveBeenCalledTimes(1)
+    expect(Exit.isFailure(result) && Cause.hasInterruptsOnly(result.cause)).toBe(true)
+    expect(GoalState.read(yield* run.metadata)).toMatchObject({ text: objective, active: true })
+    yield* run.prompt.cancel(run.session.id)
+  }),
+  30_000,
+)
 
 for (const action of ["replace", "stop"] as const) {
   it.instance(
