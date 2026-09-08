@@ -80,6 +80,8 @@ export type {
 }
 
 export interface PRStatus {
+  viewerDidAuthor?: boolean
+  id?: string
   number: number
   baseRefOid?: string
   headRefOid?: string
@@ -511,6 +513,7 @@ interface RunStatusMessage extends RunStatus {
 /** All messages the Agent Manager extension sends to the webview. */
 export type AgentManagerOutMessage =
   | WorktreeDeletedMessage
+  | import("../shared/pr-comment-actions").PRCommentResult
   | WorktreeActivityMessage
   | WorktreeStatsMessage
   | LocalStatsMessage
@@ -1174,6 +1177,7 @@ interface BrowserRequestIn {
 
 /** All messages the Agent Manager expects from the webview (onMessage input). */
 export type AgentManagerInMessage =
+  | import("../shared/pr-comment-actions").PRCommentRequest
   | import("../../webview-ui/src/types/messages/agent-manager").BaseUpdateRequest
   | CreateWorktreeIn
   | RequestProjectsIn

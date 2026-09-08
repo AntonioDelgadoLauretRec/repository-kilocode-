@@ -2575,6 +2575,7 @@ const AgentManagerContent: Component = () => {
                         )
                       }
                       remoteComments={remote.comments}
+                      remoteTarget={remote.target}
                       focusedComment={remote.focus}
                       composer={composers.get}
                       lead={() => diffScopeControls(true)}
@@ -2690,6 +2691,7 @@ const AgentManagerContent: Component = () => {
                   canComment={scopeCapabilities(review.scope()).comments}
                   comments={reviewComments()}
                   remoteComments={remote.comments()}
+                  remoteTarget={(comment) => remote.target(diffCtx(), comment)}
                   focusedComment={reviewActive() ? remote.focus(diffScopeId()) : undefined}
                   onCommentsChange={setReviewCommentsForSelection}
                   composer={composers.get(`${activeProjectId() ?? "single"}\0${diffScopeId() ?? ""}`)}

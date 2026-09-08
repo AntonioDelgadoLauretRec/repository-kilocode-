@@ -82,6 +82,8 @@ export type {
 } from "../../../agent-manager/pr/pr-types"
 
 export interface PRStatus {
+  id?: string
+  viewerDidAuthor?: boolean
   number: number
   baseRefOid?: string
   headRefOid?: string

@@ -1274,6 +1274,8 @@ export interface DiffViewerContextMessage {
 export interface DiffViewerPRCommentsMessage {
   type: "diffViewer.prComments"
   comments: PRComment[]
+  target?: import("../../../../src/shared/pr-comment-actions").PRTarget
+  threads?: string[]
 }
 
 export interface DiffViewerFocusCommentMessage {
@@ -1529,6 +1531,14 @@ export interface AgentManagerBrowserDevtoolsMessage {
 }
 
 export type ExtensionMessage =
+  | {
+      type: "agentManager.resolveCommentResult" | "agentManager.unresolveCommentResult"
+      projectId?: string
+      worktreeId: string
+      threadId: string
+      success: boolean
+      error?: string
+    }
   | { type: "sessionAcknowledged"; sessionID: string; eventID: string }
   | { type: "webviewActiveChanged"; active: boolean }
   | DocumentResultMessage

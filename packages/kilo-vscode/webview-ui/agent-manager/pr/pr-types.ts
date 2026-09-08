@@ -31,12 +31,17 @@ export interface PRCheck {
 }
 
 export interface PRCommentReply {
+  id?: string
+  canEdit?: boolean
+  canDelete?: boolean
   author: string
   body: string
   avatar?: string
 }
 
 export interface PRComment {
+  canEdit?: boolean
+  canDelete?: boolean
   id: string
   threadId: string
   author: string
@@ -77,6 +82,9 @@ export interface PRReviewer {
 }
 
 export interface PRConversationComment {
+  kind?: "issue" | "review"
+  canEdit?: boolean
+  canDelete?: boolean
   id: string
   author: string
   avatar?: string

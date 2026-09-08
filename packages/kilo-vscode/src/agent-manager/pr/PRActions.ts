@@ -39,30 +39,44 @@ export function removeCommentReaction(subjectId: string, content: PRReactionCont
   return mutateReaction(subjectId, content, false, cwd)
 }
 
-export async function resolveComment(threadId: string, cwd: string): Promise<void> {
-  const mutation = `mutation($id: ID!) { resolveReviewThread(input: { threadId: $id }) { thread { isResolved } } }`
-  try {
-    await execGhRead(["api", "graphql", "-f", `query=${mutation}`, "-F", `id=${threadId}`], {
-      cwd,
-      timeout: GH_MUTATION_TIMEOUT,
-    })
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err)
-    const stderr = (err as Record<string, unknown>).stderr
-    throw new Error(`Could not resolve thread: ${msg}${stderr ? ` — ${stderr}` : ""}`)
+export async function replyComment(threadId: string, body: string, cwd: string): Promise<void> {
+  const mutation = `mutation($id: ID!, $body: String!) {
+    addPullRequestReviewThreadReply(input: { pullRequestReviewThreadId: $id, body: $body }) {
+      comment { id }
+    }
+  }`
+  const { stdout } = await execGhRead(
+    ["api", "graphql", "-f", `query=${mutation}`, "-f", `id=${threadId}`, "-f", `body=${body}`],
+    { cwd, timeout: GH_MUTATION_TIMEOUT },
+  )
+  const result = JSON.parse(stdout) as {
+    errors?: { message?: string }[]
+    data?: { addPullRequestReviewThreadReply?: { comment?: { id?: string } } }
   }
+  if (result.errors?.length) {
+    throw new Error(result.errors.map((error) => error.message ?? "GraphQL error").join("; "))
+  }
+  if (!result.data?.addPullRequestReviewThreadReply?.comment?.id) throw new Error("Invalid PR reply response")
 }
 
-export async function unresolveComment(threadId: string, cwd: string): Promise<void> {
-  const mutation = `mutation($id: ID!) { unresolveReviewThread(input: { threadId: $id }) { thread { isResolved } } }`
+export function resolveComment(threadId: string, cwd: string): Promise<void> {
+  return resolve("resolve", threadId, cwd)
+}
+
+export function unresolveComment(threadId: string, cwd: string): Promise<void> {
+  return resolve("unresolve", threadId, cwd)
+}
+
+async function resolve(action: "resolve" | "unresolve", id: string, cwd: string): Promise<void> {
+  const mutation = `mutation($id: ID!) { ${action}ReviewThread(input: { threadId: $id }) { thread { isResolved } } }`
   try {
-    await execGhRead(["api", "graphql", "-f", `query=${mutation}`, "-F", `id=${threadId}`], {
+    await execGhRead(["api", "graphql", "-f", `query=${mutation}`, "-F", `id=${id}`], {
       cwd,
       timeout: GH_MUTATION_TIMEOUT,
     })
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err)
     const stderr = (err as Record<string, unknown>).stderr
-    throw new Error(`Could not unresolve thread: ${msg}${stderr ? ` — ${stderr}` : ""}`)
+    throw new Error(`Could not ${action} thread: ${msg}${stderr ? ` - ${stderr}` : ""}`)
   }
 }

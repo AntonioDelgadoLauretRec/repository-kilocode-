@@ -2065,6 +2065,8 @@ export const PRPanelComments: Story = {
         <PRComments
           comments={prComments}
           worktreeId="wt-a1"
+          prNumber={8594}
+          prUrl="https://github.com/org/repo/pull/8594"
           onOpenFile={() => {}}
           onOpenDiff={() => {}}
           onOpenUrl={() => {}}
@@ -2082,6 +2084,8 @@ export const PRPanelComments200: Story = {
         <PRComments
           comments={prComments}
           worktreeId="wt-a1"
+          prNumber={8594}
+          prUrl="https://github.com/org/repo/pull/8594"
           onOpenFile={() => {}}
           onOpenDiff={() => {}}
           onOpenUrl={() => {}}

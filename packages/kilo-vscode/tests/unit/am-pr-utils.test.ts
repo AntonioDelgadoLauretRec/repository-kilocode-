@@ -23,7 +23,35 @@ import type { PRComment, PRConversationComment, PRStatus } from "../../src/agent
 
 // --- parsePRResult ---
 
+describe("comment permissions", () => {
+  it.each([
+    [true, true, true],
+    [true, true, false],
+    [true, false, true],
+    [false, true, true],
+    [undefined, true, true],
+    [true, undefined, undefined],
+  ])("requires ownership and each GitHub permission (%s, %s, %s)", (owner, update, remove) => {
+    const node = {
+      id: "comment",
+      body: "Body",
+      viewerDidAuthor: owner,
+      viewerCanUpdate: update,
+      viewerCanDelete: remove,
+    }
+    const expected = { canEdit: owner === true && update === true, canDelete: owner === true && remove === true }
+    const thread = parseComments([{ comments: { nodes: [node] }, latest: { nodes: [{ ...node, id: "reply" }] } }]).at(0)
+    expect(thread).toMatchObject(expected)
+    expect(thread?.replies?.at(0)).toMatchObject({ ...expected, id: "reply" })
+    expect(parseConversation([node], []).at(0)).toMatchObject({ ...expected, kind: "issue" })
+    expect(parseConversation([], [node]).at(0)).toMatchObject({ kind: "review", canEdit: false, canDelete: false })
+  })
+})
+
 describe("parsePRResult", () => {
+  it("retains the pull request node ID", () => {
+    expect(parsePRResult(JSON.stringify({ number: 1, id: "PR_1" }))?.id).toBe("PR_1")
+  })
   it("returns null when number is missing", () => {
     expect(parsePRResult(JSON.stringify({ title: "foo" }))).toBeNull()
   })
@@ -380,6 +408,8 @@ describe("parseComments", () => {
       {
         id: "c1",
         threadId: "PRT_thread1",
+        canEdit: false,
+        canDelete: false,
         author: "alice",
         avatar: "https://avatar",
         body: "looks good",
@@ -463,7 +493,9 @@ describe("parseComments", () => {
     const result = parseComments(threads)
     expect(result).toHaveLength(1)
     expect(result[0]?.id).toBe("first")
-    expect(result[0]?.replies).toEqual([{ author: "bob", body: "second comment" }])
+    expect(result[0]?.replies).toEqual([
+      { id: "second", author: "bob", body: "second comment", canEdit: false, canDelete: false },
+    ])
   })
 
   it("marks an outdated thread", () => {
@@ -549,7 +581,7 @@ describe("parseComments", () => {
         line: 12,
         originalLine: 9,
         startLine: 10,
-        replies: [{ author: "bob", body: "reply", avatar: "https://avatar/bob" }],
+        replies: [expect.objectContaining({ author: "bob", body: "reply", avatar: "https://avatar/bob" })],
       }),
     )
     expect(result[1]).toEqual(
@@ -746,6 +778,9 @@ describe("parseConversation", () => {
     expect(result).toHaveLength(2)
     expect(result[0]).toEqual({
       id: "IC_1",
+      kind: "issue",
+      canEdit: false,
+      canDelete: false,
       author: "alice",
       avatar: "https://avatar/alice",
       body: "First comment",
@@ -755,6 +790,9 @@ describe("parseConversation", () => {
     })
     expect(result[1]).toEqual({
       id: "PRR_1",
+      kind: "review",
+      canEdit: false,
+      canDelete: false,
       author: "bob",
       avatar: "https://avatar/bob",
       body: "Consider using rawJSON",
