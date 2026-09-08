@@ -831,15 +831,22 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
   }
 
   /** Register a session created externally and notify the webview. */
-  public registerSession(session: Session, activate = false): void {
+  public registerSession(
+    session: Session,
+    activate = false,
+    project = this.opts.projectQualifier?.()?.projectId,
+  ): void {
     this.removedSessionIds.delete(session.id)
-    this.stopCurrentSessionProcesses(session.id)
-    this.setCurrentSession(session)
-    this.contextSessionID = session.id
+    if (project === this.opts.projectQualifier?.()?.projectId) {
+      this.stopCurrentSessionProcesses(session.id)
+      this.setCurrentSession(session)
+      this.contextSessionID = session.id
+    }
     this.trackedSessionIds.add(session.id)
+    this.trackDirectory(session.id, session.directory)
     this.postMessage({
       type: "sessionCreated",
-      projectId: this.opts.projectQualifier?.()?.projectId,
+      projectId: project,
       session: this.sessionToWebview(session),
       ...(activate ? { activate: true } : {}),
     })
@@ -2064,23 +2071,26 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
 
     try {
       const workspaceDir = this.getContextDirectory()
+      const project = this.opts.projectQualifier?.()?.projectId
       const metadata = await sandboxSessionMetadata(this.connectionService.sandboxPreference, this.client, workspaceDir)
       const { data: session } = await this.client.session.create(
         { directory: workspaceDir, platform: this.opts.platform, metadata },
         { throwOnError: true },
       )
-      this.stopCurrentSessionProcesses(session.id)
-      this.setCurrentSession(session)
-      this.contextSessionID = session.id
-      this.focusSession(session.id)
+      if (project === this.opts.projectQualifier?.()?.projectId) {
+        this.stopCurrentSessionProcesses(session.id)
+        this.setCurrentSession(session)
+        this.contextSessionID = session.id
+        this.focusSession(session.id)
+      }
       this.trackDirectory(session.id, workspaceDir)
       this.trackedSessionIds.add(session.id)
 
       // Notify webview of the new session
       this.postMessage({
         type: "sessionCreated",
-        projectId: this.opts.projectQualifier?.()?.projectId,
-        session: this.sessionToWebview(this.currentSession!),
+        projectId: project,
+        session: this.sessionToWebview(session),
       })
     } catch (error) {
       console.error("[Kilo New] KiloProvider: Failed to create session:", error)
@@ -3713,6 +3723,7 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
   }
   private async resolveSession(sessionID?: string, draftID?: string, context?: string, contextDirectory?: string) {
     if (!this.client) return undefined
+    const project = this.opts.projectQualifier?.()?.projectId
 
     // Agent Manager: consult the shared route service for an exact directory
     // before the legacy sessionDirectories/workspace-root resolution. When a
@@ -3769,15 +3780,17 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
           await this.client!.session.delete({ sessionID: session.id, directory: dir }, { throwOnError: true })
           return undefined
         }
-        this.stopCurrentSessionProcesses(session.id)
-        this.setCurrentSession(session)
-        this.contextSessionID = session.id
-        this.focusSession(session.id)
+        if (project === this.opts.projectQualifier?.()?.projectId) {
+          this.stopCurrentSessionProcesses(session.id)
+          this.setCurrentSession(session)
+          this.contextSessionID = session.id
+          this.focusSession(session.id)
+        }
         this.trackDirectory(session.id, dir)
         this.trackedSessionIds.add(session.id)
         this.postMessage({
           type: "sessionCreated",
-          projectId: this.opts.projectQualifier?.()?.projectId,
+          projectId: project,
           session: this.sessionToWebview(session),
           draftID,
         })
@@ -3885,10 +3898,6 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
     return vscode.workspace.getConfiguration("kilo-code.new").get<string>("languageCommitMessage", "sync")
   }
 
-  private multiProjectSetting(): boolean {
-    return vscode.workspace.getConfiguration("kilo-code.new.experimental").get<boolean>("multiProject", false)
-  }
-
   private browserAutomationSetting(): boolean {
     return vscode.workspace.getConfiguration("kilo-code.new.experimental").get<boolean>("browserAutomation", false)
   }
@@ -3970,7 +3979,6 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
     return {
       maxCost: this.maxCostSetting(),
       languageCommitMessage: this.commitMessageLanguageSetting(),
-      multiProject: this.multiProjectSetting(),
       browserAutomation: this.browserAutomationSetting(),
       "agentManager.autoBranchNaming": naming.get<boolean>("autoBranchNaming", true),
       "agentManager.branchPrefix": naming.get<string>("branchPrefix", ""),

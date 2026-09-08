@@ -700,7 +700,6 @@ export interface ClaudeCompatSettingLoadedMessage {
 
 export interface ExtensionSettings {
   maxCost?: number
-  multiProject?: boolean
   [key: string]: unknown
 }
 
@@ -912,7 +911,6 @@ export interface AgentProjectSnapshot {
 // Project catalog push from extension to webview
 export interface AgentManagerProjectsMessage {
   type: "agentManager.projects"
-  multiProject: boolean
   projects: AgentProjectSnapshot[]
 }
 
