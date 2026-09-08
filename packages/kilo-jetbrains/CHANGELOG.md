@@ -450,10 +450,6 @@
 
 ## [7.1.6-rc.3] - 2026-09-08
 
-### Added
-
-- Added stdin prompt support for Cloud Agent CLI commands.
-
 ### Fixed
 
 - Fixed config warnings being attributed to the IDE's working directory instead of the actual project, which could show a stray "home directory" warning banner.
