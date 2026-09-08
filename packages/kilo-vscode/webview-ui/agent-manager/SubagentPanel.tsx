@@ -6,15 +6,15 @@
  */
 
 import { Icon } from "@kilocode/kilo-ui/icon"
-import { AgentAvatar } from "@kilocode/kilo-ui/agent-avatar"
+import { AgentAvatar, AgentAvatarPalette } from "@kilocode/kilo-ui/agent-avatar"
 import { IconButton } from "@kilocode/kilo-ui/icon-button"
-import { createEffect, createMemo, on, Show, type Accessor, type Component } from "solid-js"
+import { createEffect, createMemo, on, type Accessor, type Component } from "solid-js"
 import { DataBridge } from "../src/App"
 import { ChatView } from "../src/components/chat"
-import { ActivityIcon } from "../src/components/shared/ActivityIcon"
+import { children } from "../src/components/chat/background-agents"
 import { useLanguage } from "../src/context/language"
 import { SessionProvider, useSession, useSessionVisibility } from "../src/context/session"
-import { description, label, running, type Activity } from "../src/utils/session-activity"
+import { description, label, type Activity } from "../src/utils/session-activity"
 import { SortableClosableTab } from "./ClosableTab"
 import { InspectorTabStrip } from "./InspectorTabStrip"
 import type { SubagentTab } from "./subagent-tabs"
@@ -105,12 +105,7 @@ const SubagentContent: Component<Props & { activity: (id: string) => Activity }>
               tooltip={() => (state() === "idle" ? name : `${name}: ${language.t(description(state()))}`)}
               icon="task"
               iconNode={
-                <>
-                  <AgentAvatar id={id} running={running(state())} />
-                  <Show when={state() !== "idle" && !running(state())}>
-                    <ActivityIcon state={state()} spinner="am-tab-spinner" />
-                  </Show>
-                </>
+                <AgentAvatar id={id} status={state() === "busy" || state() === "retry" ? "running" : undefined} />
               }
               state={state()}
               stateLabel={state() === "idle" ? undefined : language.t(label(state()))}
@@ -145,9 +140,16 @@ const SubagentContent: Component<Props & { activity: (id: string) => Activity }>
 export const SubagentPanel: Component<Props> = (props) => {
   const session = useSession()
   useSessionVisibility(() => (props.visible() ? props.active() : undefined))
+  // Colors follow the parent's spawn order so tabs match the parent transcript.
+  const siblings = createMemo(() => {
+    const id = session.currentSessionID()
+    return id ? children(session.getSessionToolParts(id)) : []
+  })
   return (
-    <SessionProvider>
-      <SubagentContent {...props} activity={session.activityFor} />
-    </SessionProvider>
+    <AgentAvatarPalette ids={siblings()}>
+      <SessionProvider>
+        <SubagentContent {...props} activity={session.activityFor} />
+      </SessionProvider>
+    </AgentAvatarPalette>
   )
 }

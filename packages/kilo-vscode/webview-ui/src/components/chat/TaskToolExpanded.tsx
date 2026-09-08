@@ -24,7 +24,7 @@ import { useWorktreeMode } from "../../context/worktree-mode"
 import { childID, latestTaskPart } from "../../context/session-utils"
 import { useConfig } from "../../context/config"
 import { openSubagent } from "./open-subagent"
-import { showChildPromotion, taskResult, taskRunning, taskVisible } from "./task-tool-state"
+import { showChildPromotion, taskAvatarStatus, taskResult, taskRunning, taskVisible } from "./task-tool-state"
 
 const TaskToolRenderer: Component<ToolProps> = (props) => {
   const i18n = useI18n()
@@ -59,6 +59,10 @@ const TaskToolRenderer: Component<ToolProps> = (props) => {
   )
 
   const running = createMemo(() => taskRunning(props.status))
+  const avatar = createMemo(() => {
+    const id = childSessionId()
+    return taskAvatarStatus(id, props.status, session.allStatusMap())
+  })
   // BasicTool's forceOpen effect only fires onOpenChange on a false->true
   // transition — a virtualized remount that starts with forceOpen already
   // true never transitions, so this local signal must also seed itself from
@@ -203,7 +207,7 @@ const TaskToolRenderer: Component<ToolProps> = (props) => {
     <div data-component="tool-part-wrapper">
       <BasicTool
         icon="task"
-        iconNode={<AgentAvatar id={childSessionId() ?? ""} running={running()} />}
+        iconNode={<AgentAvatar id={childSessionId() ?? ""} status={avatar()} />}
         status={props.status}
         tool={props.tool}
         partID={props.partID}

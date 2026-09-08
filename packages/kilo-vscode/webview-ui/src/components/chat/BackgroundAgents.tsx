@@ -237,15 +237,8 @@ export const BackgroundAgents: Component<{ readonly?: boolean }> = (props) => {
               aria-expanded={open()}
               onClick={() => setOpen((value) => !value)}
             >
-              <Show
-                when={waiting() > 0}
-                fallback={
-                  <Show when={icon(state())} fallback={<Spinner />}>
-                    {(name) => <Icon name={name()} size="small" />}
-                  </Show>
-                }
-              >
-                <Icon name="warning" size="small" />
+              <Show when={icon(state())} fallback={<Spinner />}>
+                {(name) => <Icon name={name()} size="small" />}
               </Show>
               <span data-slot="task-header-todos-summary">{caption()}</span>
             </Button>
@@ -265,19 +258,8 @@ export const BackgroundAgents: Component<{ readonly?: boolean }> = (props) => {
                         aria-label={tooltip(agent())}
                         onClick={() => openAgent(agent())}
                       >
-                        <AgentAvatar
-                          id={agent().id}
-                          running={agent().status === "running" && !agent().permission && !agent().question}
-                        />
+                        <AgentAvatar id={agent().id} status={agent().status === "running" ? "running" : undefined} />
                         <span dir="auto">{label(agent())}</span>
-                        <Show
-                          when={agent().permission || agent().question}
-                          fallback={
-                            <Show when={icon(agent().status)}>{(name) => <Icon name={name()} size="small" />}</Show>
-                          }
-                        >
-                          <Icon name="warning" size="small" />
-                        </Show>
                       </Button>
                     )}
                   </Show>
@@ -308,7 +290,6 @@ export const BackgroundAgents: Component<{ readonly?: boolean }> = (props) => {
             ref={toggle}
             variant="ghost"
             size="small"
-            icon={waiting() > 0 ? "warning" : undefined}
             aria-label={accessible()}
             title={accessible()}
             aria-expanded={open()}
@@ -354,7 +335,6 @@ export const BackgroundAgents: Component<{ readonly?: boolean }> = (props) => {
           <div data-slot="task-header-todos-list" ref={list}>
             <Show when={visible().some((agent) => agent.permission || agent.question)}>
               <div data-slot="task-header-agent-attention">
-                <Icon name="warning" size="small" />
                 <span>{language.t("task.backgroundAgents.waiting")}</span>
               </div>
             </Show>
@@ -363,13 +343,7 @@ export const BackgroundAgents: Component<{ readonly?: boolean }> = (props) => {
                 <Show when={visible().find((agent) => agent.jobID === id)}>
                   {(agent) => (
                     <div data-slot="task-header-agent" data-status={agent().status}>
-                      <AgentAvatar
-                        id={agent().id}
-                        running={agent().status === "running" && !agent().permission && !agent().question}
-                      />
-                      <Show when={icon(agent().status)}>
-                        {(name) => <Icon name={name()} size="small" data-slot="task-header-agent-status" />}
-                      </Show>
+                      <AgentAvatar id={agent().id} status={agent().status === "running" ? "running" : undefined} />
                       <button
                         data-slot="task-header-agent-main"
                         title={`${language.t("task.backgroundAgents.open")}: ${label(agent())}`}

@@ -3,7 +3,17 @@ import { useI18n } from "../context/i18n"
 import { Icon } from "./icon"
 import { AgentAvatar } from "./agent-avatar"
 import { Markdown } from "./markdown"
+import { Spinner } from "./spinner"
 import { Tooltip } from "./tooltip"
+
+// The parent session keeps the plain spinner grid; only subagents get a glyph.
+function Member(props: { id: string }) {
+  return (
+    <Show when={props.id !== "main"} fallback={<Spinner class="board-route-parent" />}>
+      <AgentAvatar id={props.id} />
+    </Show>
+  )
+}
 
 type Route = { from?: unknown; to?: unknown; fromLabel?: unknown; toLabel?: unknown }
 
@@ -36,7 +46,7 @@ export function BoardRoute(props: Route) {
       role="group"
       aria-label={i18n.t("ui.messagePart.board.route", { from: sender(), to: recipient() })}
     >
-      <AgentAvatar id={from()} />
+      <Member id={from()} />
       <Tooltip
         class="board-route-member board-route-sender"
         contentClass="board-route-tooltip"
@@ -46,7 +56,7 @@ export function BoardRoute(props: Route) {
       </Tooltip>
       <Icon name="arrow-right" size="small" />
       <span data-slot="board-route-recipient-icon" data-broadcast={to() === "ALL"}>
-        <Show when={to() === "ALL"} fallback={<AgentAvatar id={to()} />}>
+        <Show when={to() === "ALL"} fallback={<Member id={to()} />}>
           <Icon name="task" size="small" />
           <Icon name="task" size="small" />
         </Show>

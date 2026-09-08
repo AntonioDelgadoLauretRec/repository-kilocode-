@@ -36,7 +36,7 @@ import { useClipboard } from "../context/clipboard"
 import { type UiI18n, useI18n } from "../context/i18n"
 import { BasicTool, useToolApprovalLine } from "./basic-tool"
 import { BoardMessage, BoardRoute } from "./board-message"
-import { AgentAvatar } from "./agent-avatar"
+import { AgentAvatar, taskStatus } from "./agent-avatar"
 import { Accordion } from "./accordion"
 import { StickyAccordionHeader } from "./sticky-accordion-header"
 import { Card } from "./card"
@@ -2170,9 +2170,9 @@ ToolRegistry.register({
               animate={props.reveal}
               onClick={data.openFile ? () => data.openFile!(filepath) : undefined}
             />
-    )}
+          )}
         </For>
-      <Show when={images().length > 0}>
+        <Show when={images().length > 0}>
           <div data-slot="tool-read-images">
             <For each={images()}>
               {(file) => (
@@ -2458,9 +2458,7 @@ ToolRegistry.register({
         hideDetails
         approvalPlacement="hidden"
         icon="task"
-        iconNode={
-          <AgentAvatar id={childSessionId() ?? ""} running={props.status === "running" || props.status === "pending"} />
-        }
+        iconNode={<AgentAvatar id={childSessionId() ?? ""} status={taskStatus(props.status)} />}
         status={props.status}
         trigger={trigger()}
         animated
@@ -2908,24 +2906,26 @@ ToolRegistry.register({
       const diffs = files().flatMap((file) => {
         const diff = view(file)
         return diff
-          ? [{
-              file: file.relativePath,
-              patch: diff.patch,
-              status:
-                file.type === "add"
-                  ? ("added" as const)
-                  : file.type === "delete"
-                    ? ("deleted" as const)
-                    : ("modified" as const),
-              additions:
-                file.type === "add" && diff.additions === 0
-                  ? diff.fileDiff.hunks.reduce((sum, hunk) => sum + hunk.additionLines, 0)
-                  : diff.additions,
-              deletions:
-                file.type === "delete" && diff.deletions === 0
-                  ? diff.fileDiff.hunks.reduce((sum, hunk) => sum + hunk.deletionLines, 0)
-                  : diff.deletions,
-            }]
+          ? [
+              {
+                file: file.relativePath,
+                patch: diff.patch,
+                status:
+                  file.type === "add"
+                    ? ("added" as const)
+                    : file.type === "delete"
+                      ? ("deleted" as const)
+                      : ("modified" as const),
+                additions:
+                  file.type === "add" && diff.additions === 0
+                    ? diff.fileDiff.hunks.reduce((sum, hunk) => sum + hunk.additionLines, 0)
+                    : diff.additions,
+                deletions:
+                  file.type === "delete" && diff.deletions === 0
+                    ? diff.fileDiff.hunks.reduce((sum, hunk) => sum + hunk.deletionLines, 0)
+                    : diff.deletions,
+              },
+            ]
           : []
       })
       const first = diffs[0]
@@ -3074,11 +3074,7 @@ ToolRegistry.register({
                                       <span data-slot="apply-patch-directory">{`\u2066${getDirectory(file.relativePath)}\u2069`}</span>
                                     </Show>
 
-                                    <span
-                                      data-slot="apply-patch-filename"
-                                    >
-                                      {getFilename(file.relativePath)}
-                                    </span>
+                                    <span data-slot="apply-patch-filename">{getFilename(file.relativePath)}</span>
                                   </div>
                                 </div>
                                 <div data-slot="apply-patch-trigger-actions">

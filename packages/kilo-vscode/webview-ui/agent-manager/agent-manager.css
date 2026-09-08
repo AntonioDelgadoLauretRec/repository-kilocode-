@@ -1521,9 +1521,7 @@ html[data-theme="kilo-vscode"]
 }
 
 .am-subagent-panel .am-tab-icon:has([data-component="agent-avatar"]) {
-  width: auto;
-  height: 20px;
-  gap: 4px;
+  overflow: visible;
 }
 
 .am-tab-icon[data-run-status="success"] {
