@@ -59,6 +59,14 @@ export const dict = {
   "session.goal.restart": "目標を再開（モデルクレジットを消費）",
   ...anacondaDesktopDict,
   ...cloudProviderDict,
+  "task.swarm.title": "ボード",
+  "task.swarm.refresh": "更新",
+  "task.swarm.reset": "ボードをリセット",
+  "task.swarm.resetTitle": "このボードをリセットしますか？",
+  "task.swarm.resetDescription":
+    "表示されているメッセージを消去しますか？会話と実行中のタスクは変更されません。エージェントは新しいメッセージを投稿できます。",
+  "task.swarm.loading": "ボードを読み込み中...",
+  "task.swarm.failed": "ボードを読み込むかリセットできませんでした。更新を試してください。",
 
   "command.provider.connect": "プロバイダーに接続",
 

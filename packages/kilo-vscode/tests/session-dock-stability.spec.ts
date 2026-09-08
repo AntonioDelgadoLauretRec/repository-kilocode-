@@ -158,6 +158,8 @@ for (const width of [340, 532, 720, 1400]) {
     const spinner = page.locator('.working-indicator [data-component="spinner"]')
     await page.getByTestId("toggle-busy").click()
     await expect(spinner).toBeVisible()
+    // CSS motion overrides do not clear StatusText's JavaScript width lock.
+    await expect(page.locator(".working-status")).not.toHaveAttribute("data-swap")
     const baseline = await spinner.boundingBox()
     await page.getByTestId("toggle-busy").click()
     await page.getByTestId("toggle-goal").click()
@@ -210,6 +212,7 @@ for (const width of [340, 532, 720, 1400]) {
     await expect(goal).toBeHidden()
     await expect(actions).toBeHidden()
     await expect(page.getByRole("menuitem", { name: "Clear goal" })).toBeHidden()
+    await expect(page.locator(".working-status")).not.toHaveAttribute("data-swap")
     const bounds = await spinner.boundingBox()
     if (!bounds || !baseline) throw new Error("Spinner missing")
     expect(bounds.x).toBe(baseline.x)

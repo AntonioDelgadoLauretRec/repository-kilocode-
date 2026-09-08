@@ -58,6 +58,14 @@ export const dict = {
   "session.goal.restart": "إعادة بدء الهدف (تستهلك أرصدة النموذج)",
   ...anacondaDesktopDict,
   ...cloudProviderDict,
+  "task.swarm.title": "اللوحة",
+  "task.swarm.refresh": "تحديث",
+  "task.swarm.reset": "إعادة تعيين اللوحة",
+  "task.swarm.resetTitle": "إعادة تعيين هذه اللوحة؟",
+  "task.swarm.resetDescription":
+    "مسح الرسائل الظاهرة؟ لن تتغير المحادثات والمهام الجارية. يمكن للوكلاء نشر رسائل جديدة.",
+  "task.swarm.loading": "جارٍ تحميل اللوحة...",
+  "task.swarm.failed": "تعذّر تحميل اللوحة أو إعادة تعيينها. حاول تحديثها.",
 
   "command.provider.connect": "اتصال بموفر",
 

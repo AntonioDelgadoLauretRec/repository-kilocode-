@@ -65,6 +65,14 @@ export const dict = {
   "session.goal.restart": "Ziel neu starten (verbraucht Modellguthaben)",
   ...anacondaDesktopDict,
   ...cloudProviderDict,
+  "task.swarm.title": "Board",
+  "task.swarm.refresh": "Aktualisieren",
+  "task.swarm.reset": "Board zurücksetzen",
+  "task.swarm.resetTitle": "Dieses Board zurücksetzen?",
+  "task.swarm.resetDescription":
+    "Sichtbare Nachrichten löschen? Unterhaltungen und laufende Aufgaben bleiben unverändert. Agenten können neue Nachrichten veröffentlichen.",
+  "task.swarm.loading": "Board wird geladen...",
+  "task.swarm.failed": "Das Board konnte nicht geladen oder zurückgesetzt werden. Versuchen Sie, es zu aktualisieren.",
 
   "command.provider.connect": "Anbieter verbinden",
 
