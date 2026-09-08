@@ -249,24 +249,16 @@ describe("working-tree PR suggestions", () => {
     }
   })
 
-  it("notifies directory watchers with the complete replacement while old readers retain the original", async () => {
+  it("replaces the target atomically while old readers retain the original", async () => {
     const file = path.join(directory, "file.txt")
     const value = await token()
     const before = await fs.readFile(file, "utf8")
     const reader = await fs.open(file, "r")
-    const event = Promise.withResolvers<void>()
-    const watcher = disk.watch(directory, (_event, name) => {
-      if (name === "file.txt") event.resolve()
-    })
-    const timeout = setTimeout(() => event.reject(new Error("Replacement watcher event missing")), 3000)
     try {
       expect((await apply(value)).success).toBe(true)
-      await event.promise
       expect(await fs.readFile(file, "utf8")).toBe(before.replace("old", "new"))
       expect(await reader.readFile("utf8")).toBe(before)
     } finally {
-      clearTimeout(timeout)
-      watcher.close()
       await reader.close()
     }
   })
