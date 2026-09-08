@@ -429,6 +429,16 @@ describe("WorktreeManager.createWorktree", () => {
     )
   })
 
+  it("reports when an explicit base branch is selected in a repository with no commits", async () => {
+    const root = await fs.mkdtemp(path.join(os.tmpdir(), "kilo-wt-empty-"))
+    tempDirs.push(root)
+    gitExec(["git", "init", "-b", "main", root])
+
+    await expect(createManager(root).createWorktree({ baseBranch: "main", branchName: "feature" })).rejects.toThrow(
+      "This repository has no commits yet. Create an initial commit before using worktrees.",
+    )
+  })
+
   it("throws when workspace is not a git repo", async () => {
     const dir = await fs.mkdtemp(path.join(os.tmpdir(), "kilo-wt-nogit-"))
     tempDirs.push(dir)
