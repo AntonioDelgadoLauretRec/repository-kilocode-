@@ -420,6 +420,12 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
         action: () => props.onUpdateBase?.(),
         enabled: () => props.worktree === true && server.isConnected() && !locked() && !props.blocked?.(),
       },
+      {
+        name: "caffeinate",
+        description: "Keep the computer awake while Kilo agents work",
+        hints: ["caffenate", "keep-awake"],
+        action: () => vscode.postMessage({ type: "toggleCaffeination" }),
+      },
     ],
   )
   const clearSandboxRequest = (sessionID: string | undefined, requestID: string) => {
