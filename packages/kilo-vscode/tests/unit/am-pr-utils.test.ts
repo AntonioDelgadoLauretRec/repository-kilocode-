@@ -455,7 +455,14 @@ describe("parseComments", () => {
         comments: {
           nodes: [
             { id: "first", body: "first comment", author: { login: "alice" } },
-            { id: "second", body: "second comment", author: { login: "bob" } },
+            {
+              id: "second",
+              body: "second comment",
+              author: { login: "bob" },
+              createdAt: "2024-01-02T00:00:00Z",
+              url: "https://github.com/example/repo/pull/1#discussion_r2",
+              reactionGroups: [{ content: "HEART", reactors: { totalCount: 2 }, viewerHasReacted: true }],
+            },
           ],
         },
       },
@@ -463,7 +470,16 @@ describe("parseComments", () => {
     const result = parseComments(threads)
     expect(result).toHaveLength(1)
     expect(result[0]?.id).toBe("first")
-    expect(result[0]?.replies).toEqual([{ author: "bob", body: "second comment" }])
+    expect(result[0]?.replies).toEqual([
+      {
+        id: "second",
+        author: "bob",
+        body: "second comment",
+        createdAt: new Date("2024-01-02T00:00:00Z").getTime(),
+        url: "https://github.com/example/repo/pull/1#discussion_r2",
+        reactions: [{ content: "HEART", count: 2, viewerHasReacted: true }],
+      },
+    ])
   })
 
   it("marks an outdated thread", () => {
@@ -549,7 +565,7 @@ describe("parseComments", () => {
         line: 12,
         originalLine: 9,
         startLine: 10,
-        replies: [{ author: "bob", body: "reply", avatar: "https://avatar/bob" }],
+        replies: [{ id: "left-reply", author: "bob", body: "reply", avatar: "https://avatar/bob" }],
       }),
     )
     expect(result[1]).toEqual(
