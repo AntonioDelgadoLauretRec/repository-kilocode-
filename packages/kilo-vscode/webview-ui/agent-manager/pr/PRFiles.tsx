@@ -107,7 +107,7 @@ export function PRFiles(props: PRTarget & { own?: boolean; closed?: boolean; onR
         source: side === "RIGHT" ? selected : undefined,
       },
     })
-    queueMicrotask(() => {
+    requestAnimationFrame(() => {
       if (!composer?.isConnected) return
       composer.scrollIntoView({ block: "nearest" })
       composer.querySelector("textarea")?.focus({ preventScroll: true })
