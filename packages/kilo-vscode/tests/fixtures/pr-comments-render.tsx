@@ -941,3 +941,147 @@ assert.equal(fix()?.disabled, false)
 setPrState((prev) => ({ ...prev, checks: summarize([{ name: "Tests", status: "success" }]) }))
 assert.equal(fix(), null)
 remount()
+
+// PR summary: Fix with Kilo and jump-to-section per row, without scrolling.
+const { PRSummary } = await import("../../webview-ui/agent-manager/pr/PRSummary")
+const terminalSent: unknown[] = []
+window.addEventListener("message", (ev: MessageEvent) => {
+  if (ev.data?.type === "appendReviewCommentsToTerminal") terminalSent.push(ev.data)
+})
+const fourth = document.createElement("div")
+document.body.append(fourth)
+const jumped: string[] = []
+const [terminal, setTerminal] = createSignal<string | undefined>(undefined)
+const [summaryPR, setSummaryPR] = createSignal<PRStatus>({
+  ...base,
+  review: "changes_requested",
+  checks: summarize([
+    { name: "Typecheck", status: "failure", url: "https://github.com/example/repo/actions/runs/100/job/200" },
+    { name: "Tests", status: "success" },
+  ]),
+  comments: {
+    total: 3,
+    unresolved: 2,
+    comments: [
+      {
+        id: "c1",
+        threadId: "T_one",
+        author: "a",
+        body: "one",
+        file: "a.ts",
+        line: 1,
+        resolved: false,
+        outdated: false,
+      },
+      {
+        id: "c2",
+        threadId: "T_two",
+        author: "b",
+        body: "two",
+        file: "b.ts",
+        line: 2,
+        resolved: false,
+        outdated: false,
+      },
+      {
+        id: "c3",
+        threadId: "T_done",
+        author: "c",
+        body: "done",
+        file: "c.ts",
+        line: 3,
+        resolved: true,
+        outdated: false,
+      },
+    ],
+  },
+  conversation: [
+    { id: "IC_human", author: "marius", body: "please also update docs", createdAt: Date.now(), isBot: false },
+    { id: "IC_bot", author: "kilo-bot", body: "automated", createdAt: Date.now(), isBot: true },
+    { id: "IC_dismissed", author: "reviewer", body: "nit", createdAt: Date.now(), isBot: false },
+  ],
+})
+const summaryWorktree = "wt-summary"
+patchCommentState(summaryWorktree, (prev) => ({ dismissed: { ...prev.dismissed, IC_dismissed: true } }))
+const disposeSummary = render(
+  () => (
+    <VSCodeProvider>
+      <LanguageProvider>
+        <PRSummary
+          pr={summaryPR()}
+          worktreeId={summaryWorktree}
+          activeTerminalId={terminal()}
+          onJump={(id) => jumped.push(id)}
+        />
+      </LanguageProvider>
+    </VSCodeProvider>
+  ),
+  fourth,
+)
+await window.happyDOM.waitUntilComplete()
+const row = (id: string) => fourth.querySelector<HTMLElement>(`.am-pr-summary-row[data-target="${id}"]`)
+const rowFix = (id: string) => row(id)?.querySelector<HTMLButtonElement>(".am-pr-summary-fix")
+const rowJump = (id: string) => row(id)?.querySelector<HTMLButtonElement>(".am-pr-summary-jump")
+assert.equal(fourth.querySelectorAll(".am-pr-summary-row").length, 4)
+// The review row has no target and no actions.
+assert.equal(fourth.querySelectorAll(".am-pr-summary-row:not([data-target]) button").length, 0)
+assert.match(row("checks")?.textContent ?? "", /1\/2 checks passed/)
+assert.equal(rowFix("checks")?.textContent?.trim(), "Fix with Kilo")
+assert.equal(rowFix("comments")?.textContent?.trim(), "Fix 2 with Kilo")
+assert.match(row("conversation")?.textContent ?? "", /3 PR comments/)
+assert.equal(rowFix("conversation")?.textContent?.trim(), "Fix 1 with Kilo")
+// Discussion is lower-confidence feedback than CI or review threads.
+assert.equal(rowFix("checks")?.getAttribute("data-variant"), "primary")
+assert.equal(rowFix("comments")?.getAttribute("data-variant"), "primary")
+assert.equal(rowFix("conversation")?.getAttribute("data-variant"), "secondary")
+for (const id of ["checks", "comments", "conversation"]) rowJump(id)!.click()
+assert.deepEqual(jumped, ["checks", "comments", "conversation"])
+
+const mark = sent.length
+rowFix("checks")!.click()
+const ci = sent.at(-1) as { autoSend: boolean; comments: Array<{ origin: string }> }
+assert.equal(sent.length, mark + 1)
+assert.equal(ci.autoSend, true)
+assert.equal(ci.comments[0]?.origin, "ci")
+// CI has no sent state; the button stays while failures exist.
+assert.equal(rowFix("checks")?.textContent?.trim(), "Fix with Kilo")
+
+rowFix("comments")!.click()
+const threadsSent = sent.at(-1) as { comments: Array<{ id: string; origin: string }> }
+assert.equal(sent.length, mark + 2)
+assert.deepEqual(
+  threadsSent.comments.map((item) => [item.id, item.origin]),
+  [
+    ["T_one", "pr"],
+    ["T_two", "pr"],
+  ],
+)
+assert.deepEqual(Object.keys(commentState(summaryWorktree).sent).sort(), ["T_one", "T_two"])
+await window.happyDOM.waitUntilComplete()
+assert.equal(rowFix("comments"), null)
+assert.ok(rowJump("comments"))
+
+rowFix("conversation")!.click()
+const talk = sent.at(-1) as { comments: Array<{ id: string }> }
+assert.equal(sent.length, mark + 3)
+assert.deepEqual(
+  talk.comments.map((item) => item.id),
+  ["IC_human"],
+)
+await window.happyDOM.waitUntilComplete()
+assert.equal(rowFix("conversation"), null)
+
+// A terminal tab switches the labels and the transport.
+setTerminal("term-1")
+await window.happyDOM.waitUntilComplete()
+assert.equal(rowFix("checks")?.textContent?.trim(), "Send failures to terminal")
+rowFix("checks")!.click()
+assert.equal(sent.length, mark + 3)
+assert.equal(terminalSent.length, 1)
+
+setSummaryPR((prev) => ({ ...prev, checks: summarize([{ name: "Tests", status: "success" }]) }))
+await window.happyDOM.waitUntilComplete()
+assert.match(row("checks")?.textContent ?? "", /All checks passing/)
+assert.equal(rowFix("checks"), null)
+assert.ok(rowJump("checks"))
+disposeSummary()
