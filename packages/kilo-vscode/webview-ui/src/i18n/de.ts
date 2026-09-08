@@ -60,8 +60,19 @@ export const anacondaDesktopDict = {
 } as const
 
 export const dict = {
+  "session.goal.complete": "Abgeschlossen (vom Modell gemeldet)",
+  "session.goal.blocked": "Blockiert",
+  "session.goal.restart": "Ziel neu starten (verbraucht Modellguthaben)",
   ...anacondaDesktopDict,
   ...cloudProviderDict,
+  "task.swarm.title": "Board",
+  "task.swarm.refresh": "Aktualisieren",
+  "task.swarm.reset": "Board zurücksetzen",
+  "task.swarm.resetTitle": "Dieses Board zurücksetzen?",
+  "task.swarm.resetDescription":
+    "Sichtbare Nachrichten löschen? Unterhaltungen und laufende Aufgaben bleiben unverändert. Agenten können neue Nachrichten veröffentlichen.",
+  "task.swarm.loading": "Board wird geladen...",
+  "task.swarm.failed": "Das Board konnte nicht geladen oder zurückgesetzt werden. Versuchen Sie, es zu aktualisieren.",
 
   "command.provider.connect": "Anbieter verbinden",
 
@@ -762,6 +773,14 @@ export const dict = {
   "session.outcome.interrupted": "Zug unterbrochen",
   "session.outcome.error": "Zug fehlgeschlagen",
   "session.outcome.finish": "Abschlussgrund: {{reason}}",
+  "session.goal.label": "Ziel",
+  "prompt.goal.set": "Ziel festlegen",
+  "prompt.goal.start": "Ziel starten",
+  "session.goal.active": "Aktiv",
+  "session.goal.paused": "Pausiert",
+  "session.goal.pause": "Pausieren",
+  "session.goal.resume": "Fortsetzen",
+  "session.goal.clear": "Ziel löschen",
   "session.costAlert.header": "Sitzungskostenwarnung",
   "session.costAlert.continue": "Fortfahren",
   "session.costAlert.question":
@@ -913,9 +932,6 @@ export const dict = {
   "settings.sandboxing.writablePaths.title": "Zusätzliche schreibbare Pfade",
   "settings.sandboxing.writablePaths.description":
     "Zusätzliche Dateisystempfade, in die die Sandbox Schreibvorgänge erlaubt (z. B. /tmp, /var/log). Diese werden mit den Standard-Schreibpfaden zusammengeführt, wenn die Sandbox aktiv ist.",
-  "settings.experimental.multiProject.title": "Multi-Projekt Agent Manager",
-  "settings.experimental.multiProject.description":
-    "Aktivieren Sie die Verwaltung von Sitzungen und Worktrees über mehrere Repositories im Agent Manager. Das aktuelle Workspace-Repository ist immer das Standardprojekt.",
   "settings.experimental.taskModelSelection.title": "Task-Subagent-Modellauswahl",
   "settings.experimental.taskModelSelection.description":
     "Erlaubt die explizite Auswahl von Modell, Anbieter und Schlussfolgerungsaufwand für Task-Subagenten.",

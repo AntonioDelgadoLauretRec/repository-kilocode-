@@ -54,8 +54,19 @@ export const anacondaDesktopDict = {
 } as const
 
 export const dict = {
+  "session.goal.complete": "Завершено (за повідомленням моделі)",
+  "session.goal.blocked": "Заблоковано",
+  "session.goal.restart": "Перезапустити ціль (витрачає кредити моделі)",
   ...anacondaDesktopDict,
   ...cloudProviderDict,
+  "task.swarm.title": "Дошка",
+  "task.swarm.refresh": "Оновити",
+  "task.swarm.reset": "Скинути дошку",
+  "task.swarm.resetTitle": "Скинути цю дошку?",
+  "task.swarm.resetDescription":
+    "Очистити видимі повідомлення? Розмови й поточні завдання залишаться без змін. Агенти можуть публікувати нові повідомлення.",
+  "task.swarm.loading": "Завантаження дошки...",
+  "task.swarm.failed": "Не вдалося завантажити або скинути дошку. Спробуйте оновити її.",
 
   "command.provider.connect": "Підключити провайдера",
 
@@ -738,6 +749,14 @@ export const dict = {
   "session.outcome.interrupted": "Хід перервано",
   "session.outcome.error": "Хід не вдався",
   "session.outcome.finish": "Причина завершення: {{reason}}",
+  "session.goal.label": "Мета",
+  "prompt.goal.set": "Задати мету",
+  "prompt.goal.start": "Почати роботу над метою",
+  "session.goal.active": "Активна",
+  "session.goal.paused": "Призупинена",
+  "session.goal.pause": "Пауза",
+  "session.goal.resume": "Продовжити",
+  "session.goal.clear": "Очистити мету",
   "session.costAlert.header": "Сповіщення про вартість сесії",
   "session.costAlert.continue": "Продовжити",
   "session.costAlert.question":
@@ -884,9 +903,6 @@ export const dict = {
   "settings.sandboxing.writablePaths.title": "Додаткові шляхи для запису",
   "settings.sandboxing.writablePaths.description":
     "Додаткові шляхи файлової системи, у які дозволено запис у пісочниці (наприклад, /tmp, /var/log). Вони об'єднуються зі шляхами запису за замовчуванням, коли пісочниця активна.",
-  "settings.experimental.multiProject.title": "Мультипроєктний Agent Manager",
-  "settings.experimental.multiProject.description":
-    "Увімкніть керування сеансами та робочими деревами в кількох репозиторіях в Agent Manager. Поточний репозиторій робочого простору завжди є проєктом за замовчуванням.",
   "settings.experimental.taskModelSelection.title": "Вибір моделі субагента Task",
   "settings.experimental.taskModelSelection.description":
     "Дозволяє явно вибирати модель, провайдера та рівень міркування для субагентів Task.",

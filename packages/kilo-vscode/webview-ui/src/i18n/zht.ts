@@ -55,8 +55,18 @@ export const anacondaDesktopDict = {
 } as const
 
 export const dict = {
+  "session.goal.complete": "完成（模型回報）",
+  "session.goal.blocked": "受阻",
+  "session.goal.restart": "重新開始目標（消耗模型額度）",
   ...anacondaDesktopDict,
   ...cloudProviderDict,
+  "task.swarm.title": "看板",
+  "task.swarm.refresh": "重新整理",
+  "task.swarm.reset": "重設看板",
+  "task.swarm.resetTitle": "重設此看板？",
+  "task.swarm.resetDescription": "清除可見訊息？對話和執行中的工作不會改變。代理可以發布新訊息。",
+  "task.swarm.loading": "正在載入看板...",
+  "task.swarm.failed": "無法載入或重設看板。請嘗試重新整理。",
 
   "command.provider.connect": "連接供應商",
 
@@ -685,6 +695,14 @@ export const dict = {
   "session.outcome.interrupted": "回合已中斷",
   "session.outcome.error": "回合失敗",
   "session.outcome.finish": "結束原因：{{reason}}",
+  "session.goal.label": "目標",
+  "prompt.goal.set": "設定目標",
+  "prompt.goal.start": "開始目標",
+  "session.goal.active": "執行中",
+  "session.goal.paused": "已暫停",
+  "session.goal.pause": "暫停",
+  "session.goal.resume": "繼續",
+  "session.goal.clear": "清除目標",
   "session.costAlert.header": "工作階段費用提醒",
   "session.costAlert.continue": "繼續",
   "session.costAlert.question": "此工作階段剛剛超過每工作階段提醒門檻 {{limit}}，目前費用為 {{cost}}。是否繼續？",
@@ -818,9 +836,6 @@ export const dict = {
   "settings.sandboxing.writablePaths.title": "額外可寫路徑",
   "settings.sandboxing.writablePaths.description":
     "沙盒允許寫入的額外檔案系統路徑（例如 /tmp、/var/log）。沙盒啟用後，這些路徑會與預設可寫路徑合併。",
-  "settings.experimental.multiProject.title": "多專案 Agent Manager",
-  "settings.experimental.multiProject.description":
-    "在 Agent Manager 中啟用跨多個儲存庫的工作階段和工作樹管理。當前工作區儲存庫始終是預設專案。",
   "settings.experimental.taskModelSelection.title": "Task 子代理模型選擇",
   "settings.experimental.taskModelSelection.description": "允許為 Task 子代理選擇指定的模型、提供者和推理工作量。",
   "settings.experimental.mcpTimeout.title": "MCP 逾時（毫秒）",

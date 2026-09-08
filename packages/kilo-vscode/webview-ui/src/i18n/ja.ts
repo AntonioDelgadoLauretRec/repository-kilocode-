@@ -54,8 +54,19 @@ export const anacondaDesktopDict = {
 } as const
 
 export const dict = {
+  "session.goal.complete": "完了（モデルによる報告）",
+  "session.goal.blocked": "ブロック中",
+  "session.goal.restart": "目標を再開（モデルクレジットを消費）",
   ...anacondaDesktopDict,
   ...cloudProviderDict,
+  "task.swarm.title": "ボード",
+  "task.swarm.refresh": "更新",
+  "task.swarm.reset": "ボードをリセット",
+  "task.swarm.resetTitle": "このボードをリセットしますか？",
+  "task.swarm.resetDescription":
+    "表示されているメッセージを消去しますか？会話と実行中のタスクは変更されません。エージェントは新しいメッセージを投稿できます。",
+  "task.swarm.loading": "ボードを読み込み中...",
+  "task.swarm.failed": "ボードを読み込むかリセットできませんでした。更新を試してください。",
 
   "command.provider.connect": "プロバイダーに接続",
 
@@ -745,6 +756,14 @@ export const dict = {
   "session.outcome.interrupted": "ターンが中断されました",
   "session.outcome.error": "ターンが失敗しました",
   "session.outcome.finish": "終了理由: {{reason}}",
+  "session.goal.label": "目標",
+  "prompt.goal.set": "目標を設定",
+  "prompt.goal.start": "目標を開始",
+  "session.goal.active": "実行中",
+  "session.goal.paused": "一時停止中",
+  "session.goal.pause": "一時停止",
+  "session.goal.resume": "再開",
+  "session.goal.clear": "目標をクリア",
   "session.costAlert.header": "セッションコストアラート",
   "session.costAlert.continue": "続行",
   "session.costAlert.question":
@@ -887,9 +906,6 @@ export const dict = {
   "settings.sandboxing.writablePaths.title": "追加の書き込み可能パス",
   "settings.sandboxing.writablePaths.description":
     "サンドボックスでの書き込みを許可する追加のファイルシステムパス（例: /tmp、/var/log）。サンドボックス有効時、デフォルトの書き込み可能パスと統合されます。",
-  "settings.experimental.multiProject.title": "マルチプロジェクト Agent Manager",
-  "settings.experimental.multiProject.description":
-    "Agent Managerで複数のリポジトリにまたがるセッションとワークツリーの管理を有効にします。現在のワークスペースリポジトリは常にデフォルトプロジェクトです。",
   "settings.experimental.taskModelSelection.title": "Task サブエージェントモデルの選択",
   "settings.experimental.taskModelSelection.description":
     "Task サブエージェントに使用するモデル、プロバイダー、推論の労力を明示的に選択できます。",
