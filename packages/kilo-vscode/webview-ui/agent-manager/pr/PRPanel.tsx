@@ -86,8 +86,11 @@ export const PRPanel: Component<PRPanelProps> = (props) => {
       restore = requestAnimationFrame(() => {
         restore = undefined
         if (jumping()) {
-          if (!comments() || !commentsRef?.isConnected) return
-          commentsRef.scrollIntoView({ behavior: "instant", block: "start" })
+          if (!comments() || !commentsRef?.isConnected || !bodyRef) return
+          bodyRef.scrollBy({
+            top: commentsRef.getBoundingClientRect().top - bodyRef.getBoundingClientRect().top - bodyRef.clientTop,
+            behavior: "instant",
+          })
           requested = false
           jumped = props.jump
           remember()
