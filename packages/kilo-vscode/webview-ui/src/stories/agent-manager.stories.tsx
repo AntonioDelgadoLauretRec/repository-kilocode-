@@ -1981,6 +1981,12 @@ export const MultiProjectSidebar: Story = {
   },
 }
 
+export const MultiProjectSidebar200: Story = {
+  ...MultiProjectSidebar,
+  name: "Project List - minimum sidebar width",
+  parameters: { layout: "fullscreen" },
+}
+
 // ---------------------------------------------------------------------------
 // PR panel — review comments
 // ---------------------------------------------------------------------------
@@ -1999,9 +2005,11 @@ const prComments: NonNullable<PRStatus["comments"]> = {
       url: "https://github.com/org/repo/pull/8594#discussion_r1",
       resolved: false,
       outdated: false,
+      createdAt: Date.now() - 5 * 60 * 1000,
       diffHunk:
         '@@ -39,7 +39,7 @@ export function execGhRead(args: string[]) {\n-  return execWithShellEnv("gh", args, options)\n+  return execWithShellEnv("gh", args, { ...options, env: env(options) })',
       side: "additions",
+      reactions: [{ content: "THUMBS_UP", count: 2, viewerHasReacted: false }],
       preview: {
         patch:
           '@@ -40,6 +40,6 @@\n   const options = { timeout: 5000 }\n   const result = await\n-    execWithShellEnv("gh", args, options)\n+    execWithShellEnv("gh", args, { ...options, env: env(options) })\n   return result\n }\n ',
@@ -2012,7 +2020,15 @@ const prComments: NonNullable<PRStatus["comments"]> = {
         top: true,
         bottom: true,
       },
-      replies: [{ author: "hubot", body: "Agreed. A guard plus a log line is enough here." }],
+      replies: [
+        {
+          id: "PRRC_1_REPLY",
+          author: "hubot",
+          body: "Agreed. A guard plus a log line is enough here.",
+          createdAt: Date.now() - 4 * 60 * 1000,
+          reactions: [{ content: "HEART", count: 1, viewerHasReacted: false }],
+        },
+      ],
     },
     {
       id: "PRRC_2",

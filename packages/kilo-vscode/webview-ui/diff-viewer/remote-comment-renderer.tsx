@@ -15,6 +15,7 @@ import { getOwner, runWithOwner } from "solid-js"
 import type { AnnotationSide, DiffLineAnnotation } from "@pierre/diffs"
 import { PRCommentCard } from "../agent-manager/pr/PRCommentCard"
 import { githubUrl, prPayload } from "../agent-manager/pr/pr-comment-payload"
+import type { ReactionController } from "../agent-manager/pr/pr-comment-state"
 import type { PRComment } from "../agent-manager/pr/pr-types"
 import { useLanguage } from "../src/context/language"
 import { sendReviewComments } from "./review-annotations"
@@ -70,6 +71,7 @@ interface Options {
   onSendClick?: () => void
   onOpenFile?: (file: string, line?: number) => void
   onOpenUrl?: (url: string) => void
+  reactions?: ReactionController
 }
 
 interface CardProps {
@@ -170,6 +172,7 @@ export function createRemoteCommentController(options: Options): RemoteCommentCo
 
   const RemoteCard: Component<CardProps> = (props) => {
     const comment = () => props.item.comment()
+    const ctrl = options.reactions?.enabled() ? options.reactions : undefined
     return (
       <PRCommentCard
         comment={comment()}
@@ -199,6 +202,14 @@ export function createRemoteCommentController(options: Options): RemoteCommentCo
             ? () => options.onOpenUrl?.(githubUrl(comment().url)!)
             : undefined
         }
+        reactionError={ctrl?.error(comment().id)}
+        reactions={ctrl?.list(comment().id, comment().reactions)}
+        reactionPending={ctrl ? (content) => ctrl.pending(comment().id, content) : undefined}
+        onReaction={ctrl ? (content, add) => ctrl.toggle(comment().id, content, add) : undefined}
+        replyReactionError={ctrl?.error}
+        replyReactions={ctrl?.list}
+        replyReactionPending={ctrl?.pending}
+        onReplyReaction={ctrl?.toggle}
       />
     )
   }
