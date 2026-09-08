@@ -16,6 +16,7 @@ import type { PRComment } from "./pr-types"
 import type { JumpTarget } from "./pr-actions"
 import { commentScroll, patchCommentState, setCommentScroll } from "./pr-comment-state"
 import { PRSummary } from "./PRSummary"
+import { PRFiles } from "./PRFiles"
 import { CopyButton } from "./CopyButton"
 import "./pr-panel.css"
 
@@ -255,6 +256,15 @@ export const PRPanel: Component<PRPanelProps> = (props) => {
             onJump={jumpTo}
           />
           <PROverview pr={props.pr} worktree={props.worktree} />
+          <PRFiles
+            projectId={props.projectId}
+            worktreeId={props.worktreeId}
+            prNumber={props.pr.number}
+            prUrl={props.pr.url}
+            own={props.pr.viewerDidAuthor}
+            closed={props.pr.state === "closed" || props.pr.state === "merged"}
+            onRefresh={props.onRefresh}
+          />
           <Show when={(props.pr.reviewers ?? []).length > 0}>
             <PRReviewers reviewers={props.pr.reviewers ?? []} />
           </Show>
@@ -268,6 +278,8 @@ export const PRPanel: Component<PRPanelProps> = (props) => {
             {(item) => (
               <div ref={commentsRef}>
                 <PRComments
+                  prNumber={props.pr.number}
+                  prUrl={props.pr.url}
                   comments={item().value}
                   projectId={props.projectId}
                   worktreeId={props.worktreeId}
@@ -279,21 +291,17 @@ export const PRPanel: Component<PRPanelProps> = (props) => {
               </div>
             )}
           </Show>
-          <Show when={conversation()}>
-            {(item) => (
-              <Show when={item().value.length > 0}>
-                <div ref={conversationRef}>
-                  <PRConversation
-                    comments={item().value}
-                    projectId={props.projectId}
-                    worktreeId={props.worktreeId}
-                    activeTerminalId={props.activeTerminalId}
-                    onOpenUrl={props.onOpenUrl}
-                  />
-                </div>
-              </Show>
-            )}
-          </Show>
+          <div ref={conversationRef}>
+            <PRConversation
+              comments={conversation()?.value ?? []}
+              prNumber={props.pr.number}
+              prUrl={props.pr.url}
+              projectId={props.projectId}
+              worktreeId={props.worktreeId}
+              activeTerminalId={props.activeTerminalId}
+              onOpenUrl={props.onOpenUrl}
+            />
+          </div>
         </div>
       </div>
     </div>
