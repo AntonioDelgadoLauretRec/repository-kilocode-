@@ -2,6 +2,7 @@
 import { For, Show, createMemo } from "solid-js"
 import { Button } from "@kilocode/kilo-ui/button"
 import { Icon } from "@kilocode/kilo-ui/icon"
+import { Spinner } from "@kilocode/kilo-ui/spinner"
 import { IconButton } from "@kilocode/kilo-ui/icon-button"
 import { Tooltip } from "@kilocode/kilo-ui/tooltip"
 import type { PRStatus } from "../../src/types/messages"
@@ -20,7 +21,7 @@ interface PRSummaryProps {
 }
 
 interface Row {
-  icon: string
+  icon?: string
   label: string
   status: string
   target?: JumpTarget
@@ -38,7 +39,7 @@ export function PRSummary(props: PRSummaryProps) {
   const { t } = useLanguage()
   const state = () => commentState(props.worktreeId)
   const statusIcon = (status: string) =>
-    status === "success" ? "circle-check" : status === "failure" ? "circle-x-outline" : "play"
+    status === "success" ? "circle-check" : status === "failure" ? "circle-x-outline" : undefined
 
   const checks = (): Row | undefined => {
     const pr = props.pr
@@ -158,7 +159,9 @@ export function PRSummary(props: PRSummaryProps) {
           <For each={rows()}>
             {(row) => (
               <div class="am-pr-summary-row am-pr-row" data-status={row.status} data-target={row.target}>
-                <Icon name={row.icon} size="small" class="am-pr-summary-icon" />
+                <Show when={row.icon} fallback={<Spinner class="am-pr-summary-icon" />}>
+                  {(icon) => <Icon name={icon()} size="small" class="am-pr-summary-icon" />}
+                </Show>
                 <span class="am-pr-summary-label">{row.label}</span>
                 <Show when={row.action || (row.target && props.onJump)}>
                   <span class="am-pr-summary-actions am-pr-row">

@@ -605,6 +605,12 @@
   flex-shrink: 0;
 }
 
+.am-pr-check-icon[data-component="spinner"],
+.am-pr-summary-icon[data-component="spinner"] {
+  width: 16px;
+  height: 16px;
+}
+
 .am-pr-panel-check-item[data-status="success"] .am-pr-check-icon {
   color: var(--vscode-testing-iconPassed, #34d399);
 }
@@ -619,6 +625,10 @@
 }
 .am-pr-panel-check-item[data-status="pending"] .am-pr-check-icon {
   color: var(--vscode-charts-yellow, #fbbf24);
+}
+.am-pr-panel-check-item[data-status="pending"] .am-pr-check-icon[data-component="spinner"],
+.am-pr-summary-row[data-status="pending"] .am-pr-summary-icon[data-component="spinner"] {
+  color: var(--vscode-foreground);
 }
 
 .am-pr-check-name {
