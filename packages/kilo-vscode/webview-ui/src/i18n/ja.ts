@@ -54,6 +54,9 @@ export const anacondaDesktopDict = {
 } as const
 
 export const dict = {
+  "session.goal.complete": "完了（モデルによる報告）",
+  "session.goal.blocked": "ブロック中",
+  "session.goal.restart": "目標を再開（モデルクレジットを消費）",
   ...anacondaDesktopDict,
   ...cloudProviderDict,
   "task.swarm.title": "ボード",
@@ -753,6 +756,14 @@ export const dict = {
   "session.outcome.interrupted": "ターンが中断されました",
   "session.outcome.error": "ターンが失敗しました",
   "session.outcome.finish": "終了理由: {{reason}}",
+  "session.goal.label": "目標",
+  "prompt.goal.set": "目標を設定",
+  "prompt.goal.start": "目標を開始",
+  "session.goal.active": "実行中",
+  "session.goal.paused": "一時停止中",
+  "session.goal.pause": "一時停止",
+  "session.goal.resume": "再開",
+  "session.goal.clear": "目標をクリア",
   "session.costAlert.header": "セッションコストアラート",
   "session.costAlert.continue": "続行",
   "session.costAlert.question":

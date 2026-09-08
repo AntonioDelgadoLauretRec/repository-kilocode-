@@ -54,6 +54,9 @@ export const anacondaDesktopDict = {
 } as const
 
 export const dict = {
+  "session.goal.complete": "تکمیل‌شده (گزارش مدل)",
+  "session.goal.blocked": "مسدود",
+  "session.goal.restart": "شروع مجدد هدف (مصرف اعتبار مدل)",
   ...anacondaDesktopDict,
   ...cloudProviderDict,
   "task.swarm.title": "برد",
@@ -709,6 +712,14 @@ export const dict = {
   "session.outcome.interrupted": "نوبت قطع شد.",
   "session.outcome.error": "نوبت با شکست مواجه شد.",
   "session.outcome.finish": "دلیل فنی پایان: {{reason}}",
+  "session.goal.label": "هدف",
+  "prompt.goal.set": "تعیین هدف",
+  "prompt.goal.start": "شروع هدف",
+  "session.goal.active": "فعال",
+  "session.goal.paused": "متوقف",
+  "session.goal.pause": "توقف موقت",
+  "session.goal.resume": "ازسرگیری",
+  "session.goal.clear": "پاک کردن هدف",
   "session.costAlert.header": "هشدار هزینه جلسه",
   "session.costAlert.continue": "ادامه",
   "session.costAlert.question": "هزینه این جلسه از آستانه هشدار {{limit}} شما فراتر رفت و {{cost}} شد. ادامه می‌دهید؟",

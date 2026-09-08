@@ -68,6 +68,7 @@ export const ChatView: Component<ChatViewProps> = (props) => {
   const canContinueInWorktree = () => props.continueInWorktree === true
 
   const id = () => session.currentSessionID()
+  const goal = () => session.currentSession()?.goal
   // Counts the in-flight first message too, so the dock reserves the same row on
   // the very first send instead of growing once the message lands.
   const hasMessages = () => session.messages().length > 0 || session.submitting()
@@ -103,7 +104,8 @@ export const ChatView: Component<ChatViewProps> = (props) => {
   const suggesting = () => isSuggesting(blocked(), familySuggestions().length)
   // Session is busy only because a question tool call is pending — prompt should behave as idle
   const questioning = () => isQuestioning(blocked(), familyQuestions().length)
-  const dock = () => !props.readonly || !!permissionRequest() || session.submitting() || session.status() !== "idle"
+  const dock = () =>
+    !props.readonly || !!goal() || !!permissionRequest() || session.submitting() || session.status() !== "idle"
   // The session dock stays empty while another surface owns the interaction:
   // a permission card, a pending question or suggestion, or agent requirements.
   // A spinner there would claim the agent is working while it waits on the user.
@@ -112,7 +114,12 @@ export const ChatView: Component<ChatViewProps> = (props) => {
   onMount(() => {
     if (props.readonly) return
     const handler = (e: KeyboardEvent) => {
-      if (e.key !== "Escape" || (!session.submitting() && session.status() === "idle") || e.defaultPrevented) return
+      if (
+        e.key !== "Escape" ||
+        (!session.submitting() && session.status() === "idle" && !goal()?.active) ||
+        e.defaultPrevented
+      )
+        return
       e.preventDefault()
       session.abort()
     }
@@ -231,8 +238,8 @@ export const ChatView: Component<ChatViewProps> = (props) => {
   const hasActions = (hasChat: boolean) =>
     canStartSession(hasChat) || canFork(hasChat) || canStartWorktree() || canMoveToWorktree(hasChat)
 
-  const renderActions = (hasChat: boolean) => (
-    <Show when={hasActions(hasChat)}>
+  const renderActions = (hasChat: boolean, control: () => JSX.Element) => (
+    <Show when={hasActions(hasChat) || !!goal()}>
       <div class="new-task-button-wrapper" classList={{ "new-task-button-wrapper--empty": !hasChat }}>
         <div class="session-actions-row">
           <Show when={canStartSession(hasChat)}>
@@ -347,6 +354,7 @@ export const ChatView: Component<ChatViewProps> = (props) => {
               </Tooltip>
             </>
           </Show>
+          {control()}
         </div>
       </div>
     </Show>
@@ -396,8 +404,9 @@ export const ChatView: Component<ChatViewProps> = (props) => {
             </Show>
             <SessionDock
               blocked={dockBlocked()}
-              hasActions={() => !props.readonly && hasActions(hasMessages())}
-              actions={() => renderActions(hasMessages())}
+              hasActions={() => !props.readonly && (hasActions(hasMessages()) || !!goal())}
+              actions={(control) => renderActions(hasMessages(), control)}
+              readonly={props.readonly}
             />
             <Show when={!props.readonly}>
               <PromptInput

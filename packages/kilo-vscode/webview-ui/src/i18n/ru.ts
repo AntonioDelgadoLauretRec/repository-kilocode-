@@ -54,6 +54,9 @@ export const anacondaDesktopDict = {
 } as const
 
 export const dict = {
+  "session.goal.complete": "Завершено (по сообщению модели)",
+  "session.goal.blocked": "Заблокировано",
+  "session.goal.restart": "Перезапустить цель (расходует кредиты модели)",
   ...anacondaDesktopDict,
   ...cloudProviderDict,
   "task.swarm.title": "Доска",
@@ -757,6 +760,14 @@ export const dict = {
   "session.outcome.interrupted": "Раунд прерван",
   "session.outcome.error": "Раунд завершился с ошибкой",
   "session.outcome.finish": "Причина завершения: {{reason}}",
+  "session.goal.label": "Цель",
+  "prompt.goal.set": "Задать цель",
+  "prompt.goal.start": "Начать работу над целью",
+  "session.goal.active": "Активна",
+  "session.goal.paused": "Приостановлена",
+  "session.goal.pause": "Пауза",
+  "session.goal.resume": "Возобновить",
+  "session.goal.clear": "Очистить цель",
   "session.costAlert.header": "Оповещение о стоимости сессии",
   "session.costAlert.continue": "Продолжить",
   "session.costAlert.question":

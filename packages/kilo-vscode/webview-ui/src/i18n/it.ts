@@ -54,6 +54,9 @@ export const anacondaDesktopDict = {
 } as const
 
 export const dict = {
+  "session.goal.complete": "Completato (segnalato dal modello)",
+  "session.goal.blocked": "Bloccato",
+  "session.goal.restart": "Riavvia obiettivo (consuma crediti)",
   ...anacondaDesktopDict,
   ...cloudProviderDict,
   "task.swarm.title": "Bacheca",
@@ -1182,6 +1185,14 @@ export const dict = {
   "session.outcome.interrupted": "Turno interrotto.",
   "session.outcome.error": "Turno fallito.",
   "session.outcome.finish": "Motivo tecnico di fine: {{reason}}",
+  "session.goal.label": "Obiettivo",
+  "prompt.goal.set": "Imposta obiettivo",
+  "prompt.goal.start": "Avvia obiettivo",
+  "session.goal.active": "Attivo",
+  "session.goal.paused": "In pausa",
+  "session.goal.pause": "Pausa",
+  "session.goal.resume": "Riprendi",
+  "session.goal.clear": "Cancella obiettivo",
   "session.costAlert.header": "Avviso costo sessione",
   "session.costAlert.continue": "Continua",
   "session.costAlert.question":

@@ -55,6 +55,9 @@ export const anacondaDesktopDict = {
 } as const
 
 export const dict = {
+  "session.goal.complete": "完成（模型回報）",
+  "session.goal.blocked": "受阻",
+  "session.goal.restart": "重新開始目標（消耗模型額度）",
   ...anacondaDesktopDict,
   ...cloudProviderDict,
   "task.swarm.title": "看板",
@@ -692,6 +695,14 @@ export const dict = {
   "session.outcome.interrupted": "回合已中斷",
   "session.outcome.error": "回合失敗",
   "session.outcome.finish": "結束原因：{{reason}}",
+  "session.goal.label": "目標",
+  "prompt.goal.set": "設定目標",
+  "prompt.goal.start": "開始目標",
+  "session.goal.active": "執行中",
+  "session.goal.paused": "已暫停",
+  "session.goal.pause": "暫停",
+  "session.goal.resume": "繼續",
+  "session.goal.clear": "清除目標",
   "session.costAlert.header": "工作階段費用提醒",
   "session.costAlert.continue": "繼續",
   "session.costAlert.question": "此工作階段剛剛超過每工作階段提醒門檻 {{limit}}，目前費用為 {{cost}}。是否繼續？",
