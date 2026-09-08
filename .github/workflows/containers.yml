@@ -1,6 +1,13 @@
 name: containers
 
 on:
+  push:
+    branches:
+      - main # kilocode_change
+    paths:
+      - packages/containers/**
+      - .github/workflows/containers.yml
+      - package.json
   workflow_dispatch:
 
 permissions:
