@@ -23,6 +23,8 @@ export const dict = {
   "agentManager.project.add": "프로젝트 추가",
   "agentManager.project.remove": "Agent Manager에서 제거",
   "agentManager.project.missing": "저장소를 찾을 수 없음",
+  "agentManager.project.restricted":
+    "현재 VS Code 작업 영역이 홈 폴더 또는 파일 시스템 루트입니다. Agent Manager를 사용하려면 VS Code에서 특정 프로젝트 폴더를 여세요.",
   "agentManager.notGitRepo": "git 저장소가 아닙니다",
 
   "agentManager.updateBase.title": "베이스에서 업데이트",

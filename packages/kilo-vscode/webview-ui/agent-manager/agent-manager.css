@@ -1831,6 +1831,11 @@ body.am-wt-dragging-active * {
   gap: 16px;
 }
 
+.am-restricted-state {
+  margin: 24px;
+  text-align: center;
+}
+
 .am-empty-state-icon {
   width: 72px;
   height: 72px;

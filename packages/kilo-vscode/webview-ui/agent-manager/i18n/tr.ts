@@ -24,6 +24,8 @@ export const dict = {
   "agentManager.project.add": "Proje ekle",
   "agentManager.project.remove": "Agent Manager'dan kaldır",
   "agentManager.project.missing": "Depo bulunamadı",
+  "agentManager.project.restricted":
+    "Mevcut VS Code çalışma alanınız ana klasörünüz veya dosya sistemi köküdür. Agent Manager'ı kullanmak için VS Code'da belirli bir proje klasörü açın.",
   "agentManager.notGitRepo": "Bir git deposu değil",
 
   "agentManager.updateBase.title": "Temel daldan güncelle",

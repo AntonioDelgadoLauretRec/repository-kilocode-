@@ -23,6 +23,8 @@ export const dict = {
   "agentManager.project.add": "Dodaj projekt",
   "agentManager.project.remove": "Usuń z Agent Manager",
   "agentManager.project.missing": "Nie znaleziono repozytorium",
+  "agentManager.project.restricted":
+    "Bieżący obszar roboczy VS Code to folder domowy lub katalog główny systemu plików. Otwórz konkretny folder projektu w VS Code, aby używać Agent Manager.",
   "agentManager.notGitRepo": "Nie jest repozytorium git",
 
   "agentManager.updateBase.title": "Aktualizuj z bazy",
