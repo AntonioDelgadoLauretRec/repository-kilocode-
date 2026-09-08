@@ -77,6 +77,8 @@ export type {
   PRCommentReply,
   PRReviewer,
   PRConversationComment,
+  PRReaction,
+  PRReactionContent,
 } from "../../../agent-manager/pr/pr-types"
 
 export interface PRStatus {
@@ -119,6 +121,17 @@ export interface RunStatus {
   startedAt?: string
   finishedAt?: string
   error?: string
+}
+
+export interface CaffeinationState {
+  enabled: boolean
+  active: boolean
+  available: boolean
+  error?: string
+}
+
+export interface AgentManagerCaffeinationMessage extends CaffeinationState {
+  type: "agentManager.caffeination"
 }
 
 export interface ManagedSessionState {

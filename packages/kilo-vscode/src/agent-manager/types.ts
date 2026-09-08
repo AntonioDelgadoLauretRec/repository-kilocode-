@@ -60,6 +60,8 @@ import type {
   ReviewerState,
   PRReviewer,
   PRConversationComment,
+  PRReaction,
+  PRReactionContent,
 } from "../../webview-ui/agent-manager/pr/pr-types"
 
 export type {
@@ -73,6 +75,8 @@ export type {
   ReviewerState,
   PRReviewer,
   PRConversationComment,
+  PRReaction,
+  PRReactionContent,
 }
 
 export interface PRStatus {
@@ -445,6 +449,17 @@ interface CommentActionResultMessage {
   error?: string
 }
 
+interface CommentReactionResultMessage {
+  type: "agentManager.commentReactionResult"
+  projectId?: string
+  worktreeId: string
+  commentId: string
+  reaction: PRReactionContent
+  add: boolean
+  success: boolean
+  error?: string
+}
+
 interface ActionOutMessage {
   type: "action"
   action: string
@@ -526,6 +541,7 @@ export type AgentManagerOutMessage =
   | PRStatusOutMessage
   | PRErrorOutMessage
   | CommentActionResultMessage
+  | CommentReactionResultMessage
   | ActionOutMessage
   | BrowserStateMessage
   | BrowserInspectionMessage
@@ -876,6 +892,15 @@ interface CommentActionIn {
   threadId: string
 }
 
+interface CommentReactionIn {
+  type: "agentManager.commentReaction"
+  projectId?: string
+  worktreeId: string
+  commentId: string
+  reaction: PRReactionContent
+  add: boolean
+}
+
 interface OpenSessionsIn {
   type: "agentManager.openSessions"
   sessionIDs: string[]
@@ -907,6 +932,7 @@ interface GenericOpenFileIn {
   filePath: string
   line?: number
   column?: number
+  sessionID?: string
 }
 
 interface PreviewImageIn {
@@ -1204,6 +1230,7 @@ export type AgentManagerInMessage =
   | RefreshPRIn
   | OpenPRIn
   | CommentActionIn
+  | CommentReactionIn
   | OpenSessionsIn
   | VisibleSessionIn
   | OpenFileIn

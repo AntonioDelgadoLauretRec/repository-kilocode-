@@ -530,6 +530,7 @@ export class PRStatusPoller {
                url
                createdAt
                diffHunk
+               reactionGroups { content reactors { totalCount } viewerHasReacted }
              }
            }`
         : ""
@@ -541,6 +542,7 @@ export class PRStatusPoller {
                body
                createdAt
                url
+               reactionGroups { content reactors { totalCount } viewerHasReacted }
              }
            }
            reviews(last: 50) {
@@ -551,6 +553,7 @@ export class PRStatusPoller {
                state
                submittedAt
                url
+               reactionGroups { content reactors { totalCount } viewerHasReacted }
              }
            }`
         : ""
