@@ -821,6 +821,7 @@ const AgentManagerContent: Component = () => {
   )
 
   const overlay = createMemo((): SetupState | null => {
+    if (restricted()) return null
     const state = setup()
     const sel = selection()
     // A live Setup script terminal shows progress and failures on its own
@@ -2156,7 +2157,7 @@ const AgentManagerContent: Component = () => {
           </div>
         </Show>
 
-        <Show when={!restricted() && overlay()}>
+        <Show when={overlay()}>
           {(state) => (
             <div class="am-setup-overlay">
               <div class="am-setup-card">
