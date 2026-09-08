@@ -935,6 +935,7 @@ interface GenericOpenFileIn {
   filePath: string
   line?: number
   column?: number
+  sessionID?: string
 }
 
 interface PreviewImageIn {

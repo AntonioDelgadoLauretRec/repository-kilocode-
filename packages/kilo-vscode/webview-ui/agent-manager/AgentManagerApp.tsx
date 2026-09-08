@@ -280,6 +280,7 @@ const AgentManagerContent: Component = () => {
   const [projectStates, setProjectStates] = createSignal<Record<string, AgentManagerStateMessage>>({})
   const activeProjectId = () => projectList().find((p) => p.active)?.id ?? currentProjectId()
   const activateSelection = (target: AgentManagerSidebarTarget, restore?: boolean) => {
+    saveTabMemory()
     comments.cancel()
     vscode.postMessage({ type: "agentManager.activateSelection", target, restore })
   }
@@ -718,12 +719,13 @@ const AgentManagerContent: Component = () => {
     return id
   }
   const placeLocal = (id: string, pending: string | undefined, active: string | undefined) => {
+    const existing = localSessionIDs().includes(id)
     const next = pending
       ? replacePendingTab({ ids: localSessionIDs(), active }, pending, id)
       : openSessionTab({ ids: localSessionIDs(), active }, id)
     setLocalSessionIDs(next.ids)
     if (pending) tabOrderSync.replaceOrAppend(LOCAL, pending, id)
-    if (!pending) tabOrderSync.append(LOCAL, id)
+    if (!pending && !existing) tabOrderSync.append(LOCAL, id)
     if (pending && pending === active) setActivePendingId(undefined)
   }
   const focusLocalSession = (id: string) => {

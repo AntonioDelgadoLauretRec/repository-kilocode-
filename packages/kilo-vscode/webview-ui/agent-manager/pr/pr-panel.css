@@ -740,6 +740,12 @@
   flex-shrink: 0;
 }
 
+.am-pr-check-icon[data-component="spinner"],
+.am-pr-summary-icon[data-component="spinner"] {
+  width: 16px;
+  height: 16px;
+}
+
 .am-pr-panel-check-item[data-status="success"] .am-pr-check-icon {
   color: var(--vscode-testing-iconPassed, #34d399);
 }
@@ -754,6 +760,10 @@
 }
 .am-pr-panel-check-item[data-status="pending"] .am-pr-check-icon {
   color: var(--vscode-charts-yellow, #fbbf24);
+}
+.am-pr-panel-check-item[data-status="pending"] .am-pr-check-icon[data-component="spinner"],
+.am-pr-summary-row[data-status="pending"] .am-pr-summary-icon[data-component="spinner"] {
+  color: var(--vscode-foreground);
 }
 
 .am-pr-check-name {
@@ -822,6 +832,7 @@
   gap: 7px;
   padding: 2px 0;
   font-size: var(--kilo-font-size-12);
+  min-height: 24px;
 }
 
 .am-pr-summary-icon {
@@ -843,42 +854,21 @@
 
 .am-pr-summary-label {
   color: var(--vscode-foreground);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.am-pr-summary-jump {
+/* Fix with Kilo plus jump-to-section, kept visible when the panel is narrow. */
+.am-pr-summary-actions {
   margin-left: auto;
-  font-size: var(--kilo-font-size-12);
-  color: var(--text-weaker);
+  gap: 2px;
+  flex-shrink: 0;
 }
 
-.am-pr-summary-row-link {
-  cursor: pointer;
-  border-radius: 3px;
-  padding-left: 2px;
-  padding-right: 2px;
-}
-
-button.am-pr-summary-row-link {
-  all: unset;
-  display: flex;
-  width: 100%;
-  gap: 7px;
-  padding: 2px;
-  font-size: var(--kilo-font-size-12);
-  box-sizing: border-box;
-  cursor: pointer;
-}
-
-button.am-pr-summary-row-link:focus-visible {
-  outline: 1px solid var(--vscode-focusBorder);
-}
-
-.am-pr-summary-row-link:hover {
-  background: var(--vscode-list-hoverBackground);
-}
-
-.am-pr-summary-row-link:hover .am-pr-summary-jump {
-  color: var(--vscode-foreground);
+.am-pr-summary-fix {
+  white-space: nowrap;
 }
 .am-pr-review {
   padding: 12px 0;
