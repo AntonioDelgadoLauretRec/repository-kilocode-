@@ -306,3 +306,14 @@ test("does not check hidden views and rechecks availability when the view return
   await result(page, await scene.current(2))
   await expect(scene.toggle).toBeVisible()
 })
+
+test("cleans up the reader when it closes repeatedly", async ({ page }) => {
+  const scene = await setup(page)
+  for (const count of [2, 3, 4]) {
+    await scene.toggle.click()
+    await result(page, await scene.current(count))
+    await page.keyboard.press("Escape")
+    await expect(page.getByRole("dialog")).toHaveCount(0)
+  }
+  expect(scene.calls).toHaveLength(4)
+})

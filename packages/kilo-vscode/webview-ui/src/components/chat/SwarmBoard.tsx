@@ -318,6 +318,8 @@ export const SwarmBoard: Component<{ readonly?: boolean; projectId?: string }> =
               class="task-board-list"
               data-component="board-messages"
               ref={(el) => {
+                resize?.disconnect()
+                if (!el) return
                 scroll.contentRef(el)
                 resize = new ResizeObserver(() => {
                   if (viewport && viewport.scrollHeight <= viewport.clientHeight) more()
