@@ -5,12 +5,49 @@ import { Global } from "@opencode-ai/core/global"
 import { ClaudeMigration } from "@/kilocode/config/claude-migration"
 import { tmpdir } from "../../fixture/fixture"
 
-async function files(root: string) {
-  return {
-    rules: await fs.readFile(path.join(root, ".claude", "CLAUDE.md")),
-    skill: await fs.readFile(path.join(root, ".claude", "skills", "audit", "SKILL.md")),
-    mcp: await fs.readFile(path.join(root, ".claude.json")),
+async function sourceTree(root: string) {
+  const result: Record<string, unknown> = {}
+  const visit = async (relative: string): Promise<void> => {
+    const file = path.join(root, relative)
+    const info = await fs.lstat(file)
+    result[relative] = {
+      bytes: info.isFile() ? await fs.readFile(file) : undefined,
+      ino: info.ino,
+      mode: info.mode & 0o7777,
+      mtimeMs: info.mtimeMs,
+      size: info.size,
+      type: info.isDirectory() ? "directory" : info.isSymbolicLink() ? "symlink" : "file",
+    }
+    if (!info.isDirectory()) return
+    for (const entry of (await fs.readdir(file)).sort()) await visit(path.join(relative, entry))
   }
+
+  for (const relative of [".claude", ".claude.json"]) {
+    try {
+      await visit(relative)
+    } catch (error) {
+      if (typeof error === "object" && error !== null && "code" in error && error.code === "ENOENT") continue
+      throw error
+    }
+  }
+  return result
+}
+
+async function allPaths(root: string): Promise<string[]> {
+  const result: string[] = []
+  const visit = async (relative: string): Promise<void> => {
+    const file = path.join(root, relative)
+    const info = await fs.lstat(file)
+    result.push(relative)
+    if (!info.isDirectory()) return
+    for (const entry of await fs.readdir(file)) await visit(path.join(relative, entry))
+  }
+  try {
+    await visit(".")
+  } catch (error) {
+    if (!(typeof error === "object" && error !== null && "code" in error && error.code === "ENOENT")) throw error
+  }
+  return result
 }
 
 describe("Claude global configuration migration", () => {
@@ -35,7 +72,7 @@ describe("Claude global configuration migration", () => {
     await fs.writeFile(path.join(home, ".claude", "CLAUDE.md"), source.rules)
     await fs.writeFile(path.join(home, ".claude", "skills", "audit", "SKILL.md"), source.skill)
     await fs.writeFile(path.join(home, ".claude.json"), source.mcp)
-    const before = await files(home)
+    const before = await sourceTree(home)
 
     const previous = Global.Path.config
     ;(Global.Path as { config: string }).config = config
@@ -63,7 +100,8 @@ describe("Claude global configuration migration", () => {
       })
       expect(native.mcp.projectOnly).toBeUndefined()
       expect(JSON.stringify(result.receipt)).not.toContain("secret-token")
-      expect(await files(home)).toEqual(before)
+      expect(await sourceTree(home)).toEqual(before)
+      expect((await allPaths(tmp.path)).filter((item) => item.includes(".tmp")).length).toBe(0)
       expect(ClaudeMigration.globalHandoff({ state })).toBe(true)
       expect((await ClaudeMigration.notification({ state }))?.id).toBe(ClaudeMigration.NOTIFICATION_ID)
     } finally {
@@ -175,7 +213,8 @@ describe("Claude global configuration migration", () => {
     expect(ClaudeMigration.hasAttempt(roots)).toBe(false)
   })
 
-  test("defers custom routing without claiming an attempt", async () => {
+  test("does not claim an attempt when disabled or custom-routed", async () => {
+    const keys = ["CLAUDE_CONFIG_DIR", "KILO_CONFIG_DIR", "KILO_CONFIG", "KILO_CONFIG_CONTENT"]
     await using tmp = await tmpdir()
     const roots = {
       home: path.join(tmp.path, "home"),
@@ -184,14 +223,133 @@ describe("Claude global configuration migration", () => {
     }
     await fs.mkdir(path.join(roots.home, ".claude"), { recursive: true })
     await fs.writeFile(path.join(roots.home, ".claude", "CLAUDE.md"), "source")
-    const previous = process.env.KILO_CONFIG_DIR
-    process.env.KILO_CONFIG_DIR = path.join(tmp.path, "custom")
+
+    expect(await ClaudeMigration.run({ enabled: false, roots })).toEqual({ status: "disabled" })
+    expect(ClaudeMigration.hasAttempt(roots)).toBe(false)
+
+    for (const key of keys) {
+      const previous = process.env[key]
+      process.env[key] = path.join(tmp.path, key.toLowerCase())
+      try {
+        expect(await ClaudeMigration.run({ enabled: true, roots })).toEqual({ status: "unsupported-context" })
+        expect(ClaudeMigration.hasAttempt(roots)).toBe(false)
+      } finally {
+        if (previous === undefined) delete process.env[key]
+        else process.env[key] = previous
+      }
+    }
+  })
+
+  test("blocks retries for malformed and unfinished receipts", async () => {
+    const check = async (value: string, expected: ClaudeMigration.Receipt["status"] | undefined) => {
+      await using tmp = await tmpdir()
+      const home = path.join(tmp.path, "home")
+      const config = path.join(tmp.path, "config")
+      const state = path.join(tmp.path, "state")
+      await fs.mkdir(path.join(home, ".claude"), { recursive: true })
+      await fs.mkdir(state, { recursive: true })
+      await fs.writeFile(path.join(home, ".claude", "CLAUDE.md"), "source")
+      await fs.writeFile(path.join(state, ClaudeMigration.RECEIPT), value)
+
+      const result = await ClaudeMigration.run({ enabled: true, roots: { home, config, state } })
+      expect(result.status).toBe("already-attempted")
+      if (result.status !== "already-attempted") return
+      expect(result.receipt?.status).toBe(expected)
+      expect(await fs.stat(path.join(state, ClaudeMigration.RECEIPT))).toBeTruthy()
+      expect(await Bun.file(path.join(config, "AGENTS.md")).exists()).toBe(false)
+    }
+
+    await check("{invalid", undefined)
+    await check(JSON.stringify({ version: 99, status: "complete", startedAt: "now", items: [] }), undefined)
+    await check(JSON.stringify({ version: 1, status: "started", startedAt: "now", items: [] }), "started")
+    await check(JSON.stringify({ version: 1, status: "incomplete", startedAt: "now", items: [] }), "incomplete")
+  })
+
+  test("rejects dynamic and unsupported MCP entries without writing them", async () => {
+    await using tmp = await tmpdir()
+    const home = path.join(tmp.path, "home")
+    const config = path.join(tmp.path, "config")
+    const state = path.join(tmp.path, "state")
+    await fs.mkdir(path.join(home, ".claude"), { recursive: true })
+    await fs.writeFile(
+      path.join(home, ".claude.json"),
+      JSON.stringify({
+        mcpServers: {
+          relative: { command: "./run" },
+          interpolation: { command: "npx", args: ["${TOKEN}"] },
+          headerInterpolation: {
+            type: "http",
+            url: "https://example.test/mcp",
+            headers: { Authorization: "{env:TOKEN}" },
+          },
+          unsupported: { command: "npx", extra: "value" },
+          invalidRemote: { type: "http", url: "ftp://example.test/mcp" },
+        },
+      }),
+    )
+
+    const result = await ClaudeMigration.run({ enabled: true, roots: { home, config, state } })
+    expect(result.status).toBe("complete")
+    if (result.status !== "complete") return
+    expect(result.receipt.items.filter((item) => item.status === "imported")).toHaveLength(0)
+    expect(result.receipt.items).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ name: "relative", reason: "mcp-relative-path-unsupported" }),
+        expect.objectContaining({ name: "interpolation", reason: "mcp-interpolation-unsupported" }),
+        expect.objectContaining({ name: "headerInterpolation", reason: "mcp-interpolation-unsupported" }),
+        expect.objectContaining({ name: "unsupported", reason: "mcp-field-unsupported" }),
+        expect.objectContaining({ name: "invalidRemote", reason: "mcp-url-invalid" }),
+      ]),
+    )
+    expect(await Bun.file(path.join(config, "kilo.jsonc")).exists()).toBe(false)
+  })
+
+  test("does not follow source symlinks", async () => {
+    await using tmp = await tmpdir()
+    const home = path.join(tmp.path, "home")
+    const config = path.join(tmp.path, "config")
+    const state = path.join(tmp.path, "state")
+    const outside = path.join(tmp.path, "outside")
+    await fs.mkdir(path.join(home, ".claude", "skills"), { recursive: true })
+    await fs.mkdir(outside, { recursive: true })
+    await fs.writeFile(path.join(outside, "SKILL.md"), "secret source")
+    await fs.symlink(outside, path.join(home, ".claude", "skills", "linked"), "dir")
+    const before = await sourceTree(home)
+
+    const result = await ClaudeMigration.run({ enabled: true, roots: { home, config, state } })
+    expect(result.status).toBe("complete")
+    if (result.status !== "complete") return
+    expect(result.receipt.items).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ name: "linked", reason: "unsafe-skill-name", status: "skipped" }),
+      ]),
+    )
+    expect(await sourceTree(home)).toEqual(before)
+    expect(await Bun.file(path.join(config, "skills", "linked", "SKILL.md")).exists()).toBe(false)
+  })
+
+  test("only one concurrent caller claims the receipt", async () => {
+    await using tmp = await tmpdir()
+    const home = path.join(tmp.path, "home")
+    const config = path.join(tmp.path, "config")
+    const state = path.join(tmp.path, "state")
+    await fs.mkdir(path.join(home, ".claude"), { recursive: true })
+    await fs.writeFile(path.join(home, ".claude", "CLAUDE.md"), "source")
+
+    const previous = Global.Path.config
+    ;(Global.Path as { config: string }).config = config
     try {
-      expect(await ClaudeMigration.run({ enabled: true, roots })).toEqual({ status: "unsupported-context" })
-      expect(ClaudeMigration.hasAttempt(roots)).toBe(false)
+      const results = await Promise.all([
+        ClaudeMigration.run({ enabled: true, roots: { home, config, state } }),
+        ClaudeMigration.run({ enabled: true, roots: { home, config, state } }),
+      ])
+      expect(results.filter((result) => result.status === "complete")).toHaveLength(1)
+      expect(results.filter((result) => result.status === "already-attempted")).toHaveLength(1)
+      expect((await ClaudeMigration.readReceipt({ state }))?.status).toBe("complete")
+      expect(await fs.readFile(path.join(config, "AGENTS.md"), "utf8")).toBe("source")
+      expect((await allPaths(tmp.path)).filter((item) => item.includes(".tmp"))).toEqual([])
     } finally {
-      if (previous === undefined) delete process.env.KILO_CONFIG_DIR
-      else process.env.KILO_CONFIG_DIR = previous
+      ;(Global.Path as { config: string }).config = previous
     }
   })
 })

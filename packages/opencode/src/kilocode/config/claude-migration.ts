@@ -739,7 +739,7 @@ export namespace ClaudeMigration {
   }
 
   function hasInterpolation(value: unknown): boolean {
-    if (typeof value === "string") return /\$\{[^}]+\}/.test(value)
+    if (typeof value === "string") return /\$\{[^}]+\}|\{(?:env|file):[^}]+\}/.test(value)
     if (Array.isArray(value)) return value.some(hasInterpolation)
     return record(value) && Object.values(value).some(hasInterpolation)
   }
