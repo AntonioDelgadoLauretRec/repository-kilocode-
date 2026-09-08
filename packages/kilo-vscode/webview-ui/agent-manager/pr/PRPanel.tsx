@@ -101,8 +101,11 @@ export const PRPanel: Component<PRPanelProps> = (props) => {
         const target = jumping()
         if (target) {
           const node = targetRef(target)
-          if (!targetReady(target) || !node?.isConnected) return
-          node.scrollIntoView({ behavior: "instant", block: "start" })
+          if (!targetReady(target) || !node?.isConnected || !bodyRef) return
+          bodyRef.scrollBy({
+            top: node.getBoundingClientRect().top - bodyRef.getBoundingClientRect().top - bodyRef.clientTop,
+            behavior: "instant",
+          })
           requested = undefined
           jumped = props.jump
           remember()

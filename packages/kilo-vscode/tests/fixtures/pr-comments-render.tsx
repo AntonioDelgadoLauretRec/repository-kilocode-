@@ -611,7 +611,7 @@ const navigation = createRoot((dispose) => ({
   dispose,
 }))
 let jumps = 0
-window.HTMLElement.prototype.scrollIntoView = () => {
+window.HTMLElement.prototype.scrollBy = () => {
   jumps++
 }
 patchCommentState(target.worktreeId, () => ({ open: false }))
