@@ -7,7 +7,7 @@ import { useDialog } from "@tui/ui/dialog"
 import { DialogSelect } from "@tui/ui/dialog-select"
 import { useToast } from "@tui/ui/toast"
 import { errorMessage } from "@tui/util/error"
-import { GoalState } from "@/kilocode/session/goal-state"
+import { GoalState } from "@/kilocode/session/goal/state"
 
 export namespace GoalPrompt {
   export const read = GoalState.read
@@ -32,6 +32,7 @@ export namespace GoalPrompt {
 
   export function Row(props: { goal: ReturnType<typeof read>; run: (action: "pause" | "resume" | "clear") => void }) {
     const dialog = useDialog()
+    const status = () => (props.goal?.status === "complete" ? "complete (model-reported)" : props.goal?.status)
     const { theme } = useTheme()
     return (
       <Show when={props.goal}>
@@ -42,12 +43,25 @@ export namespace GoalPrompt {
           onMouseUp={() =>
             dialog.replace(() => (
               <DialogSelect<"pause" | "resume" | "clear">
-                title={`Goal ${props.goal?.active ? "active" : "paused"}`}
+                title={`Goal ${status()}`}
                 renderFilter={false}
+                footer={
+                  <box paddingLeft={2} paddingRight={2} paddingBottom={1}>
+                    <text wrapMode="word">{props.goal?.text.replace(/\s+/g, " ").trim()}</text>
+                    <Show when={props.goal?.reason}>
+                      <text wrapMode="word" fg={theme.textMuted}>
+                        {props.goal?.reason}
+                      </text>
+                    </Show>
+                  </box>
+                }
                 options={[
                   {
-                    title: props.goal?.active ? "Pause" : "Resume",
-                    description: props.goal?.text.replace(/\s+/g, " ").trim(),
+                    title: props.goal?.active
+                      ? "Pause"
+                      : props.goal?.status === "complete"
+                        ? "Restart goal (uses model credits)"
+                        : "Resume",
                     value: props.goal?.active ? "pause" : "resume",
                   },
                   { title: "Clear", value: "clear" },
@@ -60,7 +74,7 @@ export namespace GoalPrompt {
             ))
           }
         >
-          Goal {props.goal?.active ? "active" : "paused"} ▾
+          Goal {status()} ▾
         </text>
       </Show>
     )

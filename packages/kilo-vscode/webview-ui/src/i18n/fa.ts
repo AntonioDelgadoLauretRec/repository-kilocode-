@@ -54,6 +54,9 @@ export const anacondaDesktopDict = {
 } as const
 
 export const dict = {
+  "session.goal.complete": "تکمیل‌شده (گزارش مدل)",
+  "session.goal.blocked": "مسدود",
+  "session.goal.restart": "شروع مجدد هدف (مصرف اعتبار مدل)",
   ...anacondaDesktopDict,
   ...cloudProviderDict,
 
@@ -702,6 +705,8 @@ export const dict = {
   "session.outcome.error": "نوبت با شکست مواجه شد.",
   "session.outcome.finish": "دلیل فنی پایان: {{reason}}",
   "session.goal.label": "هدف",
+  "prompt.goal.set": "تعیین هدف",
+  "prompt.goal.start": "شروع هدف",
   "session.goal.active": "فعال",
   "session.goal.paused": "متوقف",
   "session.goal.pause": "توقف موقت",

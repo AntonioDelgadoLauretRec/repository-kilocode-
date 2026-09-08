@@ -181,6 +181,20 @@ describe("sessionToWebview", () => {
     expect({ ...saved, ...cleared }.goal).toBeNull()
   })
 
+  it.each(["active", "complete", "blocked", "paused"] as const)(
+    "carries %s goal state and report through JSON",
+    (status) => {
+      const goal = {
+        text: "Fix tests",
+        status,
+        active: status === "active",
+        reason: "Reported by the working model, not independently verified.",
+      }
+      const result = sessionToWebview(makeSession({ metadata: { "kilo.goal": goal } }))
+      expect(JSON.parse(JSON.stringify(result)).goal).toEqual(goal)
+    },
+  )
+
   it.each([null, "text", { text: 1, active: true }, { text: "Goal" }, { text: "Goal", active: "true" }])(
     "ignores invalid goal metadata %j",
     (goal) => {

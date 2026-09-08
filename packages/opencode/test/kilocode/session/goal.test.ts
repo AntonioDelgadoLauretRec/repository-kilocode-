@@ -20,8 +20,9 @@ import { SessionStatus } from "@/session/status"
 import { SessionRunState } from "@/session/run-state"
 import { MessageV2 } from "@/session/message-v2"
 import { MessageID, PartID, SessionID } from "@/session/schema"
-import { Goal } from "@/kilocode/session/goal"
-import { GoalState } from "@/kilocode/session/goal-state"
+import { Goal } from "@/kilocode/session/goal/runner"
+import { GoalPolicy } from "@/kilocode/session/goal/policy"
+import { GoalState } from "@/kilocode/session/goal/state"
 import { SessionDrain } from "@/kilocode/session/drain"
 import { KiloSessionContinuation } from "@/kilocode/session/continuation"
 import { KiloSessionPromptQueue } from "@/kilocode/session/prompt-queue"
@@ -60,7 +61,13 @@ const setup = Effect.fnUntraced(function* (cfg: Partial<Config.Info> = {}) {
   const llm = yield* TestLLMServer
   const fs = yield* FSUtil.Service
   const instance = yield* TestInstance
-  const model = { name: "Test Model", tool_call: true, limit: { context: 100000, output: 10000 } }
+  const model = {
+    name: "Test Model",
+    tool_call: true,
+    attachment: true,
+    modalities: { input: ["text", "image"], output: ["text"] },
+    limit: { context: 100000, output: 10000 },
+  }
   yield* fs.writeWithDirs(
     path.join(instance.directory, "opencode.json"),
     JSON.stringify({
@@ -112,6 +119,379 @@ const setup = Effect.fnUntraced(function* (cfg: Partial<Config.Info> = {}) {
   return { llm, sessions, prompt, status, session, command, metadata, idle, paused, wait }
 })
 
+for (const status of ["complete", "blocked"] as const) {
+  it.instance(
+    `persists explicit root ${status} report after its tool response finishes`,
+    Effect.gen(function* () {
+      const reason = status === "complete" ? "The tests passed." : "Required credentials are missing."
+      const run = yield* setup()
+      yield* run.llm.push(reply().tool("goal_report", { status, reason }), reply().text("Final report").stop())
+      yield* run.command(objective)
+      yield* run.paused
+      const goal = GoalState.read(yield* run.metadata)
+      expect(goal).toMatchObject({
+        text: objective,
+        status,
+        active: false,
+        reason: expect.stringContaining(reason),
+      })
+      const hits = yield* run.llm.hits
+      expect(hits).toHaveLength(2)
+      expect(hits.at(-1)?.body.model).toBe("test-model")
+      expect(JSON.stringify(hits.at(-1)?.body.messages)).toContain("Report recorded for this turn")
+      const messages = yield* run.sessions.messages({ sessionID: run.session.id })
+      expect(
+        messages
+          .flatMap((message) => message.parts)
+          .some((part) => part.type === "tool" && part.tool === "goal_report" && part.state.status === "completed"),
+      ).toBe(true)
+      const store = yield* InstanceStore.Service
+      const instance = yield* TestInstance
+      yield* store.reload({ directory: instance.directory })
+      expect(GoalState.read(yield* run.metadata)).toEqual(goal)
+      yield* run.command("pause")
+      expect(GoalState.read(yield* run.metadata)).toEqual(goal)
+      yield* run.command("clear")
+      expect(yield* run.metadata).toEqual(retained)
+    }),
+  )
+}
+
+for (const action of ["stop", "pause", "clear", "replace"] as const) {
+  it.instance(
+    `discards a pending root report after ${action}`,
+    Effect.gen(function* () {
+      const gate = Promise.withResolvers<void>()
+      yield* Effect.addFinalizer(() => Effect.sync(gate.resolve))
+      const run = yield* setup()
+      yield* run.llm.push(
+        reply().tool("goal_report", { status: "complete", reason: "Old report" }),
+        reply().wait(gate.promise).text("Done").stop(),
+        reply().hang(),
+      )
+      yield* run.command(objective)
+      yield* run.wait(2)
+      expect(GoalState.read(yield* run.metadata)?.status).toBe("active")
+      const message = (yield* run.sessions.messages({ sessionID: run.session.id }))
+        .flatMap((message) => message.parts)
+        .find((part) => part.type === "tool" && part.tool === "goal_report")?.messageID
+      if (!message) throw new Error("Report tool response missing")
+      if (action === "stop") yield* run.prompt.cancel(run.session.id)
+      if (action === "pause" || action === "clear") yield* run.command(action)
+      if (action === "replace") yield* run.command("New objective")
+      expect(GoalPolicy.report(run.session.id, message, { status: "complete", reason: "Stale report" })).toBe(false)
+      gate.resolve()
+      const goal = GoalState.read(yield* run.metadata)
+      if (action === "clear") expect(goal).toBeUndefined()
+      if (action === "stop" || action === "pause") expect(goal?.status).toBe("paused")
+      if (action === "replace") expect(goal).toMatchObject({ text: "New objective", status: "active" })
+      expect(goal?.reason ?? "").not.toContain("Old report")
+      yield* run.prompt.cancel(run.session.id)
+    }),
+  )
+}
+
+it.instance(
+  "pauses without an explicit tool report even when text claims completion",
+  Effect.gen(function* () {
+    const run = yield* setup()
+    yield* run.llm.text("Goal complete. All work is done.")
+    yield* run.command(objective)
+    yield* run.paused
+    expect(GoalState.read(yield* run.metadata)).toMatchObject({
+      status: "paused",
+      reason: expect.stringContaining("No successful action"),
+    })
+    expect(yield* run.llm.hits).toHaveLength(1)
+  }),
+)
+
+it.instance(
+  "restarts a complete goal only after explicit resume and clears the old report",
+  Effect.gen(function* () {
+    const run = yield* setup()
+    yield* run.llm.push(
+      reply().tool("goal_report", { status: "complete", reason: "Tests passed" }),
+      reply().text("Done").stop(),
+      reply().hang(),
+    )
+    yield* run.command(objective)
+    yield* run.paused
+    expect(GoalState.read(yield* run.metadata)?.status).toBe("complete")
+    yield* run.command("resume")
+    yield* run.wait(3)
+    expect(GoalState.read(yield* run.metadata)).toEqual({ text: objective, active: true, status: "active" })
+    yield* run.prompt.cancel(run.session.id)
+    expect(GoalState.read(yield* run.metadata)?.status).toBe("paused")
+  }),
+)
+
+it.instance(
+  "does not accept a Goal report from ordinary chat",
+  Effect.gen(function* () {
+    const run = yield* setup()
+    yield* run.llm.push(
+      reply().tool("goal_report", { status: "complete", reason: "Not a Goal" }),
+      reply().text("Done").stop(),
+    )
+    yield* run.prompt.prompt({ sessionID: run.session.id, parts: [{ type: "text", text: "Ordinary work" }] })
+    expect(JSON.stringify((yield* run.llm.hits).at(0)?.body.tools)).not.toContain('"goal_report"')
+    expect(GoalState.read(yield* run.metadata)).toBeUndefined()
+    const parts = (yield* run.sessions.messages({ sessionID: run.session.id })).flatMap((message) => message.parts)
+    expect(
+      parts.some((part) => part.type === "tool" && part.tool === "goal_report" && part.state.status === "completed"),
+    ).toBe(false)
+  }),
+)
+
+it.instance(
+  "does not complete a Goal when work fails after a report",
+  Effect.gen(function* () {
+    const run = yield* setup({ permission: { bash: "allow" } })
+    yield* run.llm.push(
+      reply().tool("goal_report", { status: "complete", reason: "Premature report" }),
+      shell("exit 1"),
+      reply().text("Failed").stop(),
+    )
+    yield* run.command(objective)
+    yield* run.paused
+    expect(GoalState.read(yield* run.metadata)).toMatchObject({
+      status: "paused",
+      reason: expect.stringContaining("Work failed"),
+    })
+  }),
+)
+
+it.instance(
+  "keeps Goal report permission rejection as a blocker",
+  Effect.gen(function* () {
+    const run = yield* setup({ permission: { goal_report: "ask" } })
+    const permissions = yield* Permission.Service
+    yield* run.llm.push(
+      reply().tool("goal_report", { status: "complete", reason: "Tests passed" }),
+      reply().text("Blocked").stop(),
+    )
+    yield* run.command(objective)
+    const request = yield* pollWithTimeout(
+      permissions
+        .list()
+        .pipe(
+          Effect.map((items) =>
+            items.find((item) => item.sessionID === run.session.id && item.permission === "goal_report"),
+          ),
+        ),
+      "Goal report did not request permission",
+      "10 seconds",
+    )
+    yield* permissions.reply({ requestID: request.id, reply: "reject" })
+    yield* run.paused
+    expect(GoalState.read(yield* run.metadata)?.status).toBe("blocked")
+  }),
+)
+
+for (const reason of ["", "   ", "x".repeat(2001)]) {
+  it.instance(
+    `rejects invalid Goal report reason of length ${reason.length}`,
+    Effect.gen(function* () {
+      const run = yield* setup()
+      yield* run.llm.push(reply().tool("goal_report", { status: "complete", reason }), reply().text("Done").stop())
+      yield* run.command(objective)
+      yield* run.paused
+      expect(GoalState.read(yield* run.metadata)?.status).toBe("paused")
+    }),
+  )
+}
+
+for (const state of ["ordinary", "pause", "clear", "completed"] as const) {
+  it.instance(
+    `excludes only questions during goals and restores them for ${state} chat`,
+    Effect.gen(function* () {
+      const run = yield* setup()
+      const question = yield* Question.Service
+      if (state !== "ordinary") {
+        yield* run.llm.push(state === "completed" ? reply().text("Goal completed").stop() : reply().hang())
+        yield* run.command(objective)
+        yield* run.wait(1)
+        if (state === "completed") yield* run.paused
+        if (state !== "completed") {
+          expect(GoalPolicy.available(run.session.id, "question")).toBe(false)
+          yield* run.command(state)
+        }
+        yield* run.idle
+      }
+      yield* run.llm.push(
+        reply().tool("question", {
+          questions: [
+            { header: "Scope", question: "Which scope?", options: [{ label: "Small", description: "Small scope" }] },
+          ],
+        }),
+        reply().text("Scope selected").stop(),
+      )
+      const work = yield* run.prompt
+        .prompt({
+          sessionID: run.session.id,
+          parts: [{ type: "text", text: "Help select the scope" }],
+        })
+        .pipe(Effect.forkChild)
+      const pending = yield* pollWithTimeout(
+        question.list().pipe(Effect.map((items) => items.find((item) => item.sessionID === run.session.id))),
+        "chat question was not requested",
+      )
+      expect(GoalPolicy.available(run.session.id, "question")).toBe(true)
+      const hits = yield* run.llm.hits
+      const tools = hits.at(-1)?.body.tools
+      expect(tools).toEqual(
+        expect.arrayContaining([expect.objectContaining({ function: expect.objectContaining({ name: "question" }) })]),
+      )
+      if (state !== "ordinary") {
+        expect(
+          (hits.at(0)?.body.tools as { function: { name: string } }[]).filter(
+            (tool) => tool.function.name !== "goal_report",
+          ),
+        ).toEqual((tools as { function: { name: string } }[]).filter((tool) => tool.function.name !== "question"))
+        expect(JSON.stringify(hits.at(0)?.body.tools)).toContain('"goal_report"')
+      }
+      yield* question.reply({ requestID: pending.id, answers: [["Small"]] })
+      yield* Fiber.join(work)
+    }),
+    30_000,
+  )
+}
+
+it.instance(
+  "restricts foreground goal delegates without restricting independent child prompts",
+  Effect.gen(function* () {
+    const run = yield* setup({ agent: { general: { model: "test/selected-model" } } })
+    yield* run.llm.pushMatch(
+      ({ body }) => body.model === "test-model",
+      reply().tool("task", { description: "Check scope", prompt: "Inspect the scope", subagent_type: "general" }),
+    )
+    yield* run.llm.pushMatch(({ body }) => body.model === "selected-model", reply().hang(), reply().hang())
+    yield* run.command(objective)
+    yield* run.wait(2)
+    const child = (yield* run.sessions.children(run.session.id)).at(0)
+    if (!child) throw new Error("Goal did not create a child")
+    expect(GoalPolicy.available(child.id, "question")).toBe(false)
+    expect(GoalPolicy.available(child.id, "goal_report")).toBe(false)
+    expect(JSON.stringify((yield* run.llm.hits).at(1)?.body.tools)).not.toContain('"goal_report"')
+    yield* run.command("pause")
+    yield* run.idle
+    const work = yield* run.prompt
+      .prompt({ sessionID: child.id, parts: [{ type: "text", text: "Independent work" }] })
+      .pipe(Effect.forkChild)
+    yield* run.wait(3)
+    expect(GoalPolicy.available(child.id, "question")).toBe(true)
+    expect(GoalPolicy.available(child.id, "goal_report")).toBe(false)
+    yield* run.prompt.cancel(child.id)
+    yield* Fiber.await(work)
+  }),
+  30_000,
+)
+
+it.instance(
+  "does not execute an unadvertised question during a goal",
+  Effect.gen(function* () {
+    const run = yield* setup()
+    const question = yield* Question.Service
+    yield* run.llm.push(
+      reply().tool("question", {
+        questions: [
+          { header: "Scope", question: "Which scope?", options: [{ label: "Small", description: "Small scope" }] },
+        ],
+      }),
+      reply().text("Cannot proceed safely").stop(),
+    )
+    yield* run.command(objective)
+    yield* run.wait(2)
+    yield* run.paused
+    expect(yield* question.list()).toEqual([])
+    const parts = (yield* run.sessions.messages({ sessionID: run.session.id })).flatMap((message) => message.parts)
+    expect(
+      parts.some((part) => part.type === "tool" && part.tool === "question" && part.state.status === "completed"),
+    ).toBe(false)
+  }),
+  30_000,
+)
+
+it.instance(
+  "starts a multiline composer objective with image and file attachments in the same session",
+  Effect.gen(function* () {
+    const run = yield* setup()
+    const text = "Implement this design\n\nKeep the file requirements."
+    const image =
+      "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+ip1sAAAAASUVORK5CYII="
+    yield* run.llm.text("Waiting for clarification")
+    yield* run.prompt.command({
+      sessionID: run.session.id,
+      agent: "code",
+      command: "goal",
+      arguments: `-- ${text}`,
+      model: "test/test-model",
+      parts: [
+        { type: "file", mime: "image/png", url: image, filename: "design.png" },
+        {
+          type: "file",
+          mime: "text/plain",
+          url: `data:text/plain;base64,${Buffer.from("Use accessible controls").toString("base64")}`,
+          filename: "requirements.txt",
+        },
+      ],
+    })
+    yield* run.wait(1)
+    yield* run.paused
+    expect(yield* run.metadata).toMatchObject({ ...retained, "kilo.goal": { text, active: false, status: "paused" } })
+    const body = JSON.stringify((yield* run.llm.hits).at(-1)?.body)
+    expect(body).toContain("Implement this design\\n\\nKeep the file requirements.")
+    expect(body).toContain("Use accessible controls")
+    expect(body).toContain(image)
+    const messages = yield* run.sessions.messages({ sessionID: run.session.id })
+    expect(messages.every((message) => message.info.sessionID === run.session.id)).toBe(true)
+    expect(
+      messages
+        .flatMap((message) => message.parts)
+        .some((part) => part.type === "file" && part.filename === "design.png"),
+    ).toBe(true)
+  }),
+  30_000,
+)
+
+it.instance(
+  "rejects invalid goal attachments before acknowledging submission",
+  Effect.gen(function* () {
+    const run = yield* setup()
+    const result = yield* run.prompt
+      .command({
+        sessionID: run.session.id,
+        agent: "code",
+        command: "goal",
+        arguments: `-- ${objective}`,
+        model: "test/test-model",
+        parts: [
+          { type: "file", mime: "image/png", url: "data:image/png;base64,bm90LWFuLWltYWdl", filename: "invalid.png" },
+        ],
+      })
+      .pipe(Effect.exit)
+    expect(Exit.isFailure(result)).toBe(true)
+    expect(GoalState.read(yield* run.metadata)?.active).toBe(false)
+    expect(yield* run.llm.hits).toHaveLength(0)
+  }),
+  30_000,
+)
+
+for (const text of ["pause", "resume", "clear"]) {
+  it.instance(
+    `accepts the literal composer objective ${text}`,
+    Effect.gen(function* () {
+      const run = yield* setup()
+      yield* run.llm.text("Please clarify")
+      yield* run.command(`-- ${text}`)
+      yield* run.wait(1)
+      yield* run.paused
+      expect(yield* run.metadata).toMatchObject({ ...retained, "kilo.goal": { text, active: false, status: "paused" } })
+    }),
+  )
+}
+
 it.instance(
   "runs two successful goal cycles and cancels the idle gap",
   Effect.gen(function* () {
@@ -131,7 +511,10 @@ it.instance(
     })
     yield* wait(2)
     yield* idle
-    expect(yield* metadata).toEqual({ ...retained, "kilo.goal": { text: objective, active: true } })
+    expect(yield* metadata).toMatchObject({
+      ...retained,
+      "kilo.goal": { text: objective, active: true, status: "active" },
+    })
     yield* wait(4)
     yield* idle
     const messages = yield* sessions.messages({ sessionID: session.id })
@@ -144,7 +527,7 @@ it.instance(
     )
     for (const hit of yield* llm.hits) expect(JSON.stringify(hit.body)).toContain(objective)
     yield* prompt.cancel(session.id)
-    expect(yield* metadata).toEqual({ ...retained, "kilo.goal": { text: objective, active: false } })
+    expect(yield* metadata).toMatchObject({ ...retained, "kilo.goal": { text: objective, active: false } })
     yield* Effect.sleep("5200 millis")
     expect(yield* llm.hits).toHaveLength(4)
   }),
@@ -200,7 +583,10 @@ for (const disposed of [false, true]) {
         "goal observer survived Stop or disposal",
       )
       expect((yield* status.get(session.id)).type).toBe("idle")
-      expect(yield* metadata).toEqual({ ...retained, "kilo.goal": { text: objective, active: false } })
+      expect(yield* metadata).toMatchObject({
+        ...retained,
+        "kilo.goal": { text: objective, active: false, status: "paused" },
+      })
       const stopped = (yield* sessions.messages({ sessionID: session.id })).at(-1)
       expect(stopped?.info.role === "assistant" && MessageV2.AbortedError.isInstance(stopped.info.error)).toBe(true)
       yield* Effect.sleep("5200 millis")
@@ -230,7 +616,10 @@ it.instance(
     gate.resolve()
     const response = yield* awaitWithTimeout(Fiber.join(human), "human prompt did not finish", "10 seconds")
     expect(response.parts).toEqual(expect.arrayContaining([expect.objectContaining({ text: "Human reply" })]))
-    expect(yield* metadata).toEqual({ ...retained, "kilo.goal": { text: objective, active: false } })
+    expect(yield* metadata).toMatchObject({
+      ...retained,
+      "kilo.goal": { text: objective, active: false, status: "paused" },
+    })
     expect(JSON.stringify((yield* llm.hits).at(-1)?.body)).toContain("Answer this instead")
     yield* Effect.sleep("5200 millis")
     expect(yield* llm.hits).toHaveLength(2)
@@ -238,13 +627,12 @@ it.instance(
   30_000,
 )
 
-for (const kind of ["permission", "question", "suggestion"] as const) {
+for (const kind of ["permission", "suggestion"] as const) {
   it.instance(
     `failed goal replacement and resume preserve the pending ${kind} and original turn`,
     Effect.gen(function* () {
       const run = yield* setup()
       const permission = yield* Permission.Service
-      const question = yield* Question.Service
       const state = yield* SessionRunState.Service
       yield* run.sessions.setPermission({
         sessionID: run.session.id,
@@ -253,25 +641,14 @@ for (const kind of ["permission", "question", "suggestion"] as const) {
       yield* run.llm.push(
         kind === "permission"
           ? shell()
-          : kind === "question"
-            ? reply().tool("question", {
-                questions: [
-                  {
-                    header: "Validation",
-                    question: "Continue validation?",
-                    options: [{ label: "Continue", description: "Continue the current objective" }],
-                  },
-                ],
-              })
-            : reply().tool("suggest", {
-                suggest: "Continue validation",
-                actions: [{ label: "Continue", prompt: "Continue the current objective" }],
-              }),
+          : reply().tool("suggest", {
+              suggest: "Continue validation",
+              actions: [{ label: "Continue", prompt: "Continue the current objective" }],
+            }),
       )
       yield* run.command(objective)
       const list = Effect.gen(function* () {
         if (kind === "permission") return yield* permission.list()
-        if (kind === "question") return yield* question.list()
         return yield* Effect.promise(() => Suggestion.list())
       })
       const request = yield* pollWithTimeout(
@@ -286,7 +663,10 @@ for (const kind of ["permission", "question", "suggestion"] as const) {
         expect(Exit.isFailure(exit)).toBe(true)
         if (Exit.isFailure(exit))
           expect(String(Cause.squash(exit.cause))).toContain("Resolve pending questions and permissions")
-        expect(yield* run.metadata).toEqual({ ...retained, "kilo.goal": { text: objective, active: true } })
+        expect(yield* run.metadata).toMatchObject({
+          ...retained,
+          "kilo.goal": { text: objective, active: true, status: "active" },
+        })
         const pending = yield* list
         expect(pending).toHaveLength(1)
         expect(pending.at(0)).toEqual(request)
@@ -297,7 +677,6 @@ for (const kind of ["permission", "question", "suggestion"] as const) {
         expect(yield* run.llm.hits).toHaveLength(1)
       }
       if ("permission" in request) yield* permission.reply({ requestID: request.id, reply: "reject" })
-      if ("questions" in request) yield* question.reject(request.id)
       if ("actions" in request) {
         yield* run.llm.text("Suggestion dismissed")
         yield* Effect.promise(() => Suggestion.dismiss(request.id))
@@ -354,7 +733,10 @@ for (const idle of [false, true]) {
         before.map((message) => message.info.id),
       )
       expect((yield* run.status.get(run.session.id)).type).toBe(idle ? "idle" : "busy")
-      expect(yield* run.metadata).toEqual({ ...retained, "kilo.goal": { text: objective, active: true } })
+      expect(yield* run.metadata).toMatchObject({
+        ...retained,
+        "kilo.goal": { text: objective, active: true, status: "active" },
+      })
       gate.resolve()
       yield* run.wait(4)
       yield* run.paused
@@ -388,7 +770,10 @@ it.instance(
     yield* run.wait(1)
     yield* release.open
     expect(Exit.hasInterrupts(yield* Fiber.await(pending))).toBe(true)
-    expect(yield* run.metadata).toEqual({ ...retained, "kilo.goal": { text: objective, active: true } })
+    expect(yield* run.metadata).toMatchObject({
+      ...retained,
+      "kilo.goal": { text: objective, active: true, status: "active" },
+    })
     expect(yield* run.llm.hits).toHaveLength(1)
     yield* run.prompt.cancel(run.session.id)
   }),
@@ -413,7 +798,10 @@ for (const busy of [true, false]) {
         .pipe(Effect.exit)
       if (busy) {
         expect(Exit.isFailure(exit) && Cause.squash(exit.cause) instanceof Session.BusyError).toBe(true)
-        expect(yield* run.metadata).toEqual({ ...retained, "kilo.goal": { text: objective, active: true } })
+        expect(yield* run.metadata).toMatchObject({
+          ...retained,
+          "kilo.goal": { text: objective, active: true, status: "active" },
+        })
         expect(KiloSessionPromptQueue.active(run.session.id)).toBe(base)
         expect((yield* run.sessions.messages({ sessionID: run.session.id })).map((message) => message.info.id)).toEqual(
           before.map((message) => message.info.id),
@@ -520,7 +908,10 @@ it.instance(
       sessionID: session.id,
       metadata: { ...retained, "kilo.goal": { text: objective, active: true } },
     })
-    expect(yield* metadata).toEqual({ ...retained, "kilo.goal": { text: objective, active: false } })
+    expect(yield* metadata).toMatchObject({
+      ...retained,
+      "kilo.goal": { text: objective, active: false, status: "paused" },
+    })
     const status = yield* control("")
     expect(status.parts).toEqual(
       expect.arrayContaining([expect.objectContaining({ text: expect.stringContaining("paused") })]),
@@ -530,12 +921,21 @@ it.instance(
     yield* command("resume")
     yield* wait(1)
     const fork = yield* sessions.fork({ sessionID: session.id })
-    expect(fork.metadata).toEqual({ ...retained, "kilo.goal": { text: objective, active: false } })
+    expect(fork.metadata).toMatchObject({
+      ...retained,
+      "kilo.goal": { text: objective, active: false, status: "paused" },
+    })
     expect((yield* sessions.get(fork.id)).metadata).toEqual(fork.metadata)
-    expect(yield* metadata).toEqual({ ...retained, "kilo.goal": { text: objective, active: true } })
+    expect(yield* metadata).toMatchObject({
+      ...retained,
+      "kilo.goal": { text: objective, active: true, status: "active" },
+    })
     yield* control("")
     yield* control("pause")
-    expect(yield* metadata).toEqual({ ...retained, "kilo.goal": { text: objective, active: false } })
+    expect(yield* metadata).toMatchObject({
+      ...retained,
+      "kilo.goal": { text: objective, active: false, status: "paused" },
+    })
     yield* control("")
     expect(yield* llm.hits).toHaveLength(1)
     yield* llm.hang
@@ -559,9 +959,15 @@ it.instance(
     yield* command(objective)
     yield* wait(2)
     yield* idle
-    expect(yield* metadata).toEqual({ ...retained, "kilo.goal": { text: objective, active: true } })
+    expect(yield* metadata).toMatchObject({
+      ...retained,
+      "kilo.goal": { text: objective, active: true, status: "active" },
+    })
     yield* awaitWithTimeout(store.reload({ directory: instance.directory }), "goal prevented instance disposal")
-    expect(yield* metadata).toEqual({ ...retained, "kilo.goal": { text: objective, active: false } })
+    expect(yield* metadata).toMatchObject({
+      ...retained,
+      "kilo.goal": { text: objective, active: false, status: "paused" },
+    })
     yield* Effect.sleep("5200 millis")
     expect(yield* llm.hits).toHaveLength(2)
   }),
@@ -633,7 +1039,9 @@ it.instance(
     const pending = yield* question
       .ask({
         sessionID: child.id,
-        questions: [{ header: "Validation", question: "Continue?", options: [{ label: "Yes", description: "Continue" }] }],
+        questions: [
+          { header: "Validation", question: "Continue?", options: [{ label: "Yes", description: "Continue" }] },
+        ],
       })
       .pipe(Effect.forkChild)
     const request = yield* pollWithTimeout(
@@ -646,7 +1054,10 @@ it.instance(
     expect(Exit.isFailure(exit)).toBe(true)
     if (Exit.isFailure(exit))
       expect(String(Cause.squash(exit.cause))).toContain("Resolve pending questions and permissions")
-    expect(yield* run.metadata).toEqual({ ...retained, "kilo.goal": { text: objective, active: false } })
+    expect(yield* run.metadata).toMatchObject({
+      ...retained,
+      "kilo.goal": { text: objective, active: false, status: "paused" },
+    })
     expect(yield* run.sessions.messages({ sessionID: run.session.id })).toEqual(before)
     expect(yield* question.list()).toEqual([request])
     expect(yield* run.llm.hits).toHaveLength(1)
@@ -691,7 +1102,7 @@ it.instance(
     yield* llm.hang
     yield* command("Review the validation results")
     yield* wait(2)
-    expect(yield* metadata).toEqual({
+    expect(yield* metadata).toMatchObject({
       ...retained,
       "kilo.goal": { text: "Review the validation results", active: true },
     })
@@ -710,7 +1121,7 @@ it.instance(
     yield* release.open
     const exit = yield* awaitWithTimeout(Fiber.await(replacement), "stopped replacement did not settle")
     expect(Exit.isFailure(exit) && Cause.hasInterruptsOnly(exit.cause)).toBe(true)
-    expect(yield* metadata).toEqual({
+    expect(yield* metadata).toMatchObject({
       ...retained,
       "kilo.goal": { text: "Review the validation results", active: false },
     })
@@ -794,7 +1205,7 @@ it.instance(
     yield* release.open
     expect(Exit.hasInterrupts(yield* Fiber.await(pause))).toBe(true)
     yield* awaitWithTimeout(Fiber.join(next), "newer start did not finish after cancellation")
-    expect(yield* run.metadata).toEqual({
+    expect(yield* run.metadata).toMatchObject({
       ...retained,
       "kilo.goal": { text: "Continue the newer objective", active: true },
     })
@@ -845,7 +1256,10 @@ it.instance(
     yield* run.sessions.setMetadata({ sessionID: run.session.id, metadata })
     yield* release.open
     yield* Fiber.join(start)
-    expect(yield* run.metadata).toEqual({ ...metadata, "kilo.goal": { text: objective, active: true } })
+    expect(yield* run.metadata).toMatchObject({
+      ...metadata,
+      "kilo.goal": { text: objective, active: true, status: "active" },
+    })
     yield* run.prompt.cancel(run.session.id)
   }),
 )
@@ -990,60 +1404,34 @@ for (const kind of ["exit", "tool", "recovered"] as const) {
   )
 }
 
-for (const kind of ["permission", "question"] as const) {
-  it.instance(
-    `does not clear a rejected ${kind} after an unrelated successful action`,
-    Effect.gen(function* () {
-      const run = yield* setup({ experimental: { continue_loop_on_deny: true } })
-      const permission = yield* Permission.Service
-      const question = yield* Question.Service
-      yield* run.sessions.setPermission({
-        sessionID: run.session.id,
-        permission: [{ permission: "bash", pattern: "*", action: "ask" }],
-      })
-      yield* run.llm.push(
-        kind === "permission"
-          ? shell()
-          : reply().tool("question", {
-              questions: [
-                {
-                  header: "Blocked",
-                  question: "Is the blocker resolved?",
-                  options: [{ label: "Continue", description: "The blocker is resolved" }],
-                },
-              ],
-            }),
-        reply().tool("read", { filePath: "opencode.json" }),
-        reply().text("Unrelated read completed").stop(),
-      )
-      yield* run.command(objective)
-      if (kind === "permission") {
-        const pending = yield* pollWithTimeout(
-          permission.list().pipe(Effect.map((items) => items.find((item) => item.sessionID === run.session.id))),
-          "permission was not requested",
-        )
-        yield* permission.reply({ requestID: pending.id, reply: "reject" })
-      }
-      if (kind === "question") {
-        const pending = yield* pollWithTimeout(
-          question.list().pipe(Effect.map((items) => items.find((item) => item.sessionID === run.session.id))),
-          "question was not requested",
-        )
-        yield* Effect.sleep("5200 millis")
-        expect(yield* run.llm.hits).toHaveLength(1)
-        yield* question.reject(pending.id)
-      }
-      yield* run.wait(3)
-      yield* run.paused
-      const last = (yield* run.sessions.messages({ sessionID: run.session.id })).at(-1)
-      expect(last?.parts).toEqual(
-        expect.arrayContaining([expect.objectContaining({ text: "Unrelated read completed" })]),
-      )
-      expect(yield* run.llm.hits).toHaveLength(3)
-    }),
-    30_000,
-  )
-}
+it.instance(
+  "does not clear a rejected permission after an unrelated successful action",
+  Effect.gen(function* () {
+    const run = yield* setup({ experimental: { continue_loop_on_deny: true } })
+    const permission = yield* Permission.Service
+    yield* run.sessions.setPermission({
+      sessionID: run.session.id,
+      permission: [{ permission: "bash", pattern: "*", action: "ask" }],
+    })
+    yield* run.llm.push(
+      shell(),
+      reply().tool("read", { filePath: "opencode.json" }),
+      reply().text("Unrelated read completed").stop(),
+    )
+    yield* run.command(objective)
+    const pending = yield* pollWithTimeout(
+      permission.list().pipe(Effect.map((items) => items.find((item) => item.sessionID === run.session.id))),
+      "permission was not requested",
+    )
+    yield* permission.reply({ requestID: pending.id, reply: "reject" })
+    yield* run.wait(3)
+    yield* run.paused
+    const last = (yield* run.sessions.messages({ sessionID: run.session.id })).at(-1)
+    expect(last?.parts).toEqual(expect.arrayContaining([expect.objectContaining({ text: "Unrelated read completed" })]))
+    expect(yield* run.llm.hits).toHaveLength(3)
+  }),
+  30_000,
+)
 
 for (const kind of ["replay", "continue", "stop"] as const) {
   it.instance(
@@ -1093,8 +1481,12 @@ for (const kind of ["replay", "continue", "stop"] as const) {
       )
       const last = messages.at(-1)?.info
       expect(last?.role === "assistant" && last.parentID).not.toBe(original?.info.id)
-      expect(yield* run.metadata).toEqual({ ...retained, "kilo.goal": { text: objective, active: true } })
+      expect(yield* run.metadata).toMatchObject({
+        ...retained,
+        "kilo.goal": { text: objective, active: true, status: "active" },
+      })
       yield* run.wait(count + 1)
+      expect(JSON.stringify((yield* run.llm.hits).at(-1)?.body)).toContain(objective)
       yield* run.prompt.cancel(run.session.id)
     }),
     30_000,
@@ -1211,7 +1603,14 @@ for (const kind of ["success", "delivery-error", "independent-child"] as const) 
       yield* run.command(objective)
       yield* run.wait(4)
       yield* run.idle
-      expect(yield* run.metadata).toEqual({ ...retained, "kilo.goal": { text: objective, active: true } })
+      expect(yield* run.metadata).toMatchObject({
+        ...retained,
+        "kilo.goal": { text: objective, active: true, status: "active" },
+      })
+      const delegated = (yield* run.sessions.children(run.session.id)).at(0)
+      if (!delegated) throw new Error("Goal did not create a child")
+      expect(GoalPolicy.available(delegated.id, "question")).toBe(false)
+      expect(GoalPolicy.available(delegated.id, "plan_exit")).toBe(true)
       gate.resolve()
       if (kind === "success") {
         yield* run.wait(6)

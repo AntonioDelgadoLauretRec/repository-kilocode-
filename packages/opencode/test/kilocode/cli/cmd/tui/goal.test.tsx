@@ -20,10 +20,12 @@ test("goal metadata requires text and explicit active state", () => {
   expect(GoalPrompt.read({ "kilo.goal": { text: "Add tests", active: true } })).toEqual({
     text: "Add tests",
     active: true,
+    status: "active",
   })
   expect(GoalPrompt.read({ "kilo.goal": { text: "Add tests", active: "true" } })).toEqual({
     text: "Add tests",
     active: false,
+    status: "paused",
   })
 })
 
@@ -101,7 +103,7 @@ test("small goal trigger opens native actions above the prompt or blocker", asyn
     await ready.promise
     await app.renderOnce()
     expect(frame()).toEqual(["Message prompt"])
-    setGoal({ text: "Add tests\nand fix failures", active: true })
+    setGoal({ text: "Add tests\nand fix failures", active: true, status: "active" })
     await app.renderOnce()
     expect(frame()).toEqual(["Goal active ▾", "Message prompt"])
     await app.mockMouse.click(70, 0)
@@ -125,7 +127,7 @@ test("small goal trigger opens native actions above the prompt or blocker", asyn
     app.mockInput.pressEnter()
     await app.renderOnce()
     expect(actions).toEqual(["pause"])
-    setGoal({ text: "Add tests\nand fix failures", active: false })
+    setGoal({ text: "Add tests\nand fix failures", active: false, status: "paused" })
     app.resize(50, 24)
     setContent("Question requires an answer")
     await app.renderOnce()
@@ -134,6 +136,21 @@ test("small goal trigger opens native actions above the prompt or blocker", asyn
     expect(app.captureCharFrame()).not.toContain("Pause")
     await click("Resume")
     expect(actions).toEqual(["pause", "resume"])
+    setGoal({ text: "Add tests", active: false, status: "complete", reason: "Model reported passing tests" })
+    await app.renderOnce()
+    await click("Goal complete")
+    expect(app.captureCharFrame()).toContain("Restart goal")
+    expect(app.captureCharFrame()).toContain("Model reported passing tests")
+    app.mockInput.pressEscape()
+    await app.renderOnce()
+    setGoal({ text: "Add tests", active: false, status: "blocked", reason: "Permission rejected" })
+    await app.renderOnce()
+    await click("Goal blocked")
+    expect(app.captureCharFrame()).toContain("Permission rejected")
+    app.mockInput.pressEscape()
+    await app.renderOnce()
+    setGoal({ text: "Add tests", active: false, status: "paused" })
+    await app.renderOnce()
     await click("Goal paused")
     await click("Clear")
     expect(actions).toEqual(["pause", "resume", "clear"])

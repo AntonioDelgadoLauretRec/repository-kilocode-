@@ -60,6 +60,9 @@ export const anacondaDesktopDict = {
 } as const
 
 export const dict = {
+  "session.goal.complete": "Abgeschlossen (vom Modell gemeldet)",
+  "session.goal.blocked": "Blockiert",
+  "session.goal.restart": "Ziel neu starten (verbraucht Modellguthaben)",
   ...anacondaDesktopDict,
   ...cloudProviderDict,
 
@@ -763,6 +766,8 @@ export const dict = {
   "session.outcome.error": "Zug fehlgeschlagen",
   "session.outcome.finish": "Abschlussgrund: {{reason}}",
   "session.goal.label": "Ziel",
+  "prompt.goal.set": "Ziel festlegen",
+  "prompt.goal.start": "Ziel starten",
   "session.goal.active": "Aktiv",
   "session.goal.paused": "Pausiert",
   "session.goal.pause": "Pausieren",

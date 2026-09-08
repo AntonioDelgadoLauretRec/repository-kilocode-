@@ -54,6 +54,9 @@ export const anacondaDesktopDict = {
 } as const
 
 export const dict = {
+  "session.goal.complete": "Završeno (prema modelu)",
+  "session.goal.blocked": "Blokirano",
+  "session.goal.restart": "Ponovo pokreni cilj (troši kredite modela)",
   ...anacondaDesktopDict,
   ...cloudProviderDict,
 
@@ -753,6 +756,8 @@ export const dict = {
   "session.outcome.error": "Potez nije uspio",
   "session.outcome.finish": "Razlog završetka: {{reason}}",
   "session.goal.label": "Cilj",
+  "prompt.goal.set": "Postavi cilj",
+  "prompt.goal.start": "Pokreni cilj",
   "session.goal.active": "Aktivan",
   "session.goal.paused": "Pauziran",
   "session.goal.pause": "Pauziraj",

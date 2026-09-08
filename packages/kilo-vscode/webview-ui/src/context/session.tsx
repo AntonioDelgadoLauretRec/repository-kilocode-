@@ -2211,7 +2211,7 @@ export const SessionProvider: ParentComponent = (props) => {
     draftID?: string,
     context?: string,
     origin?: string | null,
-    overrides?: { agent?: string; model?: string; variant?: string },
+    overrides?: { agent?: string; model?: string; variant?: string; messageID?: string },
   ): boolean {
     if (!server.isConnected()) {
       console.warn("[Kilo New] Cannot send command: not connected")
@@ -2256,6 +2256,8 @@ export const SessionProvider: ParentComponent = (props) => {
       variant: variants.request(scope),
     }
 
+    const messageID = (() => overrides?.messageID ?? Identifier.ascending("message"))()
+
     // Cloud previews need import-then-command; post importAndSend with command metadata
     const preview = sid?.startsWith("cloud:")
       ? sid.slice("cloud:".length)
@@ -2267,7 +2269,7 @@ export const SessionProvider: ParentComponent = (props) => {
         type: "importAndSend",
         cloudSessionId: preview,
         text: `/${command} ${args}`.trim(),
-        messageID: Identifier.ascending("message"),
+        messageID,
         ...selection,
         files,
         command,
@@ -2276,7 +2278,6 @@ export const SessionProvider: ParentComponent = (props) => {
       return true
     }
 
-    const messageID = Identifier.ascending("message")
     if (command !== "goal") dismiss(sid)
 
     if (scope) {

@@ -58,6 +58,9 @@ export const anacondaDesktopDict = {
 type Keys = keyof typeof en
 
 export const dict = {
+  "session.goal.complete": "완료 (모델 보고)",
+  "session.goal.blocked": "차단됨",
+  "session.goal.restart": "목표 다시 시작 (모델 크레딧 사용)",
   ...anacondaDesktopDict,
   ...cloudProviderDict,
 
@@ -747,6 +750,8 @@ export const dict = {
   "session.outcome.error": "턴이 실패했습니다",
   "session.outcome.finish": "종료 이유: {{reason}}",
   "session.goal.label": "목표",
+  "prompt.goal.set": "목표 설정",
+  "prompt.goal.start": "목표 시작",
   "session.goal.active": "활성",
   "session.goal.paused": "일시 중지됨",
   "session.goal.pause": "일시 중지",

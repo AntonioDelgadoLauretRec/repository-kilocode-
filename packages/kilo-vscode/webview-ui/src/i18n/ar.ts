@@ -53,6 +53,9 @@ export const anacondaDesktopDict = {
 } as const
 
 export const dict = {
+  "session.goal.complete": "مكتمل (حسب تقرير النموذج)",
+  "session.goal.blocked": "محظور",
+  "session.goal.restart": "إعادة بدء الهدف (تستهلك أرصدة النموذج)",
   ...anacondaDesktopDict,
   ...cloudProviderDict,
 
@@ -736,6 +739,8 @@ export const dict = {
   "session.outcome.error": "فشل الدور",
   "session.outcome.finish": "سبب الإنهاء: {{reason}}",
   "session.goal.label": "الهدف",
+  "prompt.goal.set": "تحديد الهدف",
+  "prompt.goal.start": "بدء الهدف",
   "session.goal.active": "نشط",
   "session.goal.paused": "متوقف مؤقتًا",
   "session.goal.pause": "إيقاف مؤقت",

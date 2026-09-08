@@ -54,6 +54,9 @@ export const anacondaDesktopDict = {
 } as const
 
 export const dict = {
+  "session.goal.complete": "Voltooid (gemeld door het model)",
+  "session.goal.blocked": "Geblokkeerd",
+  "session.goal.restart": "Doel opnieuw starten (gebruikt modeltegoed)",
   ...anacondaDesktopDict,
   ...cloudProviderDict,
 
@@ -742,6 +745,8 @@ export const dict = {
   "session.outcome.error": "Beurt mislukt",
   "session.outcome.finish": "Voltooiingsreden: {{reason}}",
   "session.goal.label": "Doel",
+  "prompt.goal.set": "Doel instellen",
+  "prompt.goal.start": "Doel starten",
   "session.goal.active": "Actief",
   "session.goal.paused": "Gepauzeerd",
   "session.goal.pause": "Pauzeren",

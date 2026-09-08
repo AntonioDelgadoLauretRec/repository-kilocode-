@@ -216,7 +216,18 @@ export function sessionToWebview(
       typeof goal.text === "string" &&
       "active" in goal &&
       typeof goal.active === "boolean"
-        ? { text: goal.text, active: goal.active }
+        ? {
+            text: goal.text,
+            active: goal.active,
+            ...("status" in goal &&
+            (goal.status === "active" ||
+              goal.status === "complete" ||
+              goal.status === "blocked" ||
+              goal.status === "paused")
+              ? { status: goal.status }
+              : {}),
+            ...("reason" in goal && typeof goal.reason === "string" ? { reason: goal.reason } : {}),
+          }
         : null,
   }
 }

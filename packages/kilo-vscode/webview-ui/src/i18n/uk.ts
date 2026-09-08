@@ -54,6 +54,9 @@ export const anacondaDesktopDict = {
 } as const
 
 export const dict = {
+  "session.goal.complete": "Завершено (за повідомленням моделі)",
+  "session.goal.blocked": "Заблоковано",
+  "session.goal.restart": "Перезапустити ціль (витрачає кредити моделі)",
   ...anacondaDesktopDict,
   ...cloudProviderDict,
 
@@ -739,6 +742,8 @@ export const dict = {
   "session.outcome.error": "Хід не вдався",
   "session.outcome.finish": "Причина завершення: {{reason}}",
   "session.goal.label": "Мета",
+  "prompt.goal.set": "Задати мету",
+  "prompt.goal.start": "Почати роботу над метою",
   "session.goal.active": "Активна",
   "session.goal.paused": "Призупинена",
   "session.goal.pause": "Пауза",

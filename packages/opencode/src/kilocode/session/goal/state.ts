@@ -1,4 +1,5 @@
 export namespace GoalState {
+  export type Status = "active" | "complete" | "blocked" | "paused"
   type Token = { cancel?: () => void }
   const runs = new Map<string, Token>()
   const pending = new Map<string, Token>()
@@ -22,7 +23,15 @@ export namespace GoalState {
     if (!goal || typeof goal !== "object" || !("text" in goal) || typeof goal.text !== "string" || !goal.text.trim()) {
       return undefined
     }
-    return { text: goal.text, active: "active" in goal && goal.active === true }
+    const status: Status =
+      "status" in goal &&
+      (goal.status === "active" || goal.status === "complete" || goal.status === "blocked" || goal.status === "paused")
+        ? goal.status
+        : "active" in goal && goal.active === true
+          ? "active"
+          : "paused"
+    const reason = "reason" in goal && typeof goal.reason === "string" ? goal.reason : undefined
+    return { text: goal.text, status, active: status === "active", ...(reason ? { reason } : {}) }
   }
 
   export function start(id: string, cancel?: () => void) {
@@ -52,6 +61,7 @@ export namespace GoalState {
   export function project(id: string, metadata?: Record<string, unknown> | null) {
     const goal = read(metadata)
     if (!goal) return metadata ?? undefined
-    return { ...metadata, "kilo.goal": { text: goal.text, active: active(id) } }
+    const status = active(id) ? "active" : goal.status === "active" ? "paused" : goal.status
+    return { ...metadata, "kilo.goal": { ...goal, status, active: status === "active" } }
   }
 }

@@ -3,7 +3,7 @@ import { createKiloClient, type GlobalEvent, type Session } from "@kilocode/sdk/
 import { createRoot, createSignal } from "solid-js"
 import { createStore, produce } from "solid-js/store"
 import { GoalSync } from "@/kilocode/cli/cmd/tui/goal-sync"
-import { GoalState } from "@/kilocode/session/goal-state"
+import { GoalState } from "@/kilocode/session/goal/state"
 import { tmpdir } from "../../fixture/fixture"
 import { directory, json, mount, wait } from "../../../../tui/test/cli/cmd/tui/sync-fixture"
 
@@ -152,7 +152,11 @@ for (const change of ["live event", "workspace switch"]) {
         response: json({}),
       })
       await reply.promise
-      expect(GoalState.read(store.session.at(0)?.metadata)).toEqual({ text: "Current goal", active: true })
+      expect(GoalState.read(store.session.at(0)?.metadata)).toEqual({
+        text: "Current goal",
+        active: true,
+        status: "active",
+      })
     } finally {
       dispose()
       get.mockRestore()

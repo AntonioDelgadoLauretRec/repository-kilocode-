@@ -94,7 +94,8 @@ import { SessionResume } from "@/kilocode/session-resume" // kilocode_change
 import { SessionResumeImport } from "@/kilocode/session-resume/import" // kilocode_change
 import { KiloSessionContinuation } from "@/kilocode/session/continuation" // kilocode_change
 import { KiloSessionControl } from "@/kilocode/session/control" // kilocode_change
-import { Goal } from "@/kilocode/session/goal" // kilocode_change
+import { Goal } from "@/kilocode/session/goal/runner" // kilocode_change
+import { GoalPolicy } from "@/kilocode/session/goal/policy" // kilocode_change
 
 // @ts-ignore
 globalThis.AI_SDK_LOG_WARNINGS = false
@@ -192,7 +193,7 @@ export const layer = Layer.effect(
       return {
         cancel: (sessionID: SessionID) => cancel(sessionID),
         resolvePromptParts: (template: string) => resolvePromptParts(template),
-        prompt: Goal.bind(sessionID, (input) => prompt(input).pipe(Effect.catch(Effect.die))),
+        prompt: GoalPolicy.bind(sessionID, (input) => prompt(input).pipe(Effect.catch(Effect.die))),
       } satisfies TaskPromptOps
     })
     // kilocode_change end

@@ -53,6 +53,9 @@ export const anacondaDesktopDict = {
 } as const
 
 export const dict = {
+  "session.goal.complete": "เสร็จสมบูรณ์ (โมเดลรายงาน)",
+  "session.goal.blocked": "ถูกบล็อก",
+  "session.goal.restart": "เริ่มเป้าหมายใหม่ (ใช้เครดิตโมเดล)",
   ...anacondaDesktopDict,
   ...cloudProviderDict,
 
@@ -742,6 +745,8 @@ export const dict = {
   "session.outcome.error": "เทิร์นล้มเหลว",
   "session.outcome.finish": "เหตุผลการเสร็จสิ้น: {{reason}}",
   "session.goal.label": "เป้าหมาย",
+  "prompt.goal.set": "ตั้งเป้าหมาย",
+  "prompt.goal.start": "เริ่มเป้าหมาย",
   "session.goal.active": "ทำงานอยู่",
   "session.goal.paused": "หยุดชั่วคราว",
   "session.goal.pause": "พัก",

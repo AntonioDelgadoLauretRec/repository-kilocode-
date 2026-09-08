@@ -54,6 +54,9 @@ export const anacondaDesktopDict = {
 } as const
 
 export const dict = {
+  "session.goal.complete": "Fuldført (rapporteret af modellen)",
+  "session.goal.blocked": "Blokeret",
+  "session.goal.restart": "Genstart mål (bruger modelkreditter)",
   ...anacondaDesktopDict,
   ...cloudProviderDict,
 
@@ -751,6 +754,8 @@ export const dict = {
   "session.outcome.error": "Tur mislykkedes",
   "session.outcome.finish": "Afslutningsårsag: {{reason}}",
   "session.goal.label": "Mål",
+  "prompt.goal.set": "Angiv mål",
+  "prompt.goal.start": "Start mål",
   "session.goal.active": "Aktiv",
   "session.goal.paused": "Sat på pause",
   "session.goal.pause": "Sæt på pause",

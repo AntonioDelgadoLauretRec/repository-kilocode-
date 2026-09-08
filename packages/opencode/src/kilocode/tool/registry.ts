@@ -1,4 +1,5 @@
 import { RecallTool } from "../../tool/recall"
+import { GoalReportTool } from "../session/goal/tool"
 import { AgentManagerModelsTool } from "./agent-manager-models"
 import { AgentManagerTool } from "./agent-manager"
 import { BackgroundProcessTool } from "./background-process"
@@ -86,7 +87,11 @@ export namespace KiloToolRegistry {
       const sessions = yield* KiloSessions.Service
       const notify = yield* NotifyUserTool.pipe(Effect.provideService(KiloSessions.Service, sessions))
       const send = yield* SendFileTool
-      const board = yield* Effect.all({ boardRead: BoardReadTool, boardPost: BoardPostTool })
+      const board = yield* Effect.all({
+        boardRead: BoardReadTool,
+        boardPost: BoardPostTool,
+        goalReport: GoalReportTool,
+      })
       if (!notebook)
         return {
           recall,
@@ -144,6 +149,7 @@ export namespace KiloToolRegistry {
       notify: Tool.Info
       send: Tool.Info
       boardRead?: Tool.Info
+      goalReport?: Tool.Info
       boardPost?: Tool.Info
       notebookRead?: Tool.Info
       notebookEdit?: Tool.Info
@@ -166,6 +172,7 @@ export namespace KiloToolRegistry {
         send: Tool.init(tools.send),
       })
       const terminal = tools.terminal ? yield* Tool.init(tools.terminal) : undefined
+      const report = tools.goalReport ? { goalReport: yield* Tool.init(tools.goalReport) } : {}
       const board =
         tools.boardRead && tools.boardPost
           ? yield* Effect.all({ boardRead: Tool.init(tools.boardRead), boardPost: Tool.init(tools.boardPost) })
@@ -180,7 +187,17 @@ export namespace KiloToolRegistry {
             })
           : {}
       const semantic = yield* semanticTool(deps, loaders)
-      return { ...base, ...board, terminal, browser, ...notebooks, semantic, notify: base.notify, send: base.send }
+      return {
+        ...base,
+        ...board,
+        ...report,
+        terminal,
+        browser,
+        ...notebooks,
+        semantic,
+        notify: base.notify,
+        send: base.send,
+      }
     })
   }
 
@@ -246,6 +263,7 @@ export namespace KiloToolRegistry {
       notify: Tool.Def
       send: Tool.Def
       boardRead?: Tool.Def
+      goalReport?: Tool.Def
       boardPost?: Tool.Def
       notebookRead?: Tool.Def
       notebookEdit?: Tool.Def
@@ -261,6 +279,7 @@ export namespace KiloToolRegistry {
     },
   ): Tool.Def[] {
     return [
+      ...(tools.goalReport ? [tools.goalReport] : []),
       ...(cfg.experimental?.image_generation === true ? [tools.image] : []),
       ...(cfg.experimental?.shared_agent_board === true && tools.boardRead && tools.boardPost
         ? [tools.boardRead, tools.boardPost]

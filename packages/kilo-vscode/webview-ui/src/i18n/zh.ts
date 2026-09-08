@@ -55,6 +55,9 @@ export const anacondaDesktopDict = {
 } as const
 
 export const dict = {
+  "session.goal.complete": "完成（模型报告）",
+  "session.goal.blocked": "受阻",
+  "session.goal.restart": "重新开始目标（消耗模型额度）",
   ...anacondaDesktopDict,
   ...cloudProviderDict,
 
@@ -726,6 +729,8 @@ export const dict = {
   "session.outcome.error": "回合失败",
   "session.outcome.finish": "结束原因：{{reason}}",
   "session.goal.label": "目标",
+  "prompt.goal.set": "设置目标",
+  "prompt.goal.start": "开始目标",
   "session.goal.active": "运行中",
   "session.goal.paused": "已暂停",
   "session.goal.pause": "暂停",

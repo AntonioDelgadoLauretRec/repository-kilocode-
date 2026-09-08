@@ -1,4 +1,4 @@
-import { Cause, Deferred, Effect, Exit, Scope, Semaphore } from "effect"
+import { Cause, Deferred, Effect, Scope, Semaphore } from "effect"
 import { SessionV1 } from "@opencode-ai/core/v1/session"
 import { NamedError } from "@opencode-ai/core/util/error"
 import type { EventV2 } from "@opencode-ai/core/event"
@@ -15,34 +15,16 @@ import type { CommandInput, PromptInput } from "@/session/prompt"
 import { SessionRunState } from "@/session/run-state"
 import { MessageID, PartID, SessionID } from "@/session/schema"
 import { Suggestion } from "@/kilocode/suggestion"
-import { KiloSessionControl } from "./control"
-import { GoalState } from "./goal-state"
-import { SessionDrain } from "./drain"
-import { KiloSessionPrompt } from "./prompt"
-import { KiloSessionPromptQueue } from "./prompt-queue"
+import { KiloSessionControl } from "../control"
+import { GoalState } from "./state"
+import { GoalPolicy } from "./policy"
+import { GoalInstructions } from "./instructions"
+import { SessionDrain } from "../drain"
+import { KiloSessionPrompt } from "../prompt"
+import { KiloSessionPromptQueue } from "../prompt-queue"
 import { isRecord } from "@/util/record"
 
 export namespace Goal {
-  const help =
-    "Use /goal <objective> to keep working toward a goal in this session. Runs use model credits and repeat while successful actions continue. A run with no successful action, failed work, or a rejected request pauses the goal. /goal pause stops, /goal resume continues, and /goal clear removes the goal. Stop or a new message also pauses it. Goals stay paused after a restart."
-
-  type Owner = { input: (input: PromptInput) => PromptInput; fail: () => void }
-  const owners = new Map<MessageID, Owner>()
-
-  export function bind<E, R>(id: SessionID, prompt: (input: PromptInput) => Effect.Effect<SessionV1.WithParts, E, R>) {
-    const base = KiloSessionPromptQueue.active(id)
-    const owner = base ? owners.get(base) : undefined
-    if (!owner) return prompt
-    return (input: PromptInput) =>
-      Effect.suspend(() => prompt(owner.input(input))).pipe(
-        Effect.onExit((exit) =>
-          Exit.isFailure(exit) || (exit.value.info.role === "assistant" && exit.value.info.error)
-            ? Effect.sync(owner.fail)
-            : Effect.void,
-        ),
-      )
-  }
-
   function matches<D extends EventV2.Definition>(event: EventV2.Payload, definition: D): event is EventV2.Payload<D> {
     return event.type === definition.type
   }
@@ -56,7 +38,8 @@ export namespace Goal {
     if (part.state.status !== "completed" && part.state.status !== "error") return "none"
     if (part.state.status === "error" || (part.tool === "bash" && meta?.exit !== 0) || meta?.error === true)
       return "failed"
-    if (["question", "suggest", "todowrite", "board_post", "board_read"].includes(part.tool)) return "none"
+    if (["question", "suggest", "todowrite", "board_post", "board_read", "goal_report"].includes(part.tool))
+      return "none"
     if (part.tool === "task" && meta?.background === true) return "none"
     return "success"
   }
@@ -75,23 +58,32 @@ export namespace Goal {
     let success = 0
     let failure = 0
     let blocked = false
+    let errored = false
     let open = true
-    const owner: Owner = {
+    let report: GoalPolicy.Report | undefined
+    const owner: GoalPolicy.Owner = {
+      root: id,
+      report: (message, value) => {
+        if (!open || !current() || root.message?.id !== message) return false
+        report = value
+        return true
+      },
+      current: () => open && current(),
       input: (input) => {
         if (!open || !current()) return input
         const messageID = input.messageID ?? MessageID.ascending()
         const state = owned.get(input.sessionID) ?? create()
         state.bases.add(messageID)
         owned.set(input.sessionID, state)
-        owners.set(messageID, owner)
+        GoalPolicy.track(messageID, owner)
         if (input.sessionID === id) parents.add(messageID)
         return { ...input, messageID }
       },
       fail: () => {
-        if (open && current()) blocked = true
+        if (open && current()) errored = true
       },
     }
-    owners.set(parent, owner)
+    GoalPolicy.track(parent, owner)
 
     function update(event: EventV2.Payload) {
       if (event.metadata?.fork) return
@@ -111,7 +103,7 @@ export namespace Goal {
       }
       if (matches(event, Session.Event.Error)) {
         if (event.metadata?.phase === "admission") return
-        if (active && event.data.error?.name !== "ContextOverflowError") blocked = true
+        if (active && event.data.error?.name !== "ContextOverflowError") errored = true
         return
       }
       if (matches(event, SessionV1.Event.MessageUpdated)) {
@@ -125,7 +117,7 @@ export namespace Goal {
           state.calls.clear()
         }
         state.message.finish = info.finish
-        if (info.error) blocked = true
+        if (info.error) errored = true
         return
       }
       if (!matches(event, SessionV1.Event.PartUpdated)) return
@@ -146,7 +138,7 @@ export namespace Goal {
       dispose: () => {
         open = false
         for (const state of owned.values()) {
-          for (const base of state.bases) if (owners.get(base) === owner) owners.delete(base)
+          for (const base of state.bases) GoalPolicy.release(base, owner)
         }
       },
       completed: (result: SessionV1.WithParts) =>
@@ -156,6 +148,9 @@ export namespace Goal {
         !blocked &&
         success > failure &&
         [...owned.values()].every((state) => state.message?.finish === "stop"),
+      blocked: () => blocked,
+      failed: () => errored || failure > success,
+      report: () => report,
     }
   }
 
@@ -200,12 +195,25 @@ export namespace Goal {
 
       const pause = Effect.fn("Goal.pause")(function* (id: SessionID, preserve = false) {
         if (!GoalState.pause(id, preserve)) return
-        yield* commit(id, sessions.touch(id))
+        yield* commit(
+          id,
+          Effect.gen(function* () {
+            const session = yield* sessions.get(id).pipe(Effect.orDie)
+            const goal = GoalState.read(session.metadata)
+            if (!goal) return
+            yield* sessions.setMetadata({
+              sessionID: id,
+              metadata: { ...session.metadata, "kilo.goal": { ...goal, status: "paused", active: false } },
+            })
+          }),
+        )
       })
 
       const command = Effect.fn("Goal.command")(function* (input: CommandInput) {
         const id = input.sessionID
         const args = input.arguments.trim()
+        // The composer uses a delimiter so objectives can also be control words.
+        const objective = args.startsWith("-- ") ? args.slice(3).trim() : undefined
         const starting = args !== "" && args !== "pause" && args !== "clear"
         const stopped = Deferred.makeUnsafe<void>()
         const end = () => Deferred.doneUnsafe(stopped, Effect.void)
@@ -215,7 +223,7 @@ export namespace Goal {
           yield* commands.get("goal")
           const session = yield* sessions.get(id).pipe(Effect.orDie)
           const saved = GoalState.read(session.metadata)
-          const text = args === "resume" ? saved?.text : starting ? args : saved?.text
+          const text = objective ?? (args === "resume" ? saved?.text : starting ? args : saved?.text)
           if (starting && !text) return yield* Effect.fail(new Error("Set a goal with /goal <objective> first."))
           if (text && text.length > 10_000)
             return yield* Effect.fail(new Error("Keep the goal under 10,000 characters."))
@@ -262,21 +270,21 @@ export namespace Goal {
                 Effect.gen(function* () {
                   const fresh = yield* sessions.get(id).pipe(Effect.orDie)
                   if (!valid()) return yield* Effect.interrupt
-                  if (args === "resume") return yield* sessions.touch(id)
                   const metadata = { ...fresh.metadata }
-                  if (starting) metadata["kilo.goal"] = { text }
+                  if (starting) metadata["kilo.goal"] = { text, status: "active", active: true }
                   if (args === "clear") delete metadata["kilo.goal"]
                   return yield* sessions.setMetadata({ sessionID: id, metadata })
                 }),
               )
             }
             const notice = !args
-              ? `${text ? `Goal ${GoalState.active(id) ? "active" : "paused"}: ${text}\n\n` : ""}${help}`
+              ? `${text ? `Goal ${saved?.status}: ${text}\n${saved?.reason ?? ""}\n` : ""}${GoalInstructions.help}`
               : args === "clear"
                 ? "Goal cleared."
                 : starting
-                  ? "Goal active. Runs use model credits and repeat while successful actions continue. No action, failed work, or a rejected request pauses the goal. Use Stop or /goal pause to pause."
+                  ? "Goal active. Work uses model credits. The working model reports completion or blockers with goal_report; completion is not independently verified. No progress or errors pause the goal. Use Stop or /goal pause to pause."
                   : "Goal paused. Use /goal resume to continue."
+            // Validate and persist attachments before acknowledging the command.
             const user = starting
               ? (yield* ops.create({
                   sessionID: id,
@@ -284,7 +292,7 @@ export namespace Goal {
                   agent: input.agent,
                   model: input.model ? Provider.parseModel(input.model) : undefined,
                   variant: input.variant,
-                  parts: [{ type: "text", text: `/goal ${args}`, ignored: true }],
+                  parts: [{ type: "text", text: `/goal ${objective ?? args}`, ignored: true }, ...(input.parts ?? [])],
                 })).info
               : undefined
             if (user && user.role !== "user") return yield* Effect.die(new Error("Expected a user message"))
@@ -339,8 +347,23 @@ export namespace Goal {
                 current: () => current() && ticket.current(),
                 running: () => current() && ticket.running(),
               }
+              const settle = (status: GoalState.Status, reason: string) =>
+                commit(
+                  id,
+                  Effect.gen(function* () {
+                    const session = yield* sessions.get(id).pipe(Effect.orDie)
+                    if (!guard.running()) return
+                    if (status !== "active") GoalState.pause(id, true)
+                    yield* sessions.setMetadata({
+                      sessionID: id,
+                      metadata: {
+                        ...session.metadata,
+                        "kilo.goal": { text, status, active: status === "active", reason },
+                      },
+                    })
+                  }),
+                )
               yield* Effect.gen(function* () {
-                let first = true
                 while (current() && ticket.running()) {
                   yield* drain.wait(id).pipe(Effect.raceFirst(cancelled))
                   const session = yield* sessions.get(id).pipe(Effect.orDie)
@@ -372,18 +395,41 @@ export namespace Goal {
                             {
                               type: "text",
                               synthetic: true,
-                              text: `Continue working toward this session goal:\n\n${text}\n\nUse the existing conversation and take the next useful step. Do not repeat completed work or status-only reports. If the goal is met or you cannot make progress safely, ask the user with the question tool and wait. Keep all existing permission and scope limits.`,
+                              text: GoalInstructions.prompt(text),
                             },
-                            ...(first ? (input.parts ?? []) : []),
                           ],
                         },
                         guard,
                       ),
                     )
                     yield* drain.wait(id).pipe(Effect.raceFirst(cancelled))
-                    return cycle.completed(result)
+                    if (cycle.blocked()) {
+                      yield* settle(
+                        "blocked",
+                        "A request was rejected or execution was blocked. Resolve the blocker before resuming.",
+                      )
+                      return false
+                    }
+                    if (cycle.failed() || result.info.role !== "assistant" || result.info.error) {
+                      yield* settle("paused", "Work failed. Review the conversation before resuming.")
+                      return false
+                    }
+                    const report = cycle.report()
+                    if (report && result.info.finish === "stop") {
+                      yield* settle(
+                        report.status,
+                        `Reported by the working model, not independently verified: ${report.reason}`,
+                      )
+                      return false
+                    }
+                    const next = cycle.completed(result)
+                    if (!next)
+                      yield* settle(
+                        "paused",
+                        "No successful action or explicit completion report. Review the conversation before resuming.",
+                      )
+                    return next
                   }).pipe(Effect.scoped)
-                  first = false
                   if (!next) break
                   yield* Effect.sleep("5 seconds").pipe(Effect.raceFirst(cancelled))
                 }
@@ -391,6 +437,7 @@ export namespace Goal {
                 Effect.catchCause((cause) =>
                   Effect.gen(function* () {
                     if (Cause.hasInterruptsOnly(cause)) return
+                    yield* settle("paused", "Execution failed. Review the conversation before resuming.")
                     yield* Effect.logError("Goal paused", { sessionID: id, cause })
                     yield* events.publish(Session.Event.Error, {
                       sessionID: id,
