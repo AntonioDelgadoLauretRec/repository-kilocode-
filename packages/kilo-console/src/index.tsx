@@ -1,12 +1,11 @@
 import "@kilocode/kilo-web-ui/styles"
 import { Router, Route } from "@solidjs/router"
-import { lazy, Suspense } from "solid-js"
+import { lazy } from "solid-js"
 import { render } from "solid-js/web"
 import App from "./App"
 import "./styles.css"
 import { ProjectsRoute } from "./routes/projects/ProjectsRoute"
 import { configSections } from "./routes/config/sections"
-import { LoadingScreen } from "./components/LoadingScreen"
 
 const ProjectConsoleRoute = lazy(() =>
   import("./routes/projects/ProjectConsoleRoute").then((mod) => ({ default: mod.ProjectConsoleRoute })),
@@ -26,24 +25,22 @@ function routes() {
 
 render(
   () => (
-    <Suspense fallback={<LoadingScreen variant="fullscreen" />}>
-      <Router root={App} base={base || undefined}>
-        <Route path="/projects" component={ProjectsRoute} />
-        <Route path="/projects/:project" component={ProjectConsoleRoute} />
-        <Route path="/projects/:project/settings" component={ConfigLayout}>
-          {routes()}
-        </Route>
-        <Route path="/profile" component={ProfileRoute} />
-        <Route path="/kilo/login" component={LoginRoute} />
-        <Route path="/settings" component={ConfigLayout}>
-          {routes()}
-        </Route>
-        <Route path="/config" component={ConfigLayout}>
-          {routes()}
-        </Route>
-        <Route path="*" component={ProjectsRoute} />
-      </Router>
-    </Suspense>
+    <Router root={App} base={base || undefined}>
+      <Route path="/projects" component={ProjectsRoute} />
+      <Route path="/projects/:project" component={ProjectConsoleRoute} />
+      <Route path="/projects/:project/settings" component={ConfigLayout}>
+        {routes()}
+      </Route>
+      <Route path="/profile" component={ProfileRoute} />
+      <Route path="/kilo/login" component={LoginRoute} />
+      <Route path="/settings" component={ConfigLayout}>
+        {routes()}
+      </Route>
+      <Route path="/config" component={ConfigLayout}>
+        {routes()}
+      </Route>
+      <Route path="*" component={ProjectsRoute} />
+    </Router>
   ),
   root,
 )
