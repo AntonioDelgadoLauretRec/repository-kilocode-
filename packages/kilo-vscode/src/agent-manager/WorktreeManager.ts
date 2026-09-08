@@ -229,7 +229,8 @@ export class WorktreeManager {
 
   private async ensureCommit(): Promise<void> {
     try {
-      await this.git.raw(["rev-parse", "--verify", "HEAD"])
+      const commit = await this.git.raw(["rev-list", "-n", "1", "--all"])
+      if (!commit.trim()) throw new Error("No commits found")
     } catch (error) {
       this.log(`ensureCommit: ${error}`)
       throw new Error(NO_COMMITS_MESSAGE)

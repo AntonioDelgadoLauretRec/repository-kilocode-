@@ -439,6 +439,16 @@ describe("WorktreeManager.createWorktree", () => {
     )
   })
 
+  it("allows an explicit base branch from an orphan current branch", async () => {
+    const root = await createTempRepo()
+    gitExec(["git", "-C", root, "checkout", "--orphan", "orphan"])
+    gitExec(["git", "-C", root, "rm", "-rf", "."])
+
+    const result = await createManager(root).createWorktree({ baseBranch: "main", branchName: "feature" })
+
+    expect(result.parentBranch).toBe("main")
+  })
+
   it("throws when workspace is not a git repo", async () => {
     const dir = await fs.mkdtemp(path.join(os.tmpdir(), "kilo-wt-nogit-"))
     tempDirs.push(dir)
