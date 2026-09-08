@@ -91,10 +91,9 @@ export function PRSummary(props: PRSummaryProps) {
                 : "agentManager.pr.summary.unresolved.other",
               { count: value.unresolved },
             )
-          : t(
-              value.total === 1 ? "agentManager.pr.summary.comments.one" : "agentManager.pr.summary.comments.other",
-              { count: value.total },
-            ),
+          : t(value.total === 1 ? "agentManager.pr.summary.comments.one" : "agentManager.pr.summary.comments.other", {
+              count: value.total,
+            }),
       status: value.unresolved > 0 ? "warning" : "success",
       target: "comments",
       action:
@@ -117,9 +116,7 @@ export function PRSummary(props: PRSummaryProps) {
     return {
       icon: "comment",
       label: t(
-        value.length === 1
-          ? "agentManager.pr.summary.conversation.one"
-          : "agentManager.pr.summary.conversation.other",
+        value.length === 1 ? "agentManager.pr.summary.conversation.one" : "agentManager.pr.summary.conversation.other",
         { count: value.length },
       ),
       status: ids.length > 0 ? "warning" : "success",
