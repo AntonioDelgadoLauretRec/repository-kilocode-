@@ -867,6 +867,7 @@ for (const file of ["old.ts", "renamed.ts"]) {
 navigation.dispose()
 
 const { PRChecks } = await import("../../webview-ui/agent-manager/pr/PRChecks")
+const { PRSummary } = await import("../../webview-ui/agent-manager/pr/PRSummary")
 const { summarize } = await import("../../src/agent-manager/pr/am-pr-utils")
 const third = document.createElement("div")
 document.body.append(third)
@@ -892,6 +893,9 @@ await window.happyDOM.waitUntilComplete()
 const fix = () => third.querySelector<HTMLButtonElement>(".am-pr-checks-fix")
 const failureGroup = () => third.querySelector<HTMLElement>('.am-pr-check-group[data-bucket="failure"]')
 const successGroup = () => third.querySelector<HTMLElement>('.am-pr-check-group[data-bucket="success"]')
+const pendingCheck = third.querySelector('.am-pr-panel-check-item[data-status="pending"]')
+assert.ok(pendingCheck?.querySelector('[data-component="spinner"]'), "pending checks show a spinner")
+assert.equal(pendingCheck?.querySelector('[data-component="icon"]'), null)
 assert.ok(failureGroup()?.querySelector(".am-pr-check-group-items"))
 assert.equal(successGroup()?.querySelector(".am-pr-check-group-items"), null)
 successGroup()?.querySelector<HTMLButtonElement>(".am-pr-check-group-heading")?.click()
@@ -931,6 +935,23 @@ assert.deepEqual(sent.at(-1), feedback)
 fix()!.click()
 assert.equal(sent.length, before + 3)
 assert.deepEqual(sent.at(-1), feedback)
+const fourth = document.createElement("div")
+document.body.append(fourth)
+render(
+  () => (
+    <PRSummary
+      pr={{
+        ...base,
+        review: "pending",
+        checks: summarize([{ name: "Lint", status: "pending" }]),
+      }}
+    />
+  ),
+  fourth,
+)
+await window.happyDOM.waitUntilComplete()
+assert.equal(fourth.querySelectorAll('[data-component="spinner"]').length, 2)
+assert.equal(fourth.querySelectorAll('[data-component="icon"]').length, 0)
 setPrState((prev) => ({
   ...prev,
   checks: summarize([

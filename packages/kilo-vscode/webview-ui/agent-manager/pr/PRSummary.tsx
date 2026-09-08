@@ -1,6 +1,7 @@
 /** @jsxImportSource solid-js */
 import { Show } from "solid-js"
 import { Icon } from "@kilocode/kilo-ui/icon"
+import { Spinner } from "@kilocode/kilo-ui/spinner"
 import type { PRStatus } from "../../src/types/messages"
 
 interface PRSummaryProps {
@@ -8,13 +9,13 @@ interface PRSummaryProps {
   onJumpToComments?: () => void
 }
 
-function summaryRows(pr: PRStatus): Array<{ icon: string; label: string; status: string; isComments?: boolean }> {
+function summaryRows(pr: PRStatus): Array<{ icon?: string; label: string; status: string; isComments?: boolean }> {
   const rows = []
 
   if (pr.checks.total > 0) {
     const { passed, total, status } = pr.checks
     rows.push({
-      icon: status === "success" ? "circle-check" : status === "failure" ? "circle-x-outline" : "play",
+      icon: status === "success" ? "circle-check" : status === "failure" ? "circle-x-outline" : undefined,
       label: status === "success" ? "All checks passing" : `${passed}/${total} checks passed`,
       status,
     })
@@ -23,7 +24,7 @@ function summaryRows(pr: PRStatus): Array<{ icon: string; label: string; status:
   if (pr.review) {
     const status = pr.review === "approved" ? "success" : pr.review === "changes_requested" ? "failure" : "pending"
     rows.push({
-      icon: status === "success" ? "circle-check" : status === "failure" ? "circle-x-outline" : "play",
+      icon: status === "success" ? "circle-check" : status === "failure" ? "circle-x-outline" : undefined,
       label: status === "success" ? "Approved" : status === "failure" ? "Changes requested" : "Review pending",
       status,
     })
@@ -76,7 +77,9 @@ export function PRSummary(props: PRSummaryProps) {
             }
             const content = (
               <>
-                <Icon name={row.icon} size="small" class="am-pr-summary-icon" />
+                <Show when={row.icon} fallback={<Spinner class="am-pr-summary-icon" />}>
+                  {(icon) => <Icon name={icon()} size="small" class="am-pr-summary-icon" />}
+                </Show>
                 <span class="am-pr-summary-label">{row.label}</span>
                 {row.isComments && props.onJumpToComments && <span class="am-pr-summary-jump">Jump to comments ↓</span>}
               </>
