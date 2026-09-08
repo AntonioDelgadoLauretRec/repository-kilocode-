@@ -448,6 +448,78 @@
 
 ## [Unreleased]
 
+## [7.1.6-rc.3] - 2026-09-08
+
+### Added
+- feat(vscode): show PR review comments inline in diffs by @marius-kilocode in https://github.com/Kilo-Org/kilocode/pull/13541
+- feat(agent-manager): target existing managed worktrees by @marius-kilocode in https://github.com/Kilo-Org/kilocode/pull/13861
+- feat(cli): support stdin prompts for Cloud Agent commands by @eshurakov in https://github.com/Kilo-Org/kilocode/pull/13851
+- feat(vscode): add CI failure fix action by @marius-kilocode in https://github.com/Kilo-Org/kilocode/pull/13867
+- feat(agent-manager): link cross-session messages to source sessions by @marius-kilocode in https://github.com/Kilo-Org/kilocode/pull/13876
+- feat(vscode): add cross-platform keep-awake toggle by @marius-kilocode in https://github.com/Kilo-Org/kilocode/pull/12974
+- feat(agent-manager): smoother worktree card removal by @marius-kilocode in https://github.com/Kilo-Org/kilocode/pull/13875
+- feat(vscode): compact pull request checks by @marius-kilocode in https://github.com/Kilo-Org/kilocode/pull/13878
+- feat(vscode): add type-ahead focus to agent and variant selectors by @sylwester-liljegren in https://github.com/Kilo-Org/kilocode/pull/13810
+- feat(vscode): open agent-created plans by @marius-kilocode in https://github.com/Kilo-Org/kilocode/pull/13883
+- feat(vscode): add reactions to PR comments by @marius-kilocode in https://github.com/Kilo-Org/kilocode/pull/13881
+- feat(agent-manager): route peer replies to source sessions by @marius-kilocode in https://github.com/Kilo-Org/kilocode/pull/13877
+- feat: surface PR review actions in summary by @marius-kilocode in https://github.com/Kilo-Org/kilocode/pull/13904
+- feat(vscode): support inline pull request reviews by @marius-kilocode in https://github.com/Kilo-Org/kilocode/pull/13903
+- feat(agent-manager): regroup toolbar actions by @marius-kilocode in https://github.com/Kilo-Org/kilocode/pull/13916
+- feat(vscode): add shared agent board reader and reset by @marius-kilocode in https://github.com/Kilo-Org/kilocode/pull/13782
+- feat: add continuous session goals by @marius-kilocode in https://github.com/Kilo-Org/kilocode/pull/13679
+- feat(agent-manager): enable multiple projects by default by @marius-kilocode in https://github.com/Kilo-Org/kilocode/pull/13918
+
+### Fixed
+- fix(vscode): keep prompt undo and redo inside the webview by @marius-kilocode in https://github.com/Kilo-Org/kilocode/pull/13794
+- fix(vscode): improve subagent transcript performance by @marius-kilocode in https://github.com/Kilo-Org/kilocode/pull/13847
+- fix(cli): show shared agent board messages by @marius-kilocode in https://github.com/Kilo-Org/kilocode/pull/13848
+- fix(tui): restore Home and End navigation in session prompts by @marius-kilocode in https://github.com/Kilo-Org/kilocode/pull/13855
+- fix(vscode): show dates on inline PR comments by @marius-kilocode in https://github.com/Kilo-Org/kilocode/pull/13853
+- fix(cli): reduce Windows launcher startup overhead by @marius-kilocode in https://github.com/Kilo-Org/kilocode/pull/13854
+- fix(vscode): use theme colors for diff deletion indicators by @marius-kilocode in https://github.com/Kilo-Org/kilocode/pull/13862
+- fix(vscode): harden Git worktree path resolution by @marius-kilocode in https://github.com/Kilo-Org/kilocode/pull/13863
+- fix(vscode): trim Git command output by @marius-kilocode in https://github.com/Kilo-Org/kilocode/pull/13865
+- fix(vscode): preserve model for update from base by @marius-kilocode in https://github.com/Kilo-Org/kilocode/pull/13859
+- fix(vscode): rename PR review actions to Kilo by @marius-kilocode in https://github.com/Kilo-Org/kilocode/pull/13866
+- fix(agent-manager): preserve explicit branch names and expose naming settings by @marius-kilocode in https://github.com/Kilo-Org/kilocode/pull/13860
+- fix(vscode): make worktree deletion feel complete by @marius-kilocode in https://github.com/Kilo-Org/kilocode/pull/13869
+- fix(session): speed up cold session loading by @marius-kilocode in https://github.com/Kilo-Org/kilocode/pull/13868
+- fix(vscode): respect Git diff collapse attributes by @marius-kilocode in https://github.com/Kilo-Org/kilocode/pull/13871
+- fix(agent-manager): avoid unrelated merged PR badges by @marius-kilocode in https://github.com/Kilo-Org/kilocode/pull/13872
+- fix(opencode): exit nonzero when run produces no assistant message by @iscekic in https://github.com/Kilo-Org/kilocode/pull/13832
+- fix(vscode): show upstream inference cost for OpenRouter BYOK sessions by @iscekic in https://github.com/Kilo-Org/kilocode/pull/13841
+- fix(vscode): remove missing stale worktree entries by @marius-kilocode in https://github.com/Kilo-Org/kilocode/pull/13874
+- fix(vscode): keep deleted diff line numbers neutral by @marius-kilocode in https://github.com/Kilo-Org/kilocode/pull/13880
+- fix(cli): prevent swarm agents from messaging themselves by @marius-kilocode in https://github.com/Kilo-Org/kilocode/pull/13882
+- fix(vscode): keep Agent Manager PR comment headers consistent by @marius-kilocode in https://github.com/Kilo-Org/kilocode/pull/13879
+- fix(agent-manager): restore worktree removal with cmd-w by @marius-kilocode in https://github.com/Kilo-Org/kilocode/pull/13885
+- fix(vscode): clarify keep-awake indicator by @marius-kilocode in https://github.com/Kilo-Org/kilocode/pull/13890
+- fix(cli): list sessions across all projects instead of crashing by @esc in https://github.com/Kilo-Org/kilocode/pull/13896
+- fix(vscode): restore /update-from-base requests by @marius-kilocode in https://github.com/Kilo-Org/kilocode/pull/13892
+- fix(vscode): scope plan opens to active session by @marius-kilocode in https://github.com/Kilo-Org/kilocode/pull/13901
+- fix(agent-manager): preserve tab focus and order by @marius-kilocode in https://github.com/Kilo-Org/kilocode/pull/13906
+- fix(agent-manager): use default spinner for PR processing by @marius-kilocode in https://github.com/Kilo-Org/kilocode/pull/13907
+- fix(vscode): support reactions on PR comment replies by @marius-kilocode in https://github.com/Kilo-Org/kilocode/pull/13911
+- fix(vscode): prevent webview navigation offset by @marius-kilocode in https://github.com/Kilo-Org/kilocode/pull/13908
+- fix(vscode): keep deleted diff bars visible by @marius-kilocode in https://github.com/Kilo-Org/kilocode/pull/13913
+- fix(ci): tolerate contract generation and Bun download failures by @marius-kilocode in https://github.com/Kilo-Org/kilocode/pull/13917
+- fix(cli): remove nonfunctional interactive terminal tool by @marius-kilocode in https://github.com/Kilo-Org/kilocode/pull/13793
+- fix(agent-manager): explain empty repository worktree failures by @marius-kilocode in https://github.com/Kilo-Org/kilocode/pull/13920
+- fix(jetbrains): stop auto-expanding worktree session list on new/forked sessions by @kirillk in https://github.com/Kilo-Org/kilocode/pull/13888
+- fix(jetbrains): make Agent Manager worktree deletion non-blocking and fault tolerant by @kirillk in https://github.com/Kilo-Org/kilocode/pull/13887
+- fix(jetbrains): scope config warnings to the workspace directory by @kirillk in https://github.com/Kilo-Org/kilocode/pull/13886
+- fix(release): include CLI notes in GitHub releases by @marius-kilocode in https://github.com/Kilo-Org/kilocode/pull/13921
+
+### Changed
+- release(jetbrains): v7.1.6-rc.2 by @kilo-maintainer[bot] in https://github.com/Kilo-Org/kilocode/pull/13834
+- refactor(vscode): extract Agent Manager tab dragging by @marius-kilocode in https://github.com/Kilo-Org/kilocode/pull/13856
+- chore(vscode): allow intentional nullish comparisons by @marius-kilocode in https://github.com/Kilo-Org/kilocode/pull/13864
+- test(vscode): make local diff cache timestamps deterministic by @marius-kilocode in https://github.com/Kilo-Org/kilocode/pull/13870
+- chore(jetbrains): bump CLI pin to v7.5.15 by @kilo-maintainer[bot] in https://github.com/Kilo-Org/kilocode/pull/13824
+- docs(kilo-docs): mark Kilo Deploy end of life by @jobrietbergen in https://github.com/Kilo-Org/kilocode/pull/13910
+
+
 ## [7.1.6-rc.2] - 2026-09-06
 
 ### Fixed
