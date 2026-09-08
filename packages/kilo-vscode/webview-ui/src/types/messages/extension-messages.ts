@@ -700,7 +700,6 @@ export interface ClaudeCompatSettingLoadedMessage {
 
 export interface ExtensionSettings {
   maxCost?: number
-  multiProject?: boolean
   claudeMigration?: boolean
   [key: string]: unknown
 }

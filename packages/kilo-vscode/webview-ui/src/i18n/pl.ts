@@ -880,12 +880,9 @@ export const dict = {
   "settings.sandboxing.writablePaths.title": "Dodatkowe ścieżki zapisu",
   "settings.sandboxing.writablePaths.description":
     "Dodatkowe ścieżki systemu plików, do których sandbox zezwala na zapis (np. /tmp, /var/log). Są one łączone z domyślnymi ścieżkami zapisu, gdy sandbox jest aktywny.",
-  "settings.experimental.multiProject.title": "Wieloprojektowy Agent Manager",
   "settings.experimental.claudeMigration.title": "Migracja Claude Code (Eksperymentalna)",
   "settings.experimental.claudeMigration.description":
     "Jednorazowo importuj obsługiwane globalne instrukcje CLAUDE.md, proste umiejętności i wyłączone definicje MCP. Oryginalne pliki Claude pozostają niezmienione; po włączeniu uruchom ponownie backend.",
-  "settings.experimental.multiProject.description":
-    "Włącz zarządzanie sesjami i worktree w wielu repozytoriach w Agent Managerze. Bieżące repozytorium obszaru roboczego jest zawsze projektem domyślnym.",
   "settings.experimental.taskModelSelection.title": "Wybór modelu podagenta Task",
   "settings.experimental.taskModelSelection.description":
     "Umożliwia jawny wybór modelu, dostawcy i wysiłku wnioskowania dla podagentów Task.",
