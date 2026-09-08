@@ -7,12 +7,12 @@ import { Markdown } from "@kilocode/kilo-ui/markdown"
 import { Tooltip } from "@kilocode/kilo-ui/tooltip"
 import { useLanguage } from "../../src/context/language"
 import { useVSCode } from "../../src/context/vscode"
-import { sendReviewComments } from "../../diff-viewer/review-annotations"
 import { CopyButton } from "./CopyButton"
 import { PRCommentTime } from "./PRCommentTime"
 import { SectionHeading } from "./SectionHeading"
+import { actionableConversation, sendConversation } from "./pr-actions"
 import { commentState, createReactionController, patchCommentState } from "./pr-comment-state"
-import { githubUrl, prConversationMarkdown, prConversationPayload, preview, SEND_LIMIT } from "./pr-comment-payload"
+import { githubUrl, prConversationMarkdown, preview, SEND_LIMIT } from "./pr-comment-payload"
 import type { PRConversationComment, PRReaction, PRReactionContent, ReviewerState } from "./pr-types"
 import { PRReactions } from "./PRReactions"
 
@@ -185,25 +185,10 @@ export function PRConversation(props: Props) {
     }))
   }
 
-  const actionable = createMemo(() =>
-    props.comments.filter((c) => !c.isBot && !sent(c.id) && !dismissed(c.id)).map((c) => c.id),
-  )
+  const actionable = createMemo(() => actionableConversation(props.comments, state()))
 
   function send(ids: string[]) {
-    const map = new Map(props.comments.map((c) => [c.id, c]))
-    const batch = ids
-      .flatMap((id) => {
-        const comment = map.get(id)
-        return comment && !state().sent[id] ? [comment] : []
-      })
-      .slice(0, SEND_LIMIT)
-    if (batch.length === 0) return
-    sendReviewComments(batch.map(prConversationPayload), props.activeTerminalId)
-    patch((prev) => {
-      const nextSent = { ...prev.sent }
-      for (const item of batch) nextSent[item.id] = true
-      return { sent: nextSent }
-    })
+    sendConversation(props.worktreeId, props.comments, ids, state(), props.activeTerminalId)
   }
 
   return (
