@@ -2254,13 +2254,12 @@ export const SessionProvider: ParentComponent = (props) => {
       recordModelUsage(effectiveSelection.providerID, effectiveSelection.modelID)
     }
 
-    const selection = effectiveSelection && {
-      ...effectiveSelection,
-      agent: promptAgent(scope),
-      variant: variants.request(scope),
-    }
-
-    const messageID = (() => overrides?.messageID ?? Identifier.ascending("message"))()
+    const settings = (() => {
+      if (!effectiveSelection) return
+      const { model, ...settings } = submission(scope, effectiveSelection)
+      return { ...model, ...settings }
+    })()
+    const messageID = overrides?.messageID ?? Identifier.ascending("message")
 
     // Cloud previews need import-then-command; post importAndSend with command metadata
     const preview = sid?.startsWith("cloud:")
@@ -2269,16 +2268,12 @@ export const SessionProvider: ParentComponent = (props) => {
         ? cloudPreviewId()
         : null
     if (preview) {
-      const settings = submission(scope, effectiveSelection ?? undefined)
       vscode.postMessage({
         type: "importAndSend",
         cloudSessionId: preview,
         text: `/${command} ${args}`.trim(),
-        messageID: Identifier.ascending("message"),
-        providerID: settings.model?.providerID,
-        modelID: settings.model?.modelID,
-        agent: settings.agent,
-        variant: settings.variant,
+        messageID,
+        ...settings,
         files,
         command,
         commandArgs: args,
@@ -2299,7 +2294,6 @@ export const SessionProvider: ParentComponent = (props) => {
         setDraftSessionID(scope)
       }
     }
-    const settings = submission(scope, effectiveSelection ?? undefined)
     vscode.postMessage({
       type: "sendCommand",
       command,
@@ -2307,10 +2301,7 @@ export const SessionProvider: ParentComponent = (props) => {
       messageID,
       sessionID: sid,
       draftID: effectiveDraftID,
-      providerID: settings.model?.providerID,
-      modelID: settings.model?.modelID,
-      agent: settings.agent,
-      variant: settings.variant,
+      ...settings,
       files,
       agentManagerContext: context,
     })

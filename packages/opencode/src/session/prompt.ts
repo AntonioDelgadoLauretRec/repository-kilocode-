@@ -223,7 +223,7 @@ export const layer = Layer.effect(
     const goals = yield* Goal.make({
       control,
       cancel: (id, preserve) => cancel(id, "tree", preserve),
-      create: (input) => createUserMessage(input),
+      create: (input) => prepare(input, true).pipe(Effect.scoped),
       prompt: (input, ticket) => prompt(input, ticket),
     })
     // kilocode_change end
@@ -843,14 +843,16 @@ export const layer = Layer.effect(
       return yield* provider.defaultModel().pipe(Effect.orDie)
     })
 
-    const createUserMessage = Effect.fn("SessionPrompt.createUserMessage")(function* (input: PromptInput) {
+    // kilocode_change start - prepare Goal admission without persisting or cancelling prior work
+    const prepare = Effect.fn("SessionPrompt.prepare")(function* (input: PromptInput, defer = false) {
+      // kilocode_change end
       const agentName = input.agent ?? (yield* sessions.get(input.sessionID).pipe(Effect.orDie)).agent // kilocode_change
       const ag = agentName ? yield* agents.get(agentName) : yield* agents.defaultInfo()
       if (!ag) {
         const available = (yield* agents.list()).filter((a) => !a.hidden).map((a) => a.name)
         const hint = available.length ? ` Available agents: ${available.join(", ")}` : ""
         const error = new NamedError.Unknown({ message: `Agent not found: "${agentName}".${hint}` })
-        yield* events.publish(Session.Event.Error, { sessionID: input.sessionID, error: error.toObject() })
+        if (!defer) yield* events.publish(Session.Event.Error, { sessionID: input.sessionID, error: error.toObject() }) // kilocode_change - admission failure must not fail the running Goal
         throw error
       }
       const model = input.model ?? ag.model ?? (yield* currentModel(input.sessionID))
@@ -886,25 +888,29 @@ export const layer = Layer.effect(
         editorContext: input.editorContext, // kilocode_change
       }
 
-      const current = yield* sessions.get(input.sessionID).pipe(Effect.orDie)
-      if (
-        current.agent !== info.agent ||
-        current.model?.providerID !== info.model.providerID ||
-        current.model?.id !== info.model.modelID ||
-        (current.model?.variant === "default" ? undefined : current.model?.variant) !== info.model.variant
-      ) {
-        yield* sessions.setAgentModel({
-          sessionID: input.sessionID,
-          agent: info.agent,
-          model: {
-            id: info.model.modelID,
-            providerID: info.model.providerID,
-            variant: info.model.variant ?? "default",
-          },
-          time: info.time.created,
-        })
-      }
-
+      // kilocode_change start - defer Goal model changes until admission succeeds
+      const select = Effect.gen(function* () {
+        const current = yield* sessions.get(input.sessionID).pipe(Effect.orDie)
+        if (
+          current.agent !== info.agent ||
+          current.model?.providerID !== info.model.providerID ||
+          current.model?.id !== info.model.modelID ||
+          (current.model?.variant === "default" ? undefined : current.model?.variant) !== info.model.variant
+        ) {
+          yield* sessions.setAgentModel({
+            sessionID: input.sessionID,
+            agent: info.agent,
+            model: {
+              id: info.model.modelID,
+              providerID: info.model.providerID,
+              variant: info.model.variant ?? "default",
+            },
+            time: info.time.created,
+          })
+        }
+      })
+      if (!defer) yield* select
+      // kilocode_change end
       yield* Effect.addFinalizer(() => instruction.clear(info.id))
 
       type Draft<T> = T extends SessionV1.Part ? Omit<T, "id"> & { id?: string } : never
@@ -1023,6 +1029,7 @@ export const layer = Layer.effect(
               }
             } else {
               const error = Cause.squash(exit.cause)
+              if (defer) return yield* Effect.die(error) // kilocode_change - reject invalid Goal attachments during admission
               yield* Effect.logError("failed to read MCP resource", { error, clientName, uri })
               const message = error instanceof Error ? error.message : String(error)
               pieces.push({
@@ -1182,6 +1189,7 @@ export const layer = Layer.effect(
                   }
                 } else {
                   const error = Cause.squash(exit.cause)
+                  if (defer) return yield* Effect.die(error) // kilocode_change - reject invalid Goal attachments during admission
                   yield* Effect.logError("failed to read file", { error, filepath })
                   const message = error instanceof Error ? error.message : String(error)
                   yield* events.publish(Session.Event.Error, {
@@ -1204,6 +1212,7 @@ export const layer = Layer.effect(
                 const exit = yield* execRead(args).pipe(Effect.exit)
                 if (Exit.isFailure(exit)) {
                   const error = Cause.squash(exit.cause)
+                  if (defer) return yield* Effect.die(error) // kilocode_change - reject invalid Goal attachments during admission
                   yield* Effect.logError("failed to read directory", { error, filepath })
                   const message = error instanceof Error ? error.message : String(error)
                   yield* events.publish(Session.Event.Error, {
@@ -1296,6 +1305,7 @@ export const layer = Layer.effect(
               }).pipe(Effect.exit)
               if (Exit.isFailure(access)) {
                 const error = Cause.squash(access.cause)
+                if (defer) return yield* Effect.die(error)
                 if (
                   error instanceof Image.InvalidDataUrlError ||
                   error instanceof Image.DecodeError ||
@@ -1416,11 +1426,18 @@ export const layer = Layer.effect(
         })
       }
 
-      yield* sessions.updateMessage(info)
-      for (const part of parts) yield* sessions.updatePart(part)
+      // kilocode_change start - commit the prepared Goal message only after cancellation fences
+      return Effect.gen(function* () {
+        if (defer) yield* select
+        yield* sessions.updateMessage(info)
+        for (const part of parts) yield* sessions.updatePart(part)
 
-      return { info, parts }
-    }, Effect.scoped)
+        return { info, parts }
+      })
+      // kilocode_change end
+    }) // kilocode_change - scope preparation and persistence together for normal prompts
+
+    const createUserMessage = (input: PromptInput) => prepare(input).pipe(Effect.flatten, Effect.scoped) // kilocode_change
 
     // kilocode_change start
     const prompt: (

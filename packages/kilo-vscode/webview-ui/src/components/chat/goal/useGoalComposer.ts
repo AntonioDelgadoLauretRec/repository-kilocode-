@@ -16,10 +16,17 @@ export function useGoalComposer(
   const goal = {
     active: () => owner() === key(),
     ready: (text: string) => owner() !== key() || !!text.trim(),
-    pending: () => Object.values(requests()).includes(key()),
+    pending: (scope = key()) => Object.values(requests()).includes(scope),
     activate: () => setOwner(key()),
-    cancel: () => setOwner(undefined),
+    cancel: () => {
+      // Cancel exits composition, not the accepted backend command. Retain its draft on acknowledgement.
+      for (const [id, scope] of Object.entries(requests())) {
+        if (scope === key()) submitted.delete(id)
+      }
+      setOwner(undefined)
+    },
     prepare: (draft: string, reset: () => void) => {
+      if (goal.pending()) return false
       if (!goal.active() && draft === "/goal") {
         goal.activate()
         reset()
@@ -28,7 +35,7 @@ export function useGoalComposer(
       return goal.ready(draft)
     },
     send: (scope: string, stamp: string, args: Parameters<SessionContextValue["sendCommand"]>) => {
-      if (key() !== scope || !goal.active()) return
+      if (key() !== scope || !goal.active() || goal.pending()) return
       const messageID = Identifier.ascending("message")
       submitted.set(messageID, stamp)
       goal.begin(messageID, scope)

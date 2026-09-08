@@ -33,7 +33,6 @@ Object.assign(globalThis, {
   MutationObserver: window.MutationObserver,
   IntersectionObserver: window.IntersectionObserver,
   ResizeObserver: window.ResizeObserver,
-  IntersectionObserver: window.IntersectionObserver,
   CustomEvent: window.CustomEvent,
   customElements: window.customElements,
   Event: window.Event,
@@ -67,7 +66,9 @@ const { PromptInput } = await import("../../webview-ui/src/components/chat/Promp
 const { IndexingProvider } = await import("../../webview-ui/src/context/indexing")
 const { MemoryProvider } = await import("../../webview-ui/src/context/memory")
 const { SpeechToTextModelsProvider } = await import("../../webview-ui/src/context/speech-to-text-models")
-const { drafts, imageDrafts, savePromptDraft } = await import("../../webview-ui/src/utils/draft-store")
+const { drafts, imageDrafts, reviewDrafts, browserDrafts, savePromptDraft } = await import(
+  "../../webview-ui/src/utils/draft-store"
+)
 
 const [settings, setSettings] = createSignal<{
   model?: string
@@ -931,12 +932,12 @@ try {
     assert(element)
     return element
   }
-  const seed = async (text: string) => {
+  const seed = async (text: string, sid = "composer") => {
     setComposer(false)
     await settle()
-    value.setCurrentSessionID("composer")
-    await emit({ type: "sessionStatus", sessionID: "composer", status: "idle" })
-    savePromptDraft(key, text, [], [image])
+    value.setCurrentSessionID(sid)
+    await emit({ type: "sessionStatus", sessionID: sid, status: "idle" })
+    savePromptDraft(`acceptance:session:${sid}`, text, [], [image])
     setComposer(true)
     await settle()
     await emit({
@@ -953,7 +954,9 @@ try {
       input().dispatchEvent(new window.KeyboardEvent("keydown", { key: "Enter", bubbles: true }))
       return
     }
-    const button = host.querySelector<HTMLButtonElement>('[aria-label="prompt.action.send"]')
+    const button = host.querySelector<HTMLButtonElement>(
+      '[aria-label="prompt.action.send"], [aria-label="prompt.goal.start"]',
+    )
     assert(button)
     button.click()
   }
@@ -1004,6 +1007,187 @@ try {
     await emit({ type: "providersLoading" })
     await emit({ type: "terminalContextResult", requestId: request.requestId, content: "terminal output" })
     retained(text, count)
+  }
+  await catalog("org-a", [recommended.modelID], recommended.modelID)
+  for (const sid of ["composer", "cloud:preview"]) {
+    await seed("/goal", sid)
+    submit(false)
+    await settle()
+    assert(host.querySelector(".prompt-goal-header"))
+    const text = "Fix the failing tests"
+    input().value = text
+    input().dispatchEvent(new window.Event("input", { bubbles: true }))
+    await settle()
+    const scope = `acceptance:session:${sid}`
+    for (const success of [false, true]) {
+      const button = host.querySelector<HTMLButtonElement>('[aria-label="prompt.goal.start"]')
+      assert(button)
+      assert.equal(button.getAttribute("aria-disabled"), "false")
+      const count = requests().length
+      const messages = value.messages().length
+      button.click()
+      await settle()
+      assert.equal(requests().length, count + 1)
+      const request = requests().at(-1)
+      assert(request?.type === (sid.startsWith("cloud:") ? "importAndSend" : "sendCommand"))
+      assert.equal(request.command, "goal")
+      assert.equal(request.type === "sendCommand" ? request.arguments : request.commandArgs, `-- ${text}`)
+      assert.equal(request.modelID, recommended.modelID)
+      assert.deepEqual(request.files, [{ mime: image.mime, url: image.dataUrl, filename: image.filename }])
+      assert.equal(value.messages().length, messages, "Goal sends must not add optimistic chat messages")
+      assert.equal(input().value, text, "Keep the Goal draft until its acknowledgement")
+      assert.equal(button.getAttribute("aria-disabled"), "true")
+      assert.equal(input().readOnly, true)
+      assert.equal(input().getAttribute("aria-disabled"), "true")
+      input().value = "Rejected pending edit"
+      input().dispatchEvent(new window.Event("input", { bubbles: true }))
+      for (const key of ["ArrowUp", "ArrowDown", "Backspace", "Tab", "Enter"]) {
+        input().setSelectionRange(0, 0)
+        input().dispatchEvent(new window.KeyboardEvent("keydown", { key, bubbles: true }))
+      }
+      const clipboard = new window.DataTransfer()
+      clipboard.items.add(new window.File(["image"], "extra.png", { type: "image/png" }))
+      const paste = new window.ClipboardEvent("paste", { bubbles: true, cancelable: true, clipboardData: clipboard })
+      input().dispatchEvent(paste)
+      assert.equal(paste.defaultPrevented, true)
+      const transfer = new window.DataTransfer()
+      transfer.setData("application/vnd.code.uri-list", "file:///test/extra.txt")
+      const drop = new window.DragEvent("drop", { bubbles: true, cancelable: true, dataTransfer: transfer })
+      input().dispatchEvent(drop)
+      assert.equal(drop.defaultPrevented, true)
+      const remove = host.querySelector<HTMLButtonElement>(".image-attachment-remove")
+      assert(remove?.disabled)
+      remove.dispatchEvent(new window.MouseEvent("click", { bubbles: true }))
+      await settle()
+      assert.equal(input().value, text)
+      assert.equal(requests().length, count + 1)
+      assert.deepEqual(imageDrafts.get(scope), [image])
+      assert(host.querySelector(`img[src="${image.dataUrl}"]`))
+      await emit({ type: "sessionCommandCompleted", messageID: "unrelated-command" })
+      assert.equal(button.getAttribute("aria-disabled"), "true")
+      await emit(
+        success
+          ? { type: "sessionCommandCompleted", messageID: request.messageID }
+          : { type: "sendMessageFailed", sessionID: sid, messageID: request.messageID, error: "Goal rejected" },
+      )
+      assert.equal(input().value, success ? "" : text)
+      assert.equal(input().readOnly, false)
+      assert.equal(!!host.querySelector(".prompt-goal-header"), !success)
+      assert.equal(drafts.has(scope), !success)
+      assert.equal(imageDrafts.has(scope), !success)
+      assert.equal(value.submitting(), false)
+    }
+  }
+  for (const success of [false, true]) {
+    for (const cancel of ["button", "escape"] as const) {
+      await seed("/goal")
+      submit(false)
+      await settle()
+      input().value = "Retain this objective"
+      input().dispatchEvent(new window.Event("input", { bubbles: true }))
+      submit(false)
+      await settle()
+      const request = requests().at(-1)
+      assert(request?.type === "sendCommand")
+      assert.equal(input().readOnly, true)
+      if (cancel === "escape")
+        input().dispatchEvent(new window.KeyboardEvent("keydown", { key: "Escape", bubbles: true }))
+      if (cancel === "button") host.querySelector<HTMLButtonElement>(".prompt-goal-header button")!.click()
+      await settle()
+      assert.equal(host.querySelector(".prompt-goal-header"), null)
+      assert.equal(input().readOnly, false)
+      assert.equal(input().getAttribute("aria-disabled"), "false")
+      assert.equal(input().value, "Retain this objective")
+      // Cancel must preserve even an unchanged draft when the accepted command later succeeds.
+      if (!success) {
+        input().value += " with a new edit"
+        input().dispatchEvent(new window.Event("input", { bubbles: true }))
+      }
+      const draft = input().value
+      await emit(
+        success
+          ? { type: "sessionCommandCompleted", messageID: request.messageID }
+          : { type: "sendMessageFailed", sessionID: "composer", messageID: request.messageID, error: "Rejected" },
+      )
+      assert.equal(input().value, draft)
+      value.setCurrentSessionID("other-composer")
+      await settle()
+      assert.equal(drafts.get(key), draft)
+      assert.deepEqual(imageDrafts.get(key), [image])
+      value.setCurrentSessionID("composer")
+      await settle()
+      assert.equal(input().value, draft)
+    }
+  }
+  for (const success of [false, true]) {
+    await seed("/goal")
+    submit(false)
+    await settle()
+    input().value = "Original session objective"
+    input().dispatchEvent(new window.Event("input", { bubbles: true }))
+    submit(false)
+    await settle()
+    const request = requests().at(-1)
+    assert(request?.type === "sendCommand")
+    await emit({ type: "appendChatBoxMessage", text: "New context from the editor" })
+    assert.equal(input().value, "Original session objective", "Host mutations must wait for admission")
+    savePromptDraft("acceptance:session:other-composer", "Other session draft", [], [{ ...image, id: "other" }])
+    value.setCurrentSessionID("other-composer")
+    await settle()
+    assert.equal(input().readOnly, false)
+    assert.equal(input().value, "Other session draft")
+    input().value += " edited"
+    input().dispatchEvent(new window.Event("input", { bubbles: true }))
+    await emit(
+      success
+        ? { type: "sessionCommandCompleted", messageID: request.messageID }
+        : { type: "sendMessageFailed", sessionID: "composer", messageID: request.messageID, error: "Rejected" },
+    )
+    assert.equal(input().value, "Other session draft edited")
+    assert.deepEqual(imageDrafts.get("acceptance:session:other-composer"), [{ ...image, id: "other" }])
+    value.setCurrentSessionID("composer")
+    await settle()
+    assert.equal(
+      input().value,
+      success ? "New context from the editor" : "Original session objective\n\nNew context from the editor",
+    )
+    assert.equal(input().readOnly, false)
+    assert.equal(imageDrafts.has(key), !success)
+  }
+  {
+    await seed("/goal")
+    submit(false)
+    await settle()
+    const comment = { id: "goal-review", file: "test.ts", line: 1, side: "additions", comment: "Keep this review" }
+    const browser = { id: "goal-browser", sessionId: "composer", selector: "button" }
+    await emit({ type: "setChatBoxMessage", text: "Retain attachments", review: [comment], browser: [browser] })
+    submit(false)
+    await settle()
+    assert.equal(input().readOnly, true)
+    const buttons = host.querySelectorAll<HTMLButtonElement>(
+      ".prompt-review-row-remove, .prompt-review-comments-header [data-component=button]",
+    )
+    assert.equal(buttons.length, 4)
+    buttons.forEach((button) => button.click())
+    assert.equal(host.querySelectorAll(".prompt-review-row").length, 2)
+    await emit({ type: "appendReviewComments", sessionID: "composer", comments: [{ ...comment, id: "later-review" }] })
+    await emit({
+      type: "appendChatBoxMessage",
+      text: "",
+      browser: { ...browser, id: "later-browser", selector: "#later" },
+    })
+    await emit({ type: "appendChatBoxMessage", text: "Retain delayed editor text" })
+    assert.equal(input().value, "Retain attachments")
+    assert.equal(host.querySelectorAll(".prompt-review-row").length, 2)
+    setComposer(false)
+    await settle()
+    assert.equal(drafts.get(key), "Retain attachments\n\nRetain delayed editor text")
+    assert.equal(reviewDrafts.get(key)?.length, 2)
+    assert.equal(browserDrafts.get(key)?.length, 2)
+    assert.deepEqual(imageDrafts.get(key), [image])
+    const request = requests().at(-1)
+    assert(request?.type === "sendCommand")
+    await emit({ type: "sessionCommandCompleted", messageID: request.messageID })
   }
   setComposer(false)
   await settle()
@@ -1131,6 +1315,46 @@ try {
       assert.equal(value.questions().length, 1)
       assert.equal(value.suggestions().length, 1)
     }
+    for (const args of ["", "pause", "clear", "resume", "A new goal"]) {
+      const control = ["", "pause", "clear"].includes(args)
+      const before = snapshot("cloud:preview")
+      const start = sent.length
+      const messageID = `goal-cloud-${phase}-${args}`
+      const accepted = value.sendCommand(
+        "goal",
+        args,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        "cloud:preview",
+        { messageID },
+      )
+      if (!control && phase !== "ready") {
+        assert.equal(accepted, false)
+        assert.deepEqual(sent.slice(start), [])
+        continue
+      }
+      assert.equal(accepted, true)
+      const request = sent.at(-1)
+      assert(request?.type === "importAndSend")
+      assert.equal(request.cloudSessionId, "preview")
+      assert.equal(request.command, "goal")
+      assert.equal(request.commandArgs, args)
+      assert.equal(request.messageID, messageID)
+      if (control) {
+        assert.deepEqual(
+          sent.slice(start).map((message) => message.type),
+          ["importAndSend"],
+        )
+        assert.equal(request.providerID, undefined)
+        assert.equal(request.modelID, undefined)
+        assert.equal(request.agent, undefined)
+        assert.equal(request.variant, undefined)
+        assert.equal(snapshot("cloud:preview"), before)
+      }
+    }
   }
   await catalog("org-a", [recommended.modelID], recommended.modelID)
   await emit({ type: "sessionUpdated", session: { ...info("root"), goal: { ...goal, active: false } } })
@@ -1140,9 +1364,9 @@ try {
   await emit({ type: "questionResolved", requestID: "goal-question" })
   await emit({ type: "suggestionResolved", requestID: "goal-suggestion" })
   await emit({ type: "sessionStatus", sessionID: "root", status: "idle" })
-  const start = sent.length
+  const idle = sent.length
   value.abort()
-  assert.equal(sent.length, start)
+  assert.equal(sent.length, idle)
   for (const update of [setOperation, setRun]) {
     update(true)
     await settle()

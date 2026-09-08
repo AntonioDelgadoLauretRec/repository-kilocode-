@@ -237,6 +237,7 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
   const git = useGitChangesContext(vscode, ctx, hasGit)
   const imageAttach = useImageAttachments()
   imageAttach.setFilePathDropHandler((paths) => {
+    if (readonly()) return
     const cwd = server.workspaceDirectory()
     const resolved = paths.map((p) => convertToMentionPath(p, cwd))
     const ref = textareaRef
@@ -292,6 +293,25 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
           ],
     )
   const locked = () => !!props.edit && props.edit.sessionID === session.currentSessionID()
+  const readonly = () => locked() || (goal.active() && goal.pending())
+  // Host-supplied drafts and attachments must wait, not disappear during Goal admission.
+  const deferred = new Map<string, ((key: string) => void)[]>()
+  let flushing = false
+  const defer = (key: string, work: (key: string) => void) => {
+    if (flushing || !goal.pending(key)) return false
+    deferred.set(key, [...(deferred.get(key) ?? []), work])
+    return true
+  }
+  createEffect(() => {
+    const key = draftKey()
+    if (goal.pending(key)) return
+    queueMicrotask(() => {
+      if (draftKey() !== key || goal.pending(key)) return
+      const work = deferred.get(key)
+      deferred.delete(key)
+      work?.forEach((apply) => apply(key))
+    })
+  })
   const saveDraft = (
     key: string,
     next: string,
@@ -467,10 +487,13 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
     references.set(draftKey(), next)
   }
 
-  const remove = (id: string) => replace(browsers().filter((item) => item.id !== id))
+  const remove = (id: string) => {
+    if (!readonly()) replace(browsers().filter((item) => item.id !== id))
+  }
   const clear = () => replace([])
 
   const removeReviewComment = (id: string) => {
+    if (readonly()) return
     replaceReviewComments(reviewComments().filter((item) => item.id !== id))
   }
 
@@ -652,8 +675,9 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
   const speechModel = () => selectedSpeechToTextModel(config(), speechModels.models())
   const hasInput = () =>
     text().trim().length > 0 || imageAttach.images().length > 0 || reviewComments().length > 0 || browsers().length > 0
-  const sendReady = () => !isDisabled() && !terminal.pending() && !git.pending() && !props.blocked?.()
+  const sendReady = () => !isDisabled() && goalReady() && !terminal.pending() && !git.pending() && !props.blocked?.()
   const canContinue = () => !goal.active() && speech.state() === "idle" && !hasInput() && session.canResume()
+  const goalReady = () => !goal.pending() && (!goal.active() || (!enhancing() && !imageAttach.pending()))
   const canSend = () =>
     sendReady() &&
     (speech.state() === "recording" ||
@@ -833,7 +857,23 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
       }),
   })
 
-  const restoreBox = (message: Extract<ExtensionMessage, { type: "setChatBoxMessage" }>) => {
+  const restoreBox = (message: Extract<ExtensionMessage, { type: "setChatBoxMessage" }>, key = draftKey()) => {
+    if (defer(key, (key) => restoreBox(message, key))) return
+    if (key !== draftKey()) {
+      savePromptDraft(
+        key,
+        message.text,
+        message.review ?? reviewDrafts.get(key) ?? [],
+        message.images?.map((image) => ({ ...image, id: crypto.randomUUID(), filename: image.filename ?? "image" })) ??
+          imageDrafts.get(key) ??
+          [],
+        scrollDrafts.get(key),
+        message.browser ?? references.get(key) ?? [],
+      )
+      if (message.paths || message.sessions)
+        mentionDrafts.set(key, { paths: message.paths ?? [], sessions: message.sessions ?? [] })
+      return
+    }
     setText(message.text)
     if (message.paths?.length) mention.seedFromParts(message.paths, message.text)
     else mention.seedFromText(message.text)
@@ -858,7 +898,17 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
     }
   }
 
-  const appendBox = (message: Extract<ExtensionMessage, { type: "appendChatBoxMessage" }>) => {
+  const appendBox = (message: Extract<ExtensionMessage, { type: "appendChatBoxMessage" }>, key = draftKey()) => {
+    if (defer(key, (key) => appendBox(message, key))) return
+    if (key !== draftKey()) {
+      if (message.browser) {
+        references.set(key, mergeBrowserReferences(references.get(key) ?? [], message.browser))
+        return
+      }
+      const current = drafts.get(key) ?? ""
+      drafts.set(key, current + (current && !current.endsWith("\n") ? "\n\n" : "") + message.text)
+      return
+    }
     const reference = message.browser
     if (reference) {
       if (reference.sessionId !== sid()) return
@@ -879,14 +929,17 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
     }
   }
 
-  const appendReviews = (message: Extract<ExtensionMessage, { type: "appendReviewComments" }>) => {
-    const target = message.sessionID
-      ? promptDraftKey(boxKey(), message.sessionID, {
-          draft: props.pendingSessionID ?? session.draftSessionID(),
-          current: session.currentSessionID(),
-        })
-      : draftKey()
+  const appendReviews = (message: Extract<ExtensionMessage, { type: "appendReviewComments" }>, key?: string) => {
+    const target =
+      key ??
+      (message.sessionID
+        ? promptDraftKey(boxKey(), message.sessionID, {
+            draft: props.pendingSessionID ?? session.draftSessionID(),
+            current: session.currentSessionID(),
+          })
+        : draftKey())
     if (!target) return
+    if (defer(target, (key) => appendReviews(message, key))) return
     if (target !== draftKey()) {
       reviewDrafts.set(target, mergeReviewComments(reviewDrafts.get(target) ?? [], message.comments))
       return
@@ -907,6 +960,11 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
     const source = scopeDraftKey(boxKey(), raw)
     const target = scopeDraftKey(boxKey(), sessionDraftKey(message.session.id))
     goal.move(source, target)
+    const queued = deferred.get(source)
+    if (queued) {
+      deferred.set(target, [...queued, ...(deferred.get(target) ?? [])])
+      deferred.delete(source)
+    }
     if (source === draftKey()) saveDraft(source, text(), reviewComments(), imageAttach.images())
     const from = reviewDrafts.get(source)
     const to = reviewDrafts.get(target)
@@ -985,6 +1043,7 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
     }
 
     if (message.type === "filePickerResult") {
+      if (defer(draftKey(), () => mention.insertFilePickerResult(message.path, message.requestId))) return
       mention.insertFilePickerResult(message.path, message.requestId)
     }
   })
@@ -992,6 +1051,10 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
 
   onCleanup(() => {
     props.onEditReady?.(false)
+    // Keep delayed host input in its draft even if the composer unmounts before acknowledgement.
+    flushing = true
+    for (const [key, work] of deferred) work.forEach((apply) => apply(key))
+    deferred.clear()
     // Persist current draft before unmounting
     saveDraft(draftKey(), text(), reviewComments(), imageAttach.images())
     if (sandboxRetry) clearTimeout(sandboxRetry)
@@ -1000,6 +1063,7 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
   })
 
   const acceptSuggestion = () => {
+    if (readonly()) return
     const result = ghost.accept()
     if (!result) return
 
@@ -1042,7 +1106,7 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
   }
 
   const handlePaste = (e: ClipboardEvent) => {
-    if (locked()) {
+    if (readonly()) {
       e.preventDefault()
       return
     }
@@ -1058,6 +1122,10 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
 
   const handleInput = (e: InputEvent) => {
     const target = e.target as HTMLTextAreaElement
+    if (readonly()) {
+      target.value = text()
+      return
+    }
     const val = target.value
     setText(val)
     preEnhanceText = null
@@ -1084,6 +1152,10 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
   }
 
   const handleKeyDown = (e: KeyboardEvent) => {
+    if (goal.pending()) {
+      escape(e)
+      return
+    }
     if (locked()) return
     // Undo enhanced prompt with Ctrl+Z / ⌘Z
     if (e.key === "z" && (e.metaKey || e.ctrlKey) && !e.shiftKey && preEnhanceText !== null) {
@@ -1457,6 +1529,9 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
     const attachments = allFiles.length > 0 ? allFiles : undefined
 
     if (objective) {
+      mention.closeMention()
+      slash.close()
+      ghost.dismiss()
       goal.send(key, stamp, [
         "goal",
         `-- ${message}`,
@@ -1535,7 +1610,7 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
       onDragOver={imageAttach.handleDragOver}
       onDragLeave={imageAttach.handleDragLeave}
       onDrop={(event) => {
-        if (locked()) {
+        if (readonly()) {
           event.preventDefault()
           return
         }
@@ -1555,12 +1630,20 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
           comments={reviewComments()}
           sessionID={sid()}
           onRemove={removeReviewComment}
-          onClear={(ids) => replaceReviewComments(reviewComments().filter((item) => !ids.includes(item.id)))}
+          onClear={(ids) => {
+            if (!readonly()) replaceReviewComments(reviewComments().filter((item) => !ids.includes(item.id)))
+          }}
         />
       </Show>
       <Show when={browsers().length > 0}>
         <div data-component="browser-references">
-          <BrowserReferences references={browsers()} onRemove={remove} onClear={clear} />
+          <BrowserReferences
+            references={browsers()}
+            onRemove={remove}
+            onClear={() => {
+              if (!readonly()) clear()
+            }}
+          />
         </div>
       </Show>
       <Show when={mention.showMention()}>
@@ -1702,7 +1785,10 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
                 <button
                   type="button"
                   class="image-attachment-remove"
-                  onClick={() => imageAttach.remove(img.id)}
+                  disabled={readonly()}
+                  onClick={() => {
+                    if (!readonly()) imageAttach.remove(img.id)
+                  }}
                   aria-label="Remove image"
                 >
                   ×
@@ -1747,7 +1833,7 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
           <textarea
             ref={textareaRef}
             class="prompt-input"
-            classList={{ "prompt-input--disabled": isDisabled() }}
+            classList={{ "prompt-input--disabled": !server.isConnected() || readonly() }}
             placeholder={placeholder()}
             value={text()}
             onInput={handleInput}
@@ -1778,8 +1864,8 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
               if (textareaRef) mention.snapSelection(textareaRef)
             }}
             onScroll={syncHighlightScroll}
-            aria-disabled={isDisabled()}
-            readOnly={locked()}
+            aria-disabled={!server.isConnected() || readonly()}
+            readOnly={readonly()}
             rows={1}
             dir="auto"
           />

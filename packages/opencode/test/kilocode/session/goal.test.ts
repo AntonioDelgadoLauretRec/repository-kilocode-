@@ -1,4 +1,5 @@
 import path from "path"
+import { pathToFileURL } from "node:url"
 import { expect, spyOn, test } from "bun:test"
 import { Cause, Effect, Exit, Fiber, Latch, Stream } from "effect"
 import { LayerNode } from "@opencode-ai/core/effect/layer-node"
@@ -472,11 +473,127 @@ it.instance(
       })
       .pipe(Effect.exit)
     expect(Exit.isFailure(result)).toBe(true)
-    expect(GoalState.read(yield* run.metadata)?.active).toBe(false)
+    expect(GoalState.read(yield* run.metadata)).toBeUndefined()
     expect(yield* run.llm.hits).toHaveLength(0)
   }),
   30_000,
 )
+
+for (const kind of ["image", "file"] as const) {
+  it.instance(
+    `invalid replacement ${kind} preserves the objective and held execution`,
+    Effect.gen(function* () {
+      const run = yield* setup()
+      const instance = yield* TestInstance
+      const gate = Promise.withResolvers<void>()
+      yield* Effect.addFinalizer(() => Effect.sync(gate.resolve))
+      yield* run.llm.push(reply().wait(gate.promise).text("Original execution finished").stop())
+      yield* run.command(objective)
+      yield* run.wait(1)
+      const base = KiloSessionPromptQueue.active(run.session.id)
+      const before = yield* run.sessions.messages({ sessionID: run.session.id })
+      const metadata = yield* run.metadata
+      const selection = yield* run.sessions.get(run.session.id)
+      const result = yield* run.prompt
+        .command({
+          sessionID: run.session.id,
+          agent: "ask",
+          model: "test/selected-model",
+          command: "goal",
+          arguments: "-- Invalid replacement",
+          parts: [
+            kind === "image"
+              ? {
+                  type: "file",
+                  mime: "image/png",
+                  url: "data:image/png;base64,bm90LWFuLWltYWdl",
+                  filename: "invalid.png",
+                }
+              : {
+                  type: "file",
+                  mime: "text/plain",
+                  url: pathToFileURL(path.join(instance.directory, "missing.txt")).href,
+                  filename: "missing.txt",
+                },
+          ],
+        })
+        .pipe(Effect.exit)
+      expect(Exit.isFailure(result)).toBe(true)
+      expect(yield* run.metadata).toEqual(metadata)
+      expect(GoalState.active(run.session.id)).toBe(true)
+      expect(KiloSessionPromptQueue.active(run.session.id)).toBe(base)
+      expect((yield* run.status.get(run.session.id)).type).toBe("busy")
+      const after = yield* run.sessions.messages({ sessionID: run.session.id })
+      expect(after.map((message) => message.info.id)).toEqual(before.map((message) => message.info.id))
+      expect(after.filter((message) => message.info.role === "user").map((message) => message.parts)).toEqual(
+        before.filter((message) => message.info.role === "user").map((message) => message.parts),
+      )
+      expect(yield* run.sessions.get(run.session.id)).toMatchObject({ agent: selection.agent, model: selection.model })
+      gate.resolve()
+      yield* run.paused
+      const last = (yield* run.sessions.messages({ sessionID: run.session.id })).at(-1)
+      expect(last?.info.role === "assistant" && last.info.error).toBeUndefined()
+      expect(last?.parts).toContainEqual(expect.objectContaining({ type: "text", text: "Original execution finished" }))
+      expect(yield* run.llm.hits).toHaveLength(1)
+    }),
+    30_000,
+  )
+}
+
+for (const action of ["replace", "stop"] as const) {
+  it.instance(
+    `fences valid attachment preparation against ${action}`,
+    Effect.gen(function* () {
+      const run = yield* setup()
+      yield* run.llm.push(reply().hang(), reply().hang())
+      yield* run.command(objective)
+      yield* run.wait(1)
+      const agents = yield* Agent.Service
+      const ready = yield* Latch.make()
+      const release = yield* Latch.make()
+      const get = agents.get
+      const stub = spyOn(agents, "get").mockImplementationOnce((name) =>
+        ready.open.pipe(Effect.andThen(release.await), Effect.andThen(get(name))),
+      )
+      yield* Effect.addFinalizer(() => release.open.pipe(Effect.andThen(Effect.sync(() => stub.mockRestore()))))
+      const id = MessageID.ascending()
+      const pending = yield* run.prompt
+        .command({
+          sessionID: run.session.id,
+          messageID: id,
+          agent: "code",
+          model: "test/test-model",
+          command: "goal",
+          arguments: "-- Prepared replacement",
+          parts: [
+            { type: "file", mime: "text/plain", url: "data:text/plain;base64,Y29udGV4dA==", filename: "context.txt" },
+          ],
+        })
+        .pipe(Effect.forkChild)
+      yield* awaitWithTimeout(ready.await, "replacement did not reach preparation")
+      expect(GoalState.read(yield* run.metadata)).toMatchObject({ text: objective, active: true })
+      expect((yield* run.status.get(run.session.id)).type).toBe("busy")
+      if (action === "stop") yield* awaitWithTimeout(run.prompt.cancel(run.session.id), "Stop waited for admission")
+      yield* release.open
+      const exit = yield* awaitWithTimeout(Fiber.await(pending), "replacement did not settle")
+      if (action === "stop") {
+        expect(Exit.hasInterrupts(exit)).toBe(true)
+        expect(GoalState.read(yield* run.metadata)).toMatchObject({ text: objective, active: false })
+        expect(
+          (yield* run.sessions.messages({ sessionID: run.session.id })).some((message) => message.info.id === id),
+        ).toBe(false)
+        expect(yield* run.llm.hits).toHaveLength(1)
+        return
+      }
+      expect(Exit.isSuccess(exit)).toBe(true)
+      yield* run.wait(2)
+      expect(GoalState.read(yield* run.metadata)).toMatchObject({ text: "Prepared replacement", active: true })
+      expect(JSON.stringify((yield* run.llm.hits).at(-1)?.body)).toContain("context")
+      yield* run.prompt.cancel(run.session.id)
+    }),
+    30_000,
+  )
+}
 
 for (const text of ["pause", "resume", "clear"]) {
   it.instance(

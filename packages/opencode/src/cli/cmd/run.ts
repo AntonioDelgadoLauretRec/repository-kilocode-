@@ -440,12 +440,12 @@ export const RunCommand = effectCmd({
       const input = { initial: undefined as string | undefined, loaded: false }
       async function loadInput() {
         if (input.loaded) return
-        // kilocode_change start - bound the stdin wait when argv already carries a
+        // Bound the stdin wait when argv already carries a
         // message or command; a launcher-held-open pipe never EOFs (see run-stdin.ts)
         const piped = process.stdin.isTTY
           ? undefined
           : await readPipedStdin({ bound: rawMessage.trim().length > 0 || args.command !== undefined })
-        // kilocode_change end
+
         message = resolveRunInput(message, piped) ?? ""
         input.initial = resolveRunInput(rawMessage, piped)
         input.loaded = true

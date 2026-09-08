@@ -155,7 +155,7 @@ export namespace Goal {
   }
 
   export function make(ops: {
-    create: (input: PromptInput) => Effect.Effect<SessionV1.WithParts>
+    create: (input: PromptInput) => Effect.Effect<Effect.Effect<SessionV1.WithParts>>
     prompt: (input: PromptInput, ticket: KiloSessionControl.Ticket) => Effect.Effect<SessionV1.WithParts, unknown>
     cancel: (id: SessionID, preserve?: boolean) => Effect.Effect<void>
     control: {
@@ -252,6 +252,27 @@ export namespace Goal {
             })
           if (starting) yield* admit(true)
           if (intent && !intent.current()) return yield* Effect.interrupt
+          // Resolve attachments without changing the transcript, model, or running goal.
+          const prepared = starting
+            ? yield* KiloSessionPrompt.intake(
+                id,
+                ops
+                  .create({
+                    sessionID: id,
+                    messageID: input.messageID,
+                    agent: input.agent,
+                    model: input.model ? Provider.parseModel(input.model) : undefined,
+                    variant: input.variant,
+                    parts: [
+                      { type: "text", text: `/goal ${objective ?? args}`, ignored: true },
+                      ...(input.parts ?? []),
+                    ],
+                  })
+                  .pipe(Effect.raceFirst(cancelled)),
+              )
+            : undefined
+          if (starting) yield* admit(true)
+          if (intent && !intent.current()) return yield* Effect.interrupt
           if (args && GoalState.active(id)) yield* ops.cancel(id, true)
           if (intent && !intent.current()) return yield* Effect.interrupt
           if (args === "pause" || args === "clear") yield* pause(id, true)
@@ -284,17 +305,7 @@ export namespace Goal {
                 : starting
                   ? "Goal active. Work uses model credits. The working model reports completion or blockers with goal_report; completion is not independently verified. No progress or errors pause the goal. Use Stop or /goal pause to pause."
                   : "Goal paused. Use /goal resume to continue."
-            // Validate and persist attachments before acknowledging the command.
-            const user = starting
-              ? (yield* ops.create({
-                  sessionID: id,
-                  messageID: input.messageID,
-                  agent: input.agent,
-                  model: input.model ? Provider.parseModel(input.model) : undefined,
-                  variant: input.variant,
-                  parts: [{ type: "text", text: `/goal ${objective ?? args}`, ignored: true }, ...(input.parts ?? [])],
-                })).info
-              : undefined
+            const user = prepared ? (yield* prepared).info : undefined
             if (user && user.role !== "user") return yield* Effect.die(new Error("Expected a user message"))
             if (!valid()) return yield* Effect.interrupt
             const model =

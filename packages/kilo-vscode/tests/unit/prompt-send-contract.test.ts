@@ -322,16 +322,22 @@ describe("sendMessage / sendCommand draft id contract", () => {
   it("sendCommand seeds the pending agent before resolving draft-scoped settings", () => {
     const body = extractFunctionBody(source, "sendCommand")
     expect(body).toMatch(
-      /if \(!sid && !draftID && effectiveDraftID\) agentDrafts\.seed\(effectiveDraftID\)[\s\S]*const settings = submission\(scope, effectiveSelection \?\? undefined\)/,
+      /if \(!sid && !draftID && effectiveDraftID\) agentDrafts\.seed\(effectiveDraftID\)[\s\S]*submission\(scope, effectiveSelection\)/,
     )
   })
 
   it("sendMessage and sendCommand post the settings returned by submission", () => {
     expect(extractFunctionBody(source, "sendMessage")).toContain("const settings = submission(scope, selection)")
     expect(extractFunctionBody(source, "sendCommand")).toContain(
-      "const settings = submission(scope, effectiveSelection ?? undefined)",
+      "const { model, ...settings } = submission(scope, effectiveSelection)",
     )
     expect(extractFunctionBody(source, "submission")).toContain("agent: resolvePromptAgent({")
+  })
+
+  it("does not resolve submission defaults for model-free Goal controls", () => {
+    const body = extractFunctionBody(source, "sendCommand")
+    expect(body).toMatch(/if \(!effectiveSelection\) return\s+const \{ model, \.\.\.settings \} = submission/)
+    expect(body).not.toContain("effectiveSelection ?? undefined")
   })
 
   it("createSession and clearCurrentSession do not pin the provisional default agent", () => {
