@@ -172,6 +172,7 @@ export function createRemoteCommentController(options: Options): RemoteCommentCo
 
   const RemoteCard: Component<CardProps> = (props) => {
     const comment = () => props.item.comment()
+    const ctrl = options.reactions?.enabled() ? options.reactions : undefined
     return (
       <PRCommentCard
         comment={comment()}
@@ -201,16 +202,14 @@ export function createRemoteCommentController(options: Options): RemoteCommentCo
             ? () => options.onOpenUrl?.(githubUrl(comment().url)!)
             : undefined
         }
-        reactionError={options.reactions?.enabled() ? options.reactions.error(comment().id) : undefined}
-        reactions={options.reactions?.enabled() ? options.reactions.list(comment().id, comment().reactions) : undefined}
-        reactionPending={
-          options.reactions?.enabled() ? (content) => options.reactions!.pending(comment().id, content) : undefined
-        }
-        onReaction={
-          options.reactions?.enabled()
-            ? (content, add) => options.reactions?.toggle(comment().id, content, add)
-            : undefined
-        }
+        reactionError={ctrl?.error(comment().id)}
+        reactions={ctrl?.list(comment().id, comment().reactions)}
+        reactionPending={ctrl ? (content) => ctrl.pending(comment().id, content) : undefined}
+        onReaction={ctrl ? (content, add) => ctrl.toggle(comment().id, content, add) : undefined}
+        replyReactionError={ctrl?.error}
+        replyReactions={ctrl?.list}
+        replyReactionPending={ctrl?.pending}
+        onReplyReaction={ctrl?.toggle}
       />
     )
   }
