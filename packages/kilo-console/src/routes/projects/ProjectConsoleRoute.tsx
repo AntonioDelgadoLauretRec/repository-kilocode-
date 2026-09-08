@@ -58,7 +58,7 @@ import {
 } from "../config/state/console"
 import { sender } from "./project-console-presence-sender"
 import "../../styles/project-console.css"
-import "../../styles/providers.css"
+import "../../styles/dialogs.css"
 
 const GhosttyTerminal = lazy(() =>
   import("./terminal/GhosttyTerminal").then((mod) => ({ default: mod.GhosttyTerminal })),
