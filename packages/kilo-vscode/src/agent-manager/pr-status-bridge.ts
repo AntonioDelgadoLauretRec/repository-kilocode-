@@ -53,7 +53,7 @@ function reactionRequest(m: Record<string, unknown>): ReactionRequest | undefine
 
 function hasComment(pr: PRStatus, id: string): boolean {
   return (
-    pr.comments?.comments.some((comment) => comment.id === id) ||
+    pr.comments?.comments.some((comment) => comment.id === id || comment.replies?.some((reply) => reply.id === id)) ||
     pr.conversation?.some((comment) => comment.id === id) ||
     false
   )
