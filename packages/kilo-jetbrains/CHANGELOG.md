@@ -448,6 +448,18 @@
 
 ## [Unreleased]
 
+## [7.1.6-rc.3] - 2026-09-08
+
+### Fixed
+
+- Fixed config warnings being attributed to the IDE's working directory instead of the actual project, which could show a stray "home directory" warning banner.
+- Fixed worktree deletion blocking the UI for large directories and failing when other worktrees were busy at the same time.
+- Fixed the worktree session list unexpectedly expanding when starting or forking a session.
+- Fixed `kilo run` returning a success exit code even when no assistant message was produced.
+- Reduced CLI startup overhead on Windows.
+- Sped up cold session loading.
+- Fixed inference cost showing as $0 for OpenRouter BYOK sessions.
+
 ## [7.1.6-rc.2] - 2026-09-06
 
 ### Fixed
