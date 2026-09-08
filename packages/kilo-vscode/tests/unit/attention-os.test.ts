@@ -1,5 +1,18 @@
 import { describe, expect, it } from "bun:test"
-import { notificationCommand, testOSNotification } from "../../src/services/attention/os"
+import fs from "node:fs/promises"
+import os from "node:os"
+import path from "node:path"
+import { notificationCommand, readAppID, testOSNotification } from "../../src/services/attention/os"
+
+const APPID = "Microsoft.VisualStudioCode"
+
+function script(command: { args: string[] } | undefined) {
+  return Buffer.from(command?.args.at(-1) ?? "", "base64").toString("utf16le")
+}
+
+function xml(command: { env?: Record<string, string> } | undefined) {
+  return Buffer.from(command?.env?.KILO_TOAST_XML ?? "", "base64").toString("utf8")
+}
 
 describe("OS attention notifications", () => {
   const notice = {
@@ -9,14 +22,45 @@ describe("OS attention notifications", () => {
   }
 
   it("builds a Windows WinRT notification command", () => {
-    const command = notificationCommand(notice, "win32")
+    const command = notificationCommand(notice, "win32", APPID)
 
     expect(command?.cmd).toBe("powershell.exe")
     expect(command?.args.slice(0, 3)).toEqual(["-NoProfile", "-NonInteractive", "-EncodedCommand"])
-    const script = Buffer.from(command?.args.at(-1) ?? "", "base64").toString("utf16le")
-    expect(script).toContain("CreateToastNotifier('Microsoft.VisualStudioCode')")
-    expect(script).toContain("Workspace: kilo-vscode")
-    expect(script).toContain("Session: Add notifications")
+    expect(command?.env?.KILO_TOAST_APPID).toBe(APPID)
+    expect(xml(command)).toContain("Workspace: kilo-vscode")
+    expect(xml(command)).toContain("Session: Add notifications")
+  })
+
+  it("passes the toast payload and identity as data, never as script source", () => {
+    const command = notificationCommand(notice, "win32", APPID)
+    const text = script(command)
+
+    // The script must be a fixed program: no notice content and no identity in it.
+    expect(text).not.toContain("kilo-vscode")
+    expect(text).not.toContain("Add notifications")
+    expect(text).not.toContain(APPID)
+    expect(text).toContain("$env:KILO_TOAST_XML")
+    expect(text).toContain("$env:KILO_TOAST_APPID")
+  })
+
+  it("cannot be escaped by Unicode smart quotes in a session title", () => {
+    // XML escaping does not touch U+2018/U+2019, which PowerShell also accepts
+    // as string delimiters. If the payload were interpolated into the script,
+    // this title would close the literal and run the trailing command.
+    const attack = "\u2019; Start-Process calc.exe; '"
+    const command = notificationCommand({ message: "Kilo task completed.", session: attack }, "win32", APPID)
+    const text = script(command)
+
+    expect(text).not.toContain("Start-Process")
+    expect(text).not.toContain("\u2019")
+    // It survives intact as inert data instead.
+    expect(xml(command)).toContain("Start-Process calc.exe")
+  })
+
+  it("declines to build a Windows command without a verified identity", () => {
+    // Guessing would attribute the toast to the wrong editor.
+    expect(notificationCommand(notice, "win32")).toBeUndefined()
+    expect(notificationCommand(notice, "win32", "")).toBeUndefined()
   })
 
   it("builds an escaped macOS osascript command", () => {
@@ -61,6 +105,34 @@ describe("OS attention notifications", () => {
 
   it("does not build a command for unsupported platforms", () => {
     expect(notificationCommand(notice, "freebsd")).toBeUndefined()
+  })
+})
+
+describe("readAppID", () => {
+  async function withProduct(content: string | undefined) {
+    const dir = await fs.mkdtemp(path.join(os.tmpdir(), "kilo-appid-"))
+    if (content !== undefined) await fs.writeFile(path.join(dir, "product.json"), content, "utf8")
+    const result = await readAppID(dir)
+    await fs.rm(dir, { recursive: true, force: true })
+    return result
+  }
+
+  it("reads the running host's identity instead of assuming VS Code", async () => {
+    // A fork such as Cursor or Antigravity ships its own identity here.
+    expect(await withProduct(JSON.stringify({ win32AppUserModelId: "Anysphere.Cursor" }))).toBe("Anysphere.Cursor")
+  })
+
+  it("returns undefined when product.json is missing, malformed, or lacks the field", async () => {
+    expect(await withProduct(undefined)).toBeUndefined()
+    expect(await withProduct("{ not json")).toBeUndefined()
+    expect(await withProduct(JSON.stringify({ nameLong: "Some Editor" }))).toBeUndefined()
+  })
+
+  it("rejects values that are not usable identities", async () => {
+    expect(await withProduct(JSON.stringify({ win32AppUserModelId: "   " }))).toBeUndefined()
+    expect(await withProduct(JSON.stringify({ win32AppUserModelId: 42 }))).toBeUndefined()
+    expect(await withProduct(JSON.stringify({ win32AppUserModelId: "Bad\u0000Id" }))).toBeUndefined()
+    expect(await withProduct(JSON.stringify({ win32AppUserModelId: "x".repeat(300) }))).toBeUndefined()
   })
 })
 

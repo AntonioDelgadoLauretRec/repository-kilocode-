@@ -277,10 +277,10 @@ export async function activate(context: vscode.ExtensionContext) {
       return { workspace, session: session?.title ?? session?.slug ?? sessionID }
     },
     focused: () => vscode.window.state.focused,
-    visible: (sessionID) =>
-      (provider.isSidebarVisible() && provider.getCurrentSessionId() === sessionID) ||
-      activeTabProvider()?.getCurrentSessionId() === sessionID ||
-      (agentManagerProvider.isActive() && agentManagerProvider.getActiveSessionId() === sessionID),
+    // Every surface already reports the session it displays, gated on its own
+    // visibility, so this covers the sidebar, Kilo editor tabs, and Agent
+    // Manager without each one needing its own accessor.
+    visible: (sessionID) => connectionService.isVisible(sessionID),
     os: showOSNotification,
     show: async (sessionID, directory) => {
       await vscode.commands.executeCommand("kilo-code.SidebarProvider.focus")

@@ -3,6 +3,8 @@ import type { TuiAttentionSoundName } from "@kilocode/plugin/tui"
 import type { SSEPayload } from "../cli-backend/sdk-sse-adapter"
 import type { KiloConnectionService } from "../cli-backend/connection-service"
 import { playSound, resolveSoundID } from "./sound"
+import { t } from "../i18n"
+import { lines } from "./notice"
 
 type Sync = Extract<SSEPayload, { type: "sync" }>
 type Question = Extract<SSEPayload, { type: "question.asked" | "question.replied" | "question.rejected" }>
@@ -33,7 +35,12 @@ export function previewSound(value: string) {
 
 export class AttentionService implements vscode.Disposable {
   private readonly active = new Set<string>()
+  private readonly goals = new Set<string>()
   private readonly errored = new Set<string>()
+  // Error notifications held until the root turn closes, keyed by session.
+  // Distinct from `errored`, which also covers manual aborts and only
+  // suppresses the following "done".
+  private readonly pending = new Map<string, string | undefined>()
   private readonly questions = new Set<string>()
   private readonly permissions = new Set<string>()
   private readonly unsubscribeEvent: () => void
@@ -70,13 +77,22 @@ export class AttentionService implements vscode.Disposable {
   }
 
   private sync(event: Sync) {
-    if (event.name !== "session.deleted.1") return
-    this.remove(event.data.sessionID)
+    if (event.name === "session.deleted.1") return this.remove(event.data.sessionID)
+    if (event.name !== "session.updated.1" && event.name !== "session.created.1") return
+    if (!("metadata" in event.data.info)) return
+    const goal = event.data.info.metadata?.["kilo.goal"]
+    if (goal && typeof goal === "object" && "active" in goal && goal.active === true) {
+      this.goals.add(event.data.sessionID)
+      return
+    }
+    this.goals.delete(event.data.sessionID)
   }
 
   private remove(sessionID: string) {
     this.active.delete(sessionID)
+    this.goals.delete(sessionID)
     this.errored.delete(sessionID)
+    this.pending.delete(sessionID)
   }
 
   private question(event: Question, directory?: string) {
@@ -114,33 +130,56 @@ export class AttentionService implements vscode.Disposable {
     if (event.properties.status.type !== "busy" && event.properties.status.type !== "retry") return
     this.active.add(sessionID)
     this.errored.delete(sessionID)
+    this.pending.delete(sessionID)
   }
 
   private close(event: Close, directory?: string) {
     const sessionID = event.properties.sessionID
     if (!this.active.delete(sessionID)) return
     if (this.errored.delete(sessionID)) {
-      if (event.properties.parentID === undefined) this.notify("error", sessionID, directory)
+      // The sound already played when the error arrived; only the notification
+      // waits here, so a retry that recovers never shows a "task failed" toast.
+      const held = this.pending.has(sessionID)
+      const dir = this.pending.get(sessionID) ?? directory
+      this.pending.delete(sessionID)
+      if (held && event.properties.parentID === undefined) this.deliver("error", sessionID, dir)
       return
     }
     if (event.properties.reason !== "completed") return
-    if (event.properties.parentID !== undefined) return
+    if (event.properties.parentID !== undefined || this.goals.has(sessionID)) return
     this.notify("done", sessionID, directory)
   }
 
   private error(event: Error) {
     const sessionID = event.properties.sessionID
     if (!sessionID || !this.active.has(sessionID)) return
-    if (event.properties.error?.name === "MessageAbortedError") return
     this.errored.add(sessionID)
+    if (event.properties.error?.name === "MessageAbortedError") return
+    this.notify("error", sessionID)
   }
 
   private notify(sound: TuiAttentionSoundName, sessionID: string, directory?: string) {
+    this.sound(sound)
+    this.announce(sound, sessionID, directory)
+  }
+
+  private sound(sound: TuiAttentionSoundName) {
     const config = vscode.workspace.getConfiguration("kilo-code.new.attention")
-    if (config.get<boolean>("enabled", false)) {
-      const selected = resolveSoundID(config.get<string>("sound", "default"))
-      void playSound(sound, selected)
+    if (!config.get<boolean>("enabled", false)) return
+    void playSound(sound, resolveSoundID(config.get<string>("sound", "default")))
+  }
+
+  private announce(sound: TuiAttentionSoundName, sessionID: string, directory?: string) {
+    // Hold errors back: `session.error` also fires for transient failures that
+    // a retry recovers from, and only the closing root turn proves otherwise.
+    if (sound === "error") {
+      this.pending.set(sessionID, directory)
+      return
     }
+    this.deliver(sound, sessionID, directory)
+  }
+
+  private deliver(sound: TuiAttentionSoundName, sessionID: string, directory?: string) {
     const text = this.text(sound)
     if (!text) return
     const initial = this.channels(sessionID)
@@ -175,26 +214,25 @@ export class AttentionService implements vscode.Disposable {
   }
 
   private text(sound: TuiAttentionSoundName) {
-    return sound === "done"
-      ? "Kilo task completed."
-      : sound === "question"
-        ? "Kilo needs your input."
-        : sound === "permission"
-          ? "Kilo needs permission."
-          : sound === "error"
-            ? "Kilo task stopped due to an error."
-            : undefined
+    const key =
+      sound === "done"
+        ? "kilocode:attention.done"
+        : sound === "question"
+          ? "kilocode:attention.question"
+          : sound === "permission"
+            ? "kilocode:attention.permission"
+            : sound === "error"
+              ? "kilocode:attention.error"
+              : undefined
+    return key ? t(key) : undefined
   }
 
   private message(sound: TuiAttentionSoundName, notice: AttentionNotice, sessionID: string, directory?: string) {
-    const show = "Show"
-    const details = [
-      notice.workspace ? `Workspace: ${notice.workspace}` : undefined,
-      notice.session ? `Session: ${notice.session}` : undefined,
-    ]
-      .filter((line): line is string => line !== undefined)
-      .join(" | ")
-    const text = [notice.message, details].filter(Boolean).join(" ")
+    const show = t("kilocode:attention.show")
+    // Same fields as the native toast; a workbench notification is plaintext,
+    // so they are joined inline instead of on their own rows.
+    const [head, ...rest] = lines(notice)
+    const text = [head, rest.join(" | ")].filter(Boolean).join(" ")
     const alert =
       sound === "error"
         ? vscode.window.showErrorMessage(text, show)
@@ -208,7 +246,9 @@ export class AttentionService implements vscode.Disposable {
 
   private reset() {
     this.active.clear()
+    this.goals.clear()
     this.errored.clear()
+    this.pending.clear()
     this.questions.clear()
     this.permissions.clear()
   }

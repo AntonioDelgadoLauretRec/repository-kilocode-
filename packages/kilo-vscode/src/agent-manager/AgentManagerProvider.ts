@@ -24,7 +24,6 @@ import {
 import { normalizeBaseBranch } from "./base-branch"
 import { handleBaseUpdate } from "./base-update"
 import { GitStatsPoller, type LocalStats, type WorktreePresenceResult, type WorktreeStats } from "./GitStatsPoller"
-import { PRStatusBridge } from "./pr-status-bridge"
 import { createPollers, type ProjectPollers } from "./project/pollers"
 import { GitOps } from "./GitOps"
 import type { GitExecutable } from "../util/git-executable"
@@ -100,7 +99,7 @@ export class AgentManagerProvider implements Disposable {
   private stateReady: Promise<void> | undefined
   private statsPoller: GitStatsPoller
   private readonly projectPollers: ProjectPollers
-  private prBridge!: PRStatusBridge
+  private prBridge!: ReturnType<typeof createPollers>["pr"]
   private orchestration: AgentManagerOrchestrationBridge
   private gitOps: GitOps
   private diffs: WorktreeDiffController
@@ -241,6 +240,7 @@ export class AgentManagerProvider implements Disposable {
       projectId: () => this.context?.id,
     })
     const pollers = createPollers({
+      dirtyFiles: () => this.host.dirtyFiles(),
       git: this.gitOps,
       semaphore,
       state: () => this.state,
@@ -874,7 +874,7 @@ export class AgentManagerProvider implements Disposable {
   private onBridgeMessage(m: AgentManagerInMessage): Record<string, unknown> | null | undefined {
     if (m.type !== "openFile") return undefined
 
-    const sessionId = this.activeSessionId
+    const sessionId = m.sessionID ?? this.activeSessionId
     const state = this.getStateManager()
     if (sessionId && state?.directoryFor(sessionId)) {
       this.openWorktreeFile(sessionId, m.filePath, m.line, m.column)
@@ -1698,10 +1698,6 @@ export class AgentManagerProvider implements Disposable {
     return this.panel?.active === true
   }
 
-  public getActiveSessionId(): string | undefined {
-    return this.activeSessionId
-  }
-
   private async waitForPanel(panel: PanelContext, promise: Promise<void>): Promise<boolean> {
     const done = promise.then(() => true)
     let sub: Disposable | undefined
@@ -1731,7 +1727,7 @@ export class AgentManagerProvider implements Disposable {
     return this.waitForPanelReady(panel)
   }
 
-  private async memory(action: "showMemory" | "toggleMemory", failure: string): Promise<void> {
+  public async showMemory(): Promise<void> {
     const panel = this.panel
     const sid = this.activeSessionId
     if (!panel || !sid) {
@@ -1741,18 +1737,26 @@ export class AgentManagerProvider implements Disposable {
     if (!(await this.waitForPanelReady(panel))) return
     if (this.activeSessionId !== sid) return
     try {
-      await panel.sessions[action](sid)
+      await panel.sessions.showMemory(sid)
     } catch (error) {
-      this.host.showError(getErrorMessage(error) || failure)
+      this.host.showError(getErrorMessage(error) || "Failed to show memory")
     }
   }
 
-  public showMemory(): Promise<void> {
-    return this.memory("showMemory", "Failed to show memory")
-  }
-
-  public toggleMemory(): Promise<void> {
-    return this.memory("toggleMemory", "Failed to toggle memory")
+  public async toggleMemory(): Promise<void> {
+    const panel = this.panel
+    const sid = this.activeSessionId
+    if (!panel || !sid) {
+      this.host.showError("No active Agent Manager session")
+      return
+    }
+    if (!(await this.waitForPanelReady(panel))) return
+    if (this.activeSessionId !== sid) return
+    try {
+      await panel.sessions.toggleMemory(sid)
+    } catch (error) {
+      this.host.showError(getErrorMessage(error) || "Failed to toggle memory")
+    }
   }
 
   /** Expose worktree session→directory mappings for the auto-approve toggle. */

@@ -1,10 +1,15 @@
 import * as vscode from "vscode"
+import fs from "node:fs/promises"
+import path from "node:path"
 import { exec } from "../../util/process"
+import { t } from "../i18n"
+import { lines } from "./notice"
 import type { AttentionNotice } from "./service"
 
 type Command = {
   cmd: string
   args: string[]
+  env?: Record<string, string>
 }
 
 const entities: Record<string, string> = {
@@ -32,34 +37,76 @@ function apple(value: string) {
     .replace(/[\r\n]+/g, " ")
 }
 
-function app() {
-  return vscode.env.appName.includes("Insiders") ? "Microsoft.VisualStudioCodeInsiders" : "Microsoft.VisualStudioCode"
-}
-
 function text(notice: AttentionNotice) {
-  return [
-    notice.message,
-    notice.workspace ? `Workspace: ${notice.workspace}` : undefined,
-    notice.session ? `Session: ${notice.session}` : undefined,
-  ]
-    .filter((line): line is string => line !== undefined)
-    .join("\n")
+  return lines(notice).join("\n")
 }
 
-export function notificationCommand(notice: AttentionNotice, platform = process.platform): Command | undefined {
+/**
+ * The AppUserModelID Windows uses to attribute the toast. Reading it from the
+ * running host's `product.json` keeps Cursor, Antigravity, and other forks
+ * working without a hardcoded editor-name mapping.
+ */
+export async function readAppID(root: string): Promise<string | undefined> {
+  const raw = await fs.readFile(path.join(root, "product.json"), "utf8").catch((err) => {
+    console.debug("[Kilo New] could not read product.json for the notification identity", { root, err })
+    return undefined
+  })
+  if (!raw) return undefined
+  const parsed = ((): { win32AppUserModelId?: unknown } | undefined => {
+    try {
+      return JSON.parse(raw)
+    } catch (err) {
+      console.debug("[Kilo New] product.json is not valid JSON", { root, err })
+      return undefined
+    }
+  })()
+  const value = parsed?.win32AppUserModelId
+  // Validate before use: a missing or malformed field must fail safely rather
+  // than attribute the toast to the wrong application.
+  if (typeof value !== "string") return undefined
+  const appid = value.trim()
+  if (!appid || appid.length > 256) return undefined
+  if (/[\u0000-\u001f\u007f]/.test(appid)) return undefined
+  return appid
+}
+
+let cached: Promise<string | undefined> | undefined
+
+/** Cached per session; `appRoot` cannot change while the host is running. */
+export function resolveAppID(platform = process.platform): Promise<string | undefined> {
+  if (platform !== "win32") return Promise.resolve(undefined)
+  cached ??= readAppID(vscode.env.appRoot)
+  return cached
+}
+
+export function notificationCommand(
+  notice: AttentionNotice,
+  platform = process.platform,
+  appid?: string,
+): Command | undefined {
   if (platform === "win32") {
-    const xml = `<toast><visual><binding template="ToastGeneric"><text>${escape(notice.message)}</text>${notice.workspace ? `<text>Workspace: ${escape(notice.workspace)}</text>` : ""}${notice.session ? `<text>Session: ${escape(notice.session)}</text>` : ""}</binding></visual></toast>`
+    // Without a verified identity Windows would either drop the toast or
+    // attribute it to another editor, so decline instead of guessing.
+    if (!appid) return undefined
+    const xml = `<toast><visual><binding template="ToastGeneric"><text>${escape(notice.message)}</text>${notice.workspace ? `<text>${escape(t("kilocode:attention.workspace"))}: ${escape(notice.workspace)}</text>` : ""}${notice.session ? `<text>${escape(t("kilocode:attention.session"))}: ${escape(notice.session)}</text>` : ""}</binding></visual></toast>`
+    // The XML and the identity are passed as environment data and never
+    // interpolated into the script. XML escaping does not neutralize the
+    // Unicode smart quotes (U+2018/U+2019) that PowerShell also accepts as
+    // string delimiters, so a crafted session title could otherwise close the
+    // string literal and run arbitrary commands. -EncodedCommand does not help,
+    // as it encodes the already-composed source.
     const script = [
       "[Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType = WindowsRuntime] > $null",
       "[Windows.Data.Xml.Dom.XmlDocument, Windows.Data.Xml.Dom, ContentType = WindowsRuntime] > $null",
       "$xml = New-Object Windows.Data.Xml.Dom.XmlDocument",
-      `$xml.LoadXml('${xml}')`,
+      "$xml.LoadXml([Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($env:KILO_TOAST_XML)))",
       "$toast = [Windows.UI.Notifications.ToastNotification]::new($xml)",
-      `[Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier('${app()}').Show($toast)`,
+      "[Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($env:KILO_TOAST_APPID).Show($toast)",
     ].join("; ")
     return {
       cmd: "powershell.exe",
       args: ["-NoProfile", "-NonInteractive", "-EncodedCommand", Buffer.from(script, "utf16le").toString("base64")],
+      env: { KILO_TOAST_XML: Buffer.from(xml, "utf8").toString("base64"), KILO_TOAST_APPID: appid },
     }
   }
   if (platform === "darwin") {
@@ -76,30 +123,44 @@ let queued = 0
 const limit = 3
 const timeout = 10_000
 
+function run(command: Command) {
+  // execFile replaces the environment wholesale, so keep the inherited one.
+  return exec(command.cmd, command.args, {
+    timeout,
+    ...(command.env ? { env: { ...process.env, ...command.env } } : {}),
+  })
+}
+
 /** Sends a real native notification and reports whether the underlying command succeeded. */
-export function testOSNotification(platform = process.platform): Promise<{ ok: boolean; error?: string }> {
-  const command = notificationCommand({ message: "This is a test notification from Kilo Code." }, platform)
-  if (!command) return Promise.resolve({ ok: false, error: "OS notifications aren't supported on this platform." })
-  return exec(command.cmd, command.args, { timeout }).then(
+export async function testOSNotification(platform = process.platform): Promise<{ ok: boolean; error?: string }> {
+  const notice = { message: t("kilocode:attention.test") }
+  const appid = await resolveAppID(platform)
+  const command = notificationCommand(notice, platform, appid)
+  if (!command) {
+    const reason = platform === "win32" ? "kilocode:attention.identity" : "kilocode:attention.unsupported"
+    return { ok: false, error: t(reason) }
+  }
+  return run(command).then(
     () => ({ ok: true }),
     (error) => ({ ok: false, error: error instanceof Error ? error.message : String(error) }),
   )
 }
 
 export function showOSNotification(notice: AttentionNotice): void {
-  const command = notificationCommand(notice)
-  if (!command || queued >= limit) return
+  if (queued >= limit) return
   queued += 1
   // Serialized with a small cap so bursts cannot pile up native helper processes.
   chain = chain
-    .then(() =>
-      exec(command.cmd, command.args, { timeout }).then(
+    .then(async () => {
+      const command = notificationCommand(notice, process.platform, await resolveAppID())
+      if (!command) return
+      await run(command).then(
         () => undefined,
         (error) => {
           console.debug("[Kilo New] OS notification failed", { cmd: command.cmd, error })
         },
-      ),
-    )
+      )
+    })
     .finally(() => {
       queued -= 1
     })
