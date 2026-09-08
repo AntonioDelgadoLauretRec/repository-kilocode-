@@ -634,12 +634,14 @@ const AgentManagerContent: Component = () => {
   const isPending = (id: string) => id.startsWith(PENDING_PREFIX)
   reportRemoteSessions(vscode, localSessionIDs, managedSessions, isPending)
 
+  const releaseTabs = () => setTabWidths(false)
   const freezeTabs = () => {
     const bar = document.querySelector(".am-tab-bar")
-    if (bar instanceof HTMLElement && bar.matches(":hover")) setTabWidths(true)
+    if (!(bar instanceof HTMLElement) || !bar.matches(":hover")) return
+    setTabWidths(true)
+    requestAnimationFrame(releaseTabs)
   }
 
-  const releaseTabs = () => setTabWidths(false)
   const worktreeTabOrder = () => registry.active().tabOrder()
   const setWorktreeTabOrder: Setter<Record<string, string[]>> = (v) => registry.active().setTabOrder(v)
 
