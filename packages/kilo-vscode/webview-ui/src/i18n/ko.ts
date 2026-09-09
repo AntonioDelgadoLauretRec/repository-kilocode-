@@ -60,7 +60,7 @@ type Keys = keyof typeof en
 export const dict = {
   "session.goal.complete": "완료 (모델 보고)",
   "session.goal.blocked": "차단됨",
-  "session.goal.restart": "목표 다시 시작 (모델 크레딧 사용)",
+  "session.goal.restart": "목표 다시 시작",
   ...anacondaDesktopDict,
   ...cloudProviderDict,
   "task.swarm.title": "보드",

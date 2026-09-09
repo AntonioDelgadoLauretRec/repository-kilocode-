@@ -56,7 +56,7 @@ export const anacondaDesktopDict = {
 export const dict = {
   "session.goal.complete": "Completato (segnalato dal modello)",
   "session.goal.blocked": "Bloccato",
-  "session.goal.restart": "Riavvia obiettivo (consuma crediti)",
+  "session.goal.restart": "Riavvia obiettivo",
   ...anacondaDesktopDict,
   ...cloudProviderDict,
   "task.swarm.title": "Bacheca",

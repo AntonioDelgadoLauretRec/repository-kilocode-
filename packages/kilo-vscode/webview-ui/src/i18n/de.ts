@@ -62,7 +62,7 @@ export const anacondaDesktopDict = {
 export const dict = {
   "session.goal.complete": "Abgeschlossen (vom Modell gemeldet)",
   "session.goal.blocked": "Blockiert",
-  "session.goal.restart": "Ziel neu starten (verbraucht Modellguthaben)",
+  "session.goal.restart": "Ziel neu starten",
   ...anacondaDesktopDict,
   ...cloudProviderDict,
   "task.swarm.title": "Board",

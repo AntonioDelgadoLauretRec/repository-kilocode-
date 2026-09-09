@@ -59,7 +59,7 @@ export const anacondaDesktopDict = {
 export const dict = {
   "session.goal.complete": "Fullført (rapportert av modellen)",
   "session.goal.blocked": "Blokkert",
-  "session.goal.restart": "Start mål på nytt (bruker modellkreditter)",
+  "session.goal.restart": "Start mål på nytt",
   ...anacondaDesktopDict,
   ...cloudProviderDict,
   "task.swarm.title": "Tavle",

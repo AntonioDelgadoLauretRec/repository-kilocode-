@@ -56,7 +56,7 @@ export const anacondaDesktopDict = {
 export const dict = {
   "session.goal.complete": "Završeno (prema modelu)",
   "session.goal.blocked": "Blokirano",
-  "session.goal.restart": "Ponovo pokreni cilj (troši kredite modela)",
+  "session.goal.restart": "Ponovo pokreni cilj",
   ...anacondaDesktopDict,
   ...cloudProviderDict,
   "task.swarm.title": "Ploča",

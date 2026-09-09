@@ -55,7 +55,7 @@ export const anacondaDesktopDict = {
 export const dict = {
   "session.goal.complete": "เสร็จสมบูรณ์ (โมเดลรายงาน)",
   "session.goal.blocked": "ถูกบล็อก",
-  "session.goal.restart": "เริ่มเป้าหมายใหม่ (ใช้เครดิตโมเดล)",
+  "session.goal.restart": "เริ่มเป้าหมายใหม่",
   ...anacondaDesktopDict,
   ...cloudProviderDict,
   "task.swarm.title": "กระดาน",

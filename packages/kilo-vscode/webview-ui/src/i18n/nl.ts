@@ -56,7 +56,7 @@ export const anacondaDesktopDict = {
 export const dict = {
   "session.goal.complete": "Voltooid (gemeld door het model)",
   "session.goal.blocked": "Geblokkeerd",
-  "session.goal.restart": "Doel opnieuw starten (gebruikt modeltegoed)",
+  "session.goal.restart": "Doel opnieuw starten",
   ...anacondaDesktopDict,
   ...cloudProviderDict,
   "task.swarm.title": "Bord",
