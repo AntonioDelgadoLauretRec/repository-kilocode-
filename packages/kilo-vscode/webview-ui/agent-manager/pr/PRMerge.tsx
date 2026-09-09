@@ -243,7 +243,16 @@ export function PRMerge(props: Props) {
                 }
               >
                 <div class="am-pr-merge-controls">
-                  <Button variant="secondary" size="small" disabled={pending()} onClick={disableAuto}>
+                  <Button
+                    variant="secondary"
+                    size="small"
+                    disabled={pending()}
+                    aria-busy={pending()}
+                    onClick={disableAuto}
+                  >
+                    <Show when={pending()}>
+                      <Spinner class="am-pr-merge-spinner" />
+                    </Show>
                     {t("agentManager.pr.merge.disableAuto")}
                   </Button>
                 </div>
