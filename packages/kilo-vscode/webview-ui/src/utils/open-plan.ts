@@ -36,11 +36,8 @@ export function createPlanOpener(active: () => string | undefined, open: (plan: 
   const id = (plan: PlanOpen) => `${plan.sessionID}:${plan.id}`
   const schedule = (plan: PlanOpen) => {
     const key = id(plan)
-    if (opened.has(key)) {
-      pending.delete(key)
-      return
-    }
     pending.delete(key)
+    if (opened.has(key)) return
     queueMicrotask(() => {
       if (active() !== plan.sessionID) {
         pending.set(key, plan)
