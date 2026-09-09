@@ -312,6 +312,31 @@ const boardReadPart: ToolPart = {
 
 const mockDataBoardRead = createMockData([boardReadPart])
 
+const boardBroadcastPart: ToolPart = {
+  id: "part-board-broadcast-001",
+  sessionID: SESSION_ID,
+  messageID: ASST_MSG_ID,
+  type: "tool",
+  callID: "call-board-broadcast-001",
+  tool: "board_post",
+  state: {
+    status: "completed",
+    input: { to: "ALL", type: "INFO", body: "Broadcast update" },
+    output: JSON.stringify({
+      from: "main",
+      to: "ALL",
+      fromLabel: "Coordinator",
+      type: "INFO",
+      body: "Broadcast update",
+    }),
+    title: "INFO to ALL",
+    metadata: { from: "main", to: "ALL", fromLabel: "Coordinator" },
+    time: { start: now - 3000, end: now - 2500 },
+  },
+}
+
+const mockDataBoardBroadcast = createMockData([boardBroadcastPart])
+
 function AllProviders(props: { children: any; data?: MockData; onOpenDiff?: () => void }) {
   return (
     <DataProvider data={props.data ?? mockData} directory="/project" onOpenDiff={props.onOpenDiff}>
@@ -450,6 +475,16 @@ export const WithBashToolExpanded: Story = {
 export const WithBoardRead: Story = {
   render: () => (
     <AllProviders data={mockDataBoardRead}>
+      <AgentAvatarPalette ids={["worker", "reviewer"]}>
+        <AssistantParts messages={[mockAssistantMessage]} />
+      </AgentAvatarPalette>
+    </AllProviders>
+  ),
+}
+
+export const WithBoardBroadcast: Story = {
+  render: () => (
+    <AllProviders data={mockDataBoardBroadcast}>
       <AgentAvatarPalette ids={["worker", "reviewer"]}>
         <AssistantParts messages={[mockAssistantMessage]} />
       </AgentAvatarPalette>

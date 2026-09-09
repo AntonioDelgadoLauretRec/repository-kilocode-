@@ -29,6 +29,8 @@ const { createSignal } = await import("solid-js")
 const { createStore } = await import("solid-js/store")
 const { render } = await import("solid-js/web")
 const { Part } = await import("@kilocode/kilo-ui/message-part")
+const { AgentAvatarPalette } = await import("@kilocode/kilo-ui/agent-avatar")
+const { BoardRoute } = await import("@kilocode/kilo-ui/board-message")
 const { MarkedProvider, createMarkedParser } = await import("@kilocode/kilo-ui/context/marked")
 
 const labels = ["initial", "hidden", "latest", "reopened", "search", "search-updated"]
@@ -82,6 +84,8 @@ JSON.parse = (text, reviver) => {
 }
 const root = document.createElement("div")
 document.body.append(root)
+const broadcastRoot = document.createElement("div")
+document.body.append(broadcastRoot)
 const dispose = render(
   () => (
     <MarkedProvider
@@ -94,6 +98,14 @@ const dispose = render(
     </MarkedProvider>
   ),
   root,
+)
+const disposeBroadcast = render(
+  () => (
+    <AgentAvatarPalette ids={["worker", "reviewer"]}>
+      <BoardRoute from="main" to="ALL" fromLabel="Coordinator" toLabel="All agents" />
+    </AgentAvatarPalette>
+  ),
+  broadcastRoot,
 )
 const settle = async () => {
   await Promise.resolve()
@@ -122,6 +134,10 @@ const visible = (label: string) => {
 
 try {
   await settle()
+  const recipient = broadcastRoot.querySelector('[data-slot="board-route-recipient-icon"]')
+  assert(recipient)
+  assert.equal(recipient.querySelectorAll('[data-component="board-participant-stack"]').length, 1)
+  assert.equal(recipient.querySelectorAll('[data-component="agent-avatar"]').length, 2)
   for (const index of [0, 1, 2]) {
     if (index) await update(index)
     assert.equal(trigger().getAttribute("aria-expanded"), "false")
@@ -154,6 +170,7 @@ try {
   assert.deepEqual(decoded, outputs)
 } finally {
   dispose()
+  disposeBroadcast()
   JSON.parse = decode
   await window.happyDOM.cancelAsync()
   await window.happyDOM.close()
