@@ -60,6 +60,10 @@ import type {
   ReviewerState,
   PRReviewer,
   PRConversationComment,
+  PRCommitItem,
+  PREventItem,
+  PREventKind,
+  PRTimelineItem,
   PRReaction,
   PRReactionContent,
 } from "../../webview-ui/agent-manager/pr/pr-types"
@@ -75,6 +79,10 @@ export type {
   ReviewerState,
   PRReviewer,
   PRConversationComment,
+  PRCommitItem,
+  PREventItem,
+  PREventKind,
+  PRTimelineItem,
   PRReaction,
   PRReactionContent,
 }
@@ -87,6 +95,8 @@ export interface PRStatus {
   headRefOid?: string
   title: string
   body?: string
+  author?: string
+  createdAt?: string
   url: string
   state: PRState
   review: ReviewDecision | null
@@ -105,7 +115,9 @@ export interface PRStatus {
     unresolved: number
     comments: PRComment[]
   }
-  conversation?: PRConversationComment[]
+  conversation?: PRTimelineItem[]
+  /** Total timeline items on GitHub; larger than `conversation` when truncated. */
+  conversationTotal?: number
   additions: number
   deletions: number
   files: number

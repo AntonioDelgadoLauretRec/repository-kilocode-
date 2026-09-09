@@ -98,3 +98,37 @@ export interface PRConversationComment {
   isBot?: boolean
   reactions?: PRReaction[]
 }
+
+export interface PRCommitItem {
+  kind: "commit"
+  id: string
+  sha: string
+  short: string
+  message: string
+  author: string
+  avatar?: string
+  createdAt?: number
+  url?: string
+}
+
+export type PREventKind = "merged" | "closed" | "reopened" | "force_pushed"
+
+export interface PREventItem {
+  kind: "event"
+  event: PREventKind
+  id: string
+  actor: string
+  avatar?: string
+  createdAt?: number
+  /** merged: target branch. force_pushed: `before to after` short SHAs. */
+  detail?: string
+  url?: string
+}
+
+/** One entry of the PR conversation: a comment, a commit, or a lifecycle event. */
+export type PRTimelineItem = PRConversationComment | PRCommitItem | PREventItem
+
+/** Comments and reviews render as cards; commits and events render as rows. */
+export function isConversationComment(item: PRTimelineItem): item is PRConversationComment {
+  return item.kind !== "commit" && item.kind !== "event"
+}

@@ -65,7 +65,7 @@ import type {
   PRCheck,
   PRComment,
   PRReviewer,
-  PRConversationComment,
+  PRTimelineItem,
 } from "../../../agent-manager/pr/pr-types"
 export type {
   PRState,
@@ -77,6 +77,10 @@ export type {
   PRCommentReply,
   PRReviewer,
   PRConversationComment,
+  PRCommitItem,
+  PREventItem,
+  PREventKind,
+  PRTimelineItem,
   PRReaction,
   PRReactionContent,
 } from "../../../agent-manager/pr/pr-types"
@@ -89,6 +93,8 @@ export interface PRStatus {
   headRefOid?: string
   title: string
   body?: string
+  author?: string
+  createdAt?: string
   url: string
   state: PRState
   review: ReviewDecision | null
@@ -107,7 +113,9 @@ export interface PRStatus {
     unresolved: number
     comments: PRComment[]
   }
-  conversation?: PRConversationComment[]
+  conversation?: PRTimelineItem[]
+  /** Total timeline items on GitHub; larger than `conversation` when truncated. */
+  conversationTotal?: number
   additions: number
   deletions: number
   files: number

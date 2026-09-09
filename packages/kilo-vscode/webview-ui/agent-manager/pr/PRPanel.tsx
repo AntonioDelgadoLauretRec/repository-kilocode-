@@ -8,7 +8,6 @@ import { useLanguage } from "../../src/context/language"
 import { PRBadge } from "./PRBadge"
 import { PROverview } from "./PROverview"
 import { PRReviewers } from "./PRReviewers"
-import { PRDescription } from "./PRDescription"
 import { PRChecks } from "./PRChecks"
 import { PRComments } from "./PRComments"
 import { PRConversation } from "./PRConversation"
@@ -182,7 +181,14 @@ export const PRPanel: Component<PRPanelProps> = (props) => {
   })
 
   const conversation = createMemo<
-    | { project?: string; worktree: string; number: number; url: string; value: NonNullable<PRStatus["conversation"]> }
+    | {
+        project?: string
+        worktree: string
+        number: number
+        url: string
+        value: NonNullable<PRStatus["conversation"]>
+        total?: number
+      }
     | undefined
   >((prev) => {
     const next = props.pr.conversation
@@ -193,6 +199,7 @@ export const PRPanel: Component<PRPanelProps> = (props) => {
         number: props.pr.number,
         url: props.pr.url,
         value: next,
+        total: props.pr.conversationTotal,
       }
     if (
       prev &&
@@ -210,6 +217,13 @@ export const PRPanel: Component<PRPanelProps> = (props) => {
     if (!target || !targetReady(target)) return
     if (target === "comments") patchCommentState(props.worktreeId, () => ({ open: true }))
     later()
+  })
+
+  const created = createMemo(() => {
+    const value = props.pr.createdAt
+    if (!value) return undefined
+    const time = Date.parse(value)
+    return Number.isFinite(time) ? time : undefined
   })
 
   return (
@@ -268,7 +282,6 @@ export const PRPanel: Component<PRPanelProps> = (props) => {
           <Show when={(props.pr.reviewers ?? []).length > 0}>
             <PRReviewers reviewers={props.pr.reviewers ?? []} />
           </Show>
-          <Show when={props.pr.body}>{(body) => <PRDescription body={body()} />}</Show>
           <Show when={props.pr.checks.checks.length > 0}>
             <div ref={checksRef}>
               <PRChecks pr={props.pr} worktreeId={props.worktreeId} activeTerminalId={props.activeTerminalId} />
@@ -293,7 +306,11 @@ export const PRPanel: Component<PRPanelProps> = (props) => {
           </Show>
           <div ref={conversationRef}>
             <PRConversation
-              comments={conversation()?.value ?? []}
+              items={conversation()?.value ?? []}
+              total={conversation()?.total}
+              description={props.pr.body}
+              author={props.pr.author}
+              createdAt={created()}
               prNumber={props.pr.number}
               prUrl={props.pr.url}
               projectId={props.projectId}
