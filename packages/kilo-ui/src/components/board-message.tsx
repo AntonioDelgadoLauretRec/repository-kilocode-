@@ -3,13 +3,12 @@ import { useI18n } from "../context/i18n"
 import { Icon } from "./icon"
 import { AgentAvatar } from "./agent-avatar"
 import { Markdown } from "./markdown"
-import { Spinner } from "./spinner"
 import { Tooltip } from "./tooltip"
 
 // The parent session keeps the plain spinner grid; only subagents get a glyph.
 function Member(props: { id: string }) {
   return (
-    <Show when={props.id !== "main"} fallback={<Spinner class="board-route-parent" />}>
+    <Show when={props.id !== "main"} fallback={<Icon class="board-route-parent" name="task" size="small" />}>
       <AgentAvatar id={props.id} />
     </Show>
   )
