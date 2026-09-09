@@ -423,6 +423,12 @@
   text-decoration: underline;
 }
 
+.am-pr-timeline-link:focus-visible {
+  outline: 1px solid var(--vscode-focusBorder);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
 .am-pr-timeline-children {
   display: flex;
   flex-direction: column;

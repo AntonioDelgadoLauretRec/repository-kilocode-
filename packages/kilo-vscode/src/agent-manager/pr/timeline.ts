@@ -81,15 +81,16 @@ export const TIMELINE_QUERY = `timelineItems(last: 100, itemTypes: [
   REOPENED_EVENT
   HEAD_REF_FORCE_PUSHED_EVENT
 ]) {
-  totalCount
+  pageInfo { hasPreviousPage }
   nodes {
     ${TIMELINE_FIELDS}
   }
 }`
 
-export function parseTimeline(nodes: GhTimelineItem[]): PRTimelineItem[] {
+export function parseTimeline(nodes: Array<GhTimelineItem | null>): PRTimelineItem[] {
   const items: PRTimelineItem[] = []
   for (const node of nodes) {
+    if (!node) continue
     const item = timelineItem(node)
     if (item) items.push(item)
   }

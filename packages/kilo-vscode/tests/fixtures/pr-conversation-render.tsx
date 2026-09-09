@@ -11,7 +11,7 @@ const dispose = mount(() => (
     prNumber={42}
     prUrl="https://github.com/example/repo/pull/42"
     worktreeId="wt-timeline"
-    total={7}
+    hasEarlier
     description="Initial PR body"
     author="marius"
     createdAt={Date.now() - 120_000}

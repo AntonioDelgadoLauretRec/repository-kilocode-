@@ -301,7 +301,7 @@ interface Props {
   prNumber: number
   prUrl: string
   items: PRTimelineItem[]
-  total?: number
+  hasEarlier?: boolean
   description?: string
   author?: string
   createdAt?: number
@@ -384,11 +384,11 @@ export function PRConversation(props: Props) {
               )}
             </Button>
           </Show>
-          <Show when={(props.total ?? 0) > props.items.length}>
-            <PRTimelineRow icon="history" label={t("agentManager.pr.timeline.earlier")} onClick={earlier()} />
-          </Show>
           <Show when={props.description}>
             {(body) => <PRDescription body={body()} author={props.author} createdAt={props.createdAt} />}
+          </Show>
+          <Show when={props.hasEarlier}>
+            <PRTimelineRow icon="history" label={t("agentManager.pr.timeline.earlier")} onClick={earlier()} />
           </Show>
           <div class="am-pr-panel-comment-list am-pr-col">
             <For each={[...index().keys()]}>

@@ -349,7 +349,7 @@ export function mergePRStatus(prev: PRStatus | undefined, next: PRStatus): PRSta
     comments: next.comments ?? current?.comments,
     unresolvedThreads: next.unresolvedThreads ?? next.comments?.unresolved ?? current?.unresolvedThreads,
     conversation: next.conversation ?? prev.conversation,
-    conversationTotal: next.conversationTotal ?? prev.conversationTotal,
+    conversationHasEarlier: next.conversationHasEarlier ?? prev.conversationHasEarlier,
   }
 }
 

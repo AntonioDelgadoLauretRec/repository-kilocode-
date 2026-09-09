@@ -510,7 +510,7 @@ export class PRStatusPoller {
         | "comments"
         | "unresolvedThreads"
         | "conversation"
-        | "conversationTotal"
+        | "conversationHasEarlier"
         | "baseRefOid"
         | "headRefOid"
         | "viewerDidAuthor"
@@ -558,7 +558,7 @@ export class PRStatusPoller {
       let total: number | undefined
       let cursor: string | undefined
       let conversation: PRTimelineItem[] | undefined
-      let conversationTotal: number | undefined
+      let conversationHasEarlier: boolean | undefined
       while (true) {
         const query = `query($owner: String!, $repo: String!, $number: Int!, $cursor: String) {
           repository(owner: $owner, name: $repo) {
@@ -609,7 +609,7 @@ export class PRStatusPoller {
         if (extra) {
           const parsed = parseConversationPayload(stdout)
           conversation = parsed.items
-          conversationTotal = parsed.total
+          conversationHasEarlier = parsed.hasEarlier
           extra = ""
         }
         if (nodes.length > total) throw new Error("Incomplete PR review threads")
@@ -630,7 +630,7 @@ export class PRStatusPoller {
             unresolvedThreads: unresolved,
             comments: { total, unresolved, comments },
             conversation,
-            conversationTotal,
+            conversationHasEarlier,
           }
         }
         cursor = advance(page.pageInfo.endCursor, cursors)
@@ -700,9 +700,11 @@ async function settled<T>(thunks: (() => Promise<T>)[], concurrency: number): Pr
   return results
 }
 
-function parseConversationPayload(stdout: string): { items?: PRTimelineItem[]; total?: number } {
+function parseConversationPayload(stdout: string): { items?: PRTimelineItem[]; hasEarlier: boolean } {
   const page = JSON.parse(stdout)?.data?.repository?.pullRequest?.timelineItems
-  if (!page || !Array.isArray(page.nodes)) return {}
-  const total = typeof page.totalCount === "number" ? page.totalCount : page.nodes.length
-  return { items: parseTimeline(page.nodes as GhTimelineItem[]), total }
+  if (!page || !Array.isArray(page.nodes)) return { hasEarlier: false }
+  return {
+    items: parseTimeline(page.nodes as Array<GhTimelineItem | null>),
+    hasEarlier: page.pageInfo?.hasPreviousPage === true,
+  }
 }

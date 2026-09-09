@@ -202,7 +202,7 @@ export const PRPanel: Component<PRPanelProps> = (props) => {
         number: props.pr.number,
         url: props.pr.url,
         value: next,
-        total: props.pr.conversationTotal,
+        hasEarlier: props.pr.conversationHasEarlier,
       }
     if (
       prev &&
@@ -324,7 +324,7 @@ export const PRPanel: Component<PRPanelProps> = (props) => {
           <div ref={conversationRef}>
             <PRConversation
               items={conversation()?.value ?? []}
-              total={conversation()?.total}
+              hasEarlier={conversation()?.hasEarlier}
               description={props.pr.body}
               author={props.pr.author}
               createdAt={created()}

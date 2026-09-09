@@ -767,6 +767,7 @@ describe("parseTimeline", () => {
 
   it("parses an empty timeline to an empty array", () => {
     expect(parseTimeline([])).toEqual([])
+    expect(parseTimeline([null])).toEqual([])
   })
 
   it("extracts comments and reviews", () => {

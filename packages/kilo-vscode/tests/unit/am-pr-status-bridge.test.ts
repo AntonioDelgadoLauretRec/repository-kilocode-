@@ -373,7 +373,7 @@ describe("PRStatusPoller unresolved threads", () => {
       if (active && !after)
         Object.assign(data.data.repository.pullRequest, {
           timelineItems: {
-            totalCount: 2,
+            pageInfo: { hasPreviousPage: true },
             nodes: [
               {
                 __typename: "IssueComment",
@@ -411,6 +411,7 @@ describe("PRStatusPoller unresolved threads", () => {
       expect(query.includes("body")).toBe(active)
       expect(query.includes("timelineItems(last: 100")).toBe(active && !args.includes("cursor=next"))
       expect(query.includes("PULL_REQUEST_COMMIT")).toBe(active && !args.includes("cursor=next"))
+      expect(query.includes("pageInfo { hasPreviousPage }")).toBe(active && !args.includes("cursor=next"))
       expect(query.includes("viewerDidAuthor viewerCanUpdate viewerCanDelete")).toBe(active)
     }
     if (active) {
@@ -421,6 +422,7 @@ describe("PRStatusPoller unresolved threads", () => {
         { id: "conversation", body: "General comment" },
         { id: "review", body: "Review summary", state: "changes_requested" },
       ])
+      expect(status?.conversationHasEarlier).toBe(true)
     }
     if (!active) {
       expect(status?.comments).toBeUndefined()

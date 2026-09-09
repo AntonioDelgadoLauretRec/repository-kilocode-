@@ -113,8 +113,8 @@ export interface PRStatus {
     comments: PRComment[]
   }
   conversation?: PRTimelineItem[]
-  /** Total timeline items on GitHub; larger than `conversation` when truncated. */
-  conversationTotal?: number
+  /** Whether GitHub has timeline items before the loaded window. */
+  conversationHasEarlier?: boolean
   additions: number
   deletions: number
   files: number
