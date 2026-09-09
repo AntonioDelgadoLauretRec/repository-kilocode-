@@ -32,33 +32,6 @@
     display: inline-flex;
   }
 
-  [data-slot="board-route-avatar"][data-clickable="true"] {
-    display: inline-flex;
-    flex: 0 0 18px;
-    width: 18px;
-    height: 18px;
-    align-items: center;
-    justify-content: center;
-    border-radius: 3px;
-    cursor: pointer;
-    transition:
-      box-shadow 120ms ease,
-      filter 120ms ease;
-
-    &:hover {
-      box-shadow:
-        0 0 0 1px color-mix(in srgb, var(--icon-interactive-base) 60%, transparent),
-        0 0 8px color-mix(in srgb, var(--icon-interactive-base) 45%, transparent);
-      filter: brightness(1.12);
-    }
-
-    &:focus-visible {
-      outline: 1px solid var(--border-focus, var(--vscode-focusBorder, #007fd4));
-      outline-offset: 2px;
-      box-shadow: 0 0 8px color-mix(in srgb, var(--icon-interactive-base) 45%, transparent);
-    }
-  }
-
   /* Parent session marker: the spinner grid, static, in the avatar slot size. */
   .board-route-parent {
     width: 18px;
@@ -67,6 +40,33 @@
     > rect {
       animation: none !important;
     }
+  }
+}
+
+/* Clickable avatars appear both inside a route and as a tool-header stack, so
+   these rules stay outside the route block. */
+[data-slot="board-route-avatar"][data-clickable="true"] {
+  display: inline-flex;
+  flex: 0 0 18px;
+  width: 18px;
+  height: 18px;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+
+  /* The avatar owns its hue, so the glow takes that agent's color. */
+  [data-component="agent-avatar"] {
+    transition: filter 120ms ease;
+  }
+
+  &:hover [data-component="agent-avatar"] {
+    filter: drop-shadow(0 0 3px currentColor);
+  }
+
+  &:focus-visible {
+    border-radius: 3px;
+    outline: 1px solid var(--border-focus, var(--vscode-focusBorder, #007fd4));
+    outline-offset: 1px;
   }
 }
 
