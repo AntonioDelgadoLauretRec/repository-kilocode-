@@ -8,8 +8,7 @@ import { Tooltip } from "./tooltip"
 
 // The parent session keeps the plain spinner grid; only subagents get a glyph.
 function Member(props: { id: string; label?: string; onSessionClick?: BoardSessionNavigation }) {
-  const navigation = useBoardNavigation()
-  const open = () => props.onSessionClick ?? navigation
+  const open = () => props.onSessionClick
   const clickable = () => props.id !== "main" && !!open()
   const label = () => props.label || props.id
   const activate = () => open()?.(props.id, props.label)
@@ -48,8 +47,7 @@ function Member(props: { id: string; label?: string; onSessionClick?: BoardSessi
 }
 
 export function BoardParticipantStack(props: { ids: string[]; onSessionClick?: BoardSessionNavigation }) {
-  const navigation = useBoardNavigation()
-  const open = () => props.onSessionClick ?? navigation
+  const open = () => props.onSessionClick
   return (
     <span data-component="board-participant-stack" aria-hidden={open() ? undefined : "true"}>
       <Show when={props.ids.length > 0} fallback={<Icon name="task" size="small" />}>
@@ -70,8 +68,7 @@ type Route = {
 export function BoardRoute(props: Route) {
   const i18n = useI18n()
   const ids = useAgentAvatarIds()
-  const navigation = useBoardNavigation()
-  const open = () => props.onSessionClick ?? navigation
+  const open = () => props.onSessionClick
   const text = (value: unknown) => (typeof value === "string" ? value : "")
   const from = () => text(props.from)
   const to = () => text(props.to)
@@ -140,10 +137,13 @@ export function BoardRoute(props: Route) {
 }
 
 export function BoardMessage(props: Route & { body: string; route?: boolean }) {
+  const navigation = useBoardNavigation()
+  const open = () => props.onSessionClick ?? navigation
+
   return (
     <div data-slot="board-message">
       <Show when={props.route !== false}>
-        <BoardRoute {...props} />
+        <BoardRoute {...props} onSessionClick={open()} />
       </Show>
       <div data-slot="board-message-body">
         <Markdown text={props.body} />

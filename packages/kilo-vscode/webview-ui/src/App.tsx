@@ -1,6 +1,6 @@
 import { Component, createSignal, createMemo, createEffect, Switch, Match, Show, onMount, onCleanup } from "solid-js"
 import { DataProvider } from "@kilocode/kilo-ui/context/data"
-import { BoardNavigationProvider } from "../../../kilo-ui/src/context/board-navigation"
+import { BoardNavigationProvider } from "@kilocode/kilo-ui/context/board-navigation"
 import Settings from "./components/settings/Settings"
 import ProfileView from "./components/profile/ProfileView"
 import { useVSCode } from "./context/vscode"

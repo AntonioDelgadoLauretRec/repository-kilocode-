@@ -30,8 +30,8 @@ const { createStore } = await import("solid-js/store")
 const { render } = await import("solid-js/web")
 const { Part } = await import("@kilocode/kilo-ui/message-part")
 const { AgentAvatarPalette } = await import("@kilocode/kilo-ui/agent-avatar")
-const { BoardRoute } = await import("@kilocode/kilo-ui/board-message")
-const { BoardNavigationProvider } = await import("../../../kilo-ui/src/context/board-navigation")
+const { BoardMessage, BoardRoute } = await import("@kilocode/kilo-ui/board-message")
+const { BoardNavigationProvider } = await import("@kilocode/kilo-ui/context/board-navigation")
 const { MarkedProvider, createMarkedParser } = await import("@kilocode/kilo-ui/context/marked")
 
 const labels = ["initial", "hidden", "latest", "reopened", "search", "search-updated"]
@@ -94,14 +94,16 @@ document.body.append(directRoot)
 const opened: Array<{ id: string; title?: string }> = []
 const dispose = render(
   () => (
-    <MarkedProvider
-      nativeParser={async (text) => {
-        parsed.push(text)
-        return parser.parse(text)
-      }}
-    >
-      <Part part={part} message={message} forceOpen={search()} />
-    </MarkedProvider>
+    <BoardNavigationProvider open={() => {}}>
+      <MarkedProvider
+        nativeParser={async (text) => {
+          parsed.push(text)
+          return parser.parse(text)
+        }}
+      >
+        <Part part={part} message={message} forceOpen={search()} />
+      </MarkedProvider>
+    </BoardNavigationProvider>
   ),
   root,
 )
@@ -123,9 +125,15 @@ const disposeWorkerBroadcast = render(
 )
 const disposeDirect = render(
   () => (
-    <BoardNavigationProvider open={(id, title) => opened.push({ id, title })}>
-      <BoardRoute from="main" to="worker" fromLabel="Coordinator" toLabel="Worker" />
-    </BoardNavigationProvider>
+    <MarkedProvider
+      nativeParser={async (text) => {
+        return parser.parse(text)
+      }}
+    >
+      <BoardNavigationProvider open={(id, title) => opened.push({ id, title })}>
+        <BoardMessage from="main" to="worker" fromLabel="Coordinator" toLabel="Worker" body="body" />
+      </BoardNavigationProvider>
+    </MarkedProvider>
   ),
   directRoot,
 )
@@ -164,6 +172,7 @@ try {
   assert(workerRecipient)
   assert.equal(workerRecipient.querySelectorAll('[data-component="board-participant-stack"]').length, 0)
   assert.equal(workerRecipient.querySelectorAll('[data-component="icon"]').length, 2)
+  assert.equal(root.querySelector('[data-component="board-participant-stack"] [data-slot="board-route-avatar"]'), null)
   const avatar = directRoot.querySelector<HTMLElement>('[data-slot="board-route-avatar"]')
   assert(avatar)
   assert.equal(avatar.getAttribute("role"), "button")
