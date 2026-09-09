@@ -7,7 +7,13 @@ import { Markdown } from "./markdown"
 import { Tooltip } from "./tooltip"
 
 // The parent session keeps the plain spinner grid; only subagents get a glyph.
-function Member(props: { id: string; label?: string; onSessionClick?: BoardSessionNavigation; semantic?: boolean }) {
+function Member(props: {
+  id: string
+  label?: string
+  onSessionClick?: BoardSessionNavigation
+  semantic?: boolean
+  active?: boolean
+}) {
   const open = () => props.onSessionClick
   const semantic = () => props.semantic !== false
   const clickable = () => props.id !== "main" && !!open()
@@ -29,7 +35,7 @@ function Member(props: { id: string; label?: string; onSessionClick?: BoardSessi
 
   return (
     <Show when={props.id !== "main"} fallback={<Icon class="board-route-parent" name="task" size="small" />}>
-      <Show when={clickable()} fallback={<AgentAvatar id={props.id} />}>
+      <Show when={clickable()} fallback={<AgentAvatar id={props.id} status={props.active ? "running" : undefined} />}>
         <span
           data-slot="board-route-avatar"
           data-clickable="true"
@@ -40,7 +46,7 @@ function Member(props: { id: string; label?: string; onSessionClick?: BoardSessi
           onClick={click}
           onKeyDown={semantic() ? key : undefined}
         >
-          <AgentAvatar id={props.id} />
+          <AgentAvatar id={props.id} status={props.active ? "running" : undefined} />
         </span>
       </Show>
     </Show>
@@ -72,7 +78,8 @@ type Route = {
   semantic?: boolean
 }
 
-export function BoardRoute(props: Route) {
+/** `pending` animates the route while the post is still being written or stored. */
+export function BoardRoute(props: Route & { pending?: boolean }) {
   const i18n = useI18n()
   const ids = useAgentAvatarIds()
   const open = () => props.onSessionClick
@@ -105,10 +112,11 @@ export function BoardRoute(props: Route) {
     <span
       data-component="board-route"
       data-broadcast={to() === "ALL"}
+      data-pending={props.pending ? "true" : undefined}
       role="group"
       aria-label={i18n.t("ui.messagePart.board.route", { from: sender(), to: recipient() })}
     >
-      <Member id={from()} label={sender()} onSessionClick={open()} semantic={props.semantic} />
+      <Member id={from()} label={sender()} onSessionClick={open()} semantic={props.semantic} active={props.pending} />
       <Tooltip
         class="board-route-member board-route-sender"
         contentClass="board-route-tooltip"
@@ -116,11 +124,21 @@ export function BoardRoute(props: Route) {
       >
         {sender()}
       </Tooltip>
-      <Icon name="arrow-right" size="small" />
+      <span data-slot="board-route-arrow">
+        <Icon name="arrow-right" size="small" />
+      </span>
       <span data-slot="board-route-recipient-icon" data-broadcast={to() === "ALL"}>
         <Show
           when={to() === "ALL"}
-          fallback={<Member id={to()} label={recipient()} onSessionClick={open()} semantic={props.semantic} />}
+          fallback={
+            <Member
+              id={to()}
+              label={recipient()}
+              onSessionClick={open()}
+              semantic={props.semantic}
+              active={props.pending && !to()}
+            />
+          }
         >
           <Show
             when={broadcast().length > 0}

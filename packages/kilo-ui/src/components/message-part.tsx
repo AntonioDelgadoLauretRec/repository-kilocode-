@@ -38,6 +38,7 @@ import { useClipboard } from "../context/clipboard"
 import { type UiI18n, useI18n } from "../context/i18n"
 import { BasicTool, useToolApprovalLine } from "./basic-tool"
 import { BoardMessage, BoardParticipantStack, BoardRoute } from "./board-message"
+import { preview } from "./board-route"
 import { AgentAvatar, taskStatus } from "./agent-avatar"
 import { Accordion } from "./accordion"
 import { StickyAccordionHeader } from "./sticky-accordion-header"
@@ -1096,6 +1097,7 @@ export interface ToolProps {
   tool: string
   partID?: string
   callID?: string
+  sessionID?: string
   output?: string
   status?: string
   attachments?: FilePart[]
@@ -1199,6 +1201,15 @@ function McpTool(props: ToolProps) {
     )
     return items.length === rows.length ? items : undefined
   })
+  // The stored route only arrives with the result. While the model still
+  // streams the post, derive the sender and recipient from the session store
+  // so the trigger shows the real avatars and titles from the first frame.
+  const data = props.tool === "board_post" ? useData() : undefined
+  const live = () => props.status === "pending" || props.status === "running"
+  const guess = createMemo(() => {
+    if (!data || !live() || !props.sessionID) return undefined
+    return preview(data.store.session, props.sessionID, props.input.to)
+  })
   const participants = createMemo(() => {
     const seen = new Set<string>()
     const ids: string[] = []
@@ -1220,10 +1231,11 @@ function McpTool(props: ToolProps) {
     if (props.tool === "board_post")
       return (
         <BoardRoute
-          from={props.metadata.from ?? result()?.from}
-          to={props.metadata.to ?? result()?.to ?? props.input.to}
-          fromLabel={props.metadata.fromLabel ?? result()?.fromLabel}
-          toLabel={props.metadata.toLabel ?? result()?.toLabel}
+          from={props.metadata.from ?? result()?.from ?? guess()?.from}
+          to={props.metadata.to ?? result()?.to ?? guess()?.to ?? props.input.to}
+          fromLabel={props.metadata.fromLabel ?? result()?.fromLabel ?? guess()?.fromLabel}
+          toLabel={props.metadata.toLabel ?? result()?.toLabel ?? guess()?.toLabel}
+          pending={live()}
           onSessionClick={navigate}
           semantic={false}
         />
@@ -1463,6 +1475,7 @@ PART_MAPPING["tool"] = function ToolPartDisplay(props) {
                 tool={part.tool}
                 partID={part.id}
                 callID={part.callID}
+                sessionID={part.sessionID}
                 metadata={meta()}
                 partMetadata={top()}
                 // @ts-expect-error
