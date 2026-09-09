@@ -23,6 +23,7 @@ import {
 } from "./provider-lifecycle"
 import { normalizeBaseBranch } from "./base-branch"
 import { handleBaseUpdate } from "./base-update"
+import { pushFixes } from "../kilo-provider/push-fixes-settings"
 import { GitStatsPoller, type LocalStats, type WorktreePresenceResult, type WorktreeStats } from "./GitStatsPoller"
 import { createPollers, type ProjectPollers } from "./project/pollers"
 import { GitOps } from "./GitOps"
@@ -352,7 +353,6 @@ export class AgentManagerProvider implements Disposable {
     }
     this.log("Opening Agent Manager panel")
     this.host.capture("Agent Manager Opened", { source: PLATFORM })
-
     const panel = this.host.openPanel({
       onBeforeMessage: (msg) => this.onMessage(msg),
       worktreeDirectories: () => this.getWorktreeDirectories(),
@@ -516,7 +516,7 @@ export class AgentManagerProvider implements Disposable {
       }
     }
     this.onBranchPrompt(m)
-    if (m.type === "agentManager.updateFromBase") return handleBaseUpdate(m, ctx, this.lifecycleHost)
+    if (m.type === "agentManager.updateFromBase") return handleBaseUpdate(m, ctx, this.lifecycleHost, pushFixes())
 
     const worktree = await this.onWorktreeMessage(m)
     if (worktree !== undefined) return worktree
@@ -1846,7 +1846,6 @@ export class AgentManagerProvider implements Disposable {
       (...args) => this.log(...args),
     )
   }
-
   public postMessage(message: unknown): void {
     this.panel?.postMessage(message)
   }
@@ -1867,7 +1866,6 @@ export class AgentManagerProvider implements Disposable {
     }
     this.pushState()
   }
-
   private async disposeAsync(): Promise<void> {
     await this.stateReady?.catch((err) => this.log("dispose: stateReady rejected:", err))
     await this.contexts.dispose()

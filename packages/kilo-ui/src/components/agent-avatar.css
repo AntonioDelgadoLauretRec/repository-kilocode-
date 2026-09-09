@@ -69,6 +69,23 @@
   }
 }
 
+[data-component="board-participant-stack"] {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  width: max-content;
+  height: 18px;
+  overflow: visible;
+  gap: 3px;
+
+  > * {
+    position: relative;
+    flex: 0 0 18px;
+    width: 18px;
+    height: 18px;
+  }
+}
+
 @keyframes agent-avatar-pulse {
   0%,
   100% {

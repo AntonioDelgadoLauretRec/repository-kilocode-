@@ -67,6 +67,21 @@
   flex-shrink: 0;
 }
 
+/* Separates the fix-mode toggle from the panel navigation actions. */
+.am-pr-panel-actions-sep {
+  width: 1px;
+  align-self: stretch;
+  margin: 2px 4px;
+  background: var(--vscode-panel-border);
+}
+
+/* Fix mode is on: the VS Code toggled-control look, distinct from ghost hover. */
+.am-pr-panel-actions [data-active="true"] {
+  background: var(--vscode-inputOption-activeBackground, color-mix(in srgb, var(--vscode-foreground) 14%, transparent));
+  color: var(--vscode-inputOption-activeForeground, var(--vscode-foreground));
+  box-shadow: inset 0 0 0 1px var(--vscode-inputOption-activeBorder, transparent);
+}
+
 .am-pr-panel-body-wrap {
   flex: 1;
   position: relative;
@@ -342,6 +357,84 @@
   font-size: var(--kilo-font-size-10);
   color: var(--text-weaker);
   flex-shrink: 0;
+}
+
+/* Conversation timeline rows: commits and lifecycle events */
+.am-pr-timeline-row {
+  width: 100%;
+  gap: 6px;
+  padding: 3px 8px;
+  min-height: 24px;
+  min-width: 0;
+  background: none;
+  border: none;
+  border-radius: 4px;
+  text-align: left;
+}
+
+.am-pr-timeline-toggle {
+  cursor: pointer;
+}
+
+.am-pr-timeline-toggle:hover {
+  background: var(--vscode-list-hoverBackground);
+}
+
+.am-pr-timeline-toggle:focus-visible {
+  outline: 1px solid var(--vscode-focusBorder);
+  outline-offset: -1px;
+}
+
+.am-pr-timeline-icon {
+  flex-shrink: 0;
+  opacity: 0.8;
+}
+
+.am-pr-timeline-chevron {
+  flex-shrink: 0;
+  opacity: 0.6;
+}
+
+.am-pr-timeline-label {
+  flex: 1;
+  font-size: var(--kilo-font-size-12);
+  color: var(--text-weak);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.am-pr-timeline-sha {
+  font-family: var(--font-mono, monospace);
+  font-size: var(--kilo-font-size-11);
+  color: var(--vscode-textLink-foreground, #3794ff);
+  flex-shrink: 0;
+}
+
+.am-pr-timeline-link {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.am-pr-timeline-link:hover {
+  text-decoration: underline;
+}
+
+.am-pr-timeline-link:focus-visible {
+  outline: 1px solid var(--vscode-focusBorder);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+.am-pr-timeline-children {
+  display: flex;
+  flex-direction: column;
+  margin-left: 16px;
+  border-left: 1px solid var(--vscode-panel-border);
+  padding-left: 4px;
 }
 
 .am-pr-comment-body {
@@ -675,9 +768,13 @@
 }
 
 .am-pr-panel-reviewer {
-  gap: 6px;
+  gap: 8px;
   padding: 3px 0;
   font-size: var(--kilo-font-size-12);
+}
+
+.am-pr-panel-reviewer [data-component="avatar"] {
+  border-radius: 50%;
 }
 
 .am-pr-reviewer-icon {
@@ -688,7 +785,7 @@
   color: var(--vscode-testing-iconPassed, #34d399);
 }
 .am-pr-panel-reviewer[data-state="changes_requested"] .am-pr-reviewer-icon {
-  color: var(--vscode-charts-yellow, #fbbf24);
+  color: var(--vscode-testing-iconFailed, #f87171);
 }
 .am-pr-panel-reviewer[data-state="commented"] .am-pr-reviewer-icon {
   color: var(--text-weak);
@@ -700,11 +797,14 @@
 .am-pr-reviewer-login {
   flex: 1;
   color: var(--vscode-foreground);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .am-pr-reviewer-state {
-  color: var(--text-weak);
   flex-shrink: 0;
+  color: var(--text-weak);
 }
 
 .am-pr-panel-checks {

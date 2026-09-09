@@ -6,11 +6,13 @@ import { Spinner } from "@kilocode/kilo-ui/spinner"
 import { IconButton } from "@kilocode/kilo-ui/icon-button"
 import { Tooltip } from "@kilocode/kilo-ui/tooltip"
 import type { PRStatus } from "../../src/types/messages"
+import { useConfig } from "../../src/context/config"
 import { useLanguage } from "../../src/context/language"
 import { sendReviewComments } from "../../diff-viewer/review-annotations"
 import { checkFeedback } from "./pr-check-feedback"
 import { SEND_LIMIT } from "./pr-comment-payload"
 import { commentState } from "./pr-comment-state"
+import { isConversationComment } from "./pr-types"
 import { type JumpTarget, actionableConversation, sendConversation, sendThreads, unsentThreads } from "./pr-actions"
 
 interface PRSummaryProps {
@@ -37,6 +39,7 @@ const JUMP_KEY: Record<JumpTarget, string> = {
 
 export function PRSummary(props: PRSummaryProps) {
   const { t } = useLanguage()
+  const { settings } = useConfig()
   const state = () => commentState(props.worktreeId)
   const statusIcon = (status: string) =>
     status === "success" ? "circle-check" : status === "failure" ? "circle-x-outline" : undefined
@@ -46,7 +49,11 @@ export function PRSummary(props: PRSummaryProps) {
     if (pr.checks.total === 0) return
     const terminal = props.activeTerminalId
     const status = pr.checks.status
-    const feedback = checkFeedback(pr, t("agentManager.pr.checks.feedback"))
+    const feedback = checkFeedback(
+      pr,
+      t("agentManager.pr.checks.feedback"),
+      !terminal && settings()["agentManager.pushFixes"] !== false,
+    )
     return {
       icon: statusIcon(status),
       label:
@@ -110,7 +117,8 @@ export function PRSummary(props: PRSummaryProps) {
   }
 
   const conversation = (): Row | undefined => {
-    const value = props.pr.conversation ?? []
+    // Commits and lifecycle events are history, not feedback the agent can fix.
+    const value = (props.pr.conversation ?? []).filter(isConversationComment)
     if (value.length === 0) return
     const terminal = props.activeTerminalId
     const ids = actionableConversation(value, state())

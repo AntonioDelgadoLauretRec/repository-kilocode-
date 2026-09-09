@@ -17,6 +17,7 @@ import { messageTurns } from "../context/session-queue"
 import { transcriptRows } from "../context/transcript-rows"
 import { ChatView } from "../components/chat/ChatView"
 import { Part } from "@kilocode/kilo-ui/message-part"
+import { AgentAvatarPalette } from "@kilocode/kilo-ui/agent-avatar"
 import { registerVscodeToolOverrides } from "../components/chat/VscodeToolOverrides"
 import { SessionContext } from "../context/session"
 import { ServerContext } from "../context/server"
@@ -1396,7 +1397,9 @@ export const AgentMessages: Story = {
     const parts = board()
     return (
       <StoryProviders data={dataWith(parts)} sessionID={SESSION_ID}>
-        <For each={parts}>{(part) => <Part part={part} message={baseAssistantMessage} defaultOpen />}</For>
+        <AgentAvatarPalette ids={["ses_serializer", "ses_parser"]}>
+          <For each={parts}>{(part) => <Part part={part} message={baseAssistantMessage} defaultOpen />}</For>
+        </AgentAvatarPalette>
       </StoryProviders>
     )
   },
