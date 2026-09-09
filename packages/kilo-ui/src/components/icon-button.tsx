@@ -31,6 +31,7 @@ export function IconButton(props: ComponentProps<"button"> & IconButtonProps) {
   const label = () => props["aria-label"] ?? split.label ?? props.icon
   const busy = () => split.loading === true
   const disabled = () => props.disabled === true || busy()
+  const aria = () => (disabled() ? "true" : (props["aria-disabled"] ?? "false"))
   return (
     <Kobalte
       {...rest}
@@ -45,6 +46,7 @@ export function IconButton(props: ComponentProps<"button"> & IconButtonProps) {
       type={props.type ?? "button"}
       aria-label={label()}
       aria-busy={busy() || props["aria-busy"]}
+      aria-disabled={aria()}
       disabled={disabled()}
       classList={{
         ...split.classList,
