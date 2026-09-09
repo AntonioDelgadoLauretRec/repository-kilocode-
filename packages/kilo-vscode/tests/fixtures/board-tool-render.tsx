@@ -29,6 +29,8 @@ const { createSignal } = await import("solid-js")
 const { createStore } = await import("solid-js/store")
 const { render } = await import("solid-js/web")
 const { Part } = await import("@kilocode/kilo-ui/message-part")
+const { AgentAvatarPalette } = await import("@kilocode/kilo-ui/agent-avatar")
+const { BoardRoute } = await import("@kilocode/kilo-ui/board-message")
 const { MarkedProvider, createMarkedParser } = await import("@kilocode/kilo-ui/context/marked")
 
 const labels = ["initial", "hidden", "latest", "reopened", "search", "search-updated"]
@@ -36,6 +38,7 @@ const outputs = labels.map((label) =>
   JSON.stringify({
     messages: [
       { from: "worker", to: "main", fromLabel: `Worker ${label}`, toLabel: "Coordinator", body: `**${label}** body` },
+      { from: "reviewer", to: "worker", fromLabel: "Reviewer", toLabel: `Worker ${label}`, body: "Secondary body" },
     ],
     hasMore: false,
   }),
@@ -81,6 +84,10 @@ JSON.parse = (text, reviver) => {
 }
 const root = document.createElement("div")
 document.body.append(root)
+const broadcastRoot = document.createElement("div")
+document.body.append(broadcastRoot)
+const workerBroadcastRoot = document.createElement("div")
+document.body.append(workerBroadcastRoot)
 const dispose = render(
   () => (
     <MarkedProvider
@@ -93,6 +100,22 @@ const dispose = render(
     </MarkedProvider>
   ),
   root,
+)
+const disposeBroadcast = render(
+  () => (
+    <AgentAvatarPalette ids={["worker", "reviewer"]}>
+      <BoardRoute from="main" to="ALL" fromLabel="Coordinator" toLabel="All agents" />
+    </AgentAvatarPalette>
+  ),
+  broadcastRoot,
+)
+const disposeWorkerBroadcast = render(
+  () => (
+    <AgentAvatarPalette ids={["worker"]}>
+      <BoardRoute from="worker" to="ALL" fromLabel="Worker" toLabel="All agents" />
+    </AgentAvatarPalette>
+  ),
+  workerBroadcastRoot,
 )
 const settle = async () => {
   await Promise.resolve()
@@ -109,6 +132,10 @@ const update = async (index: number) => {
 }
 const visible = (label: string) => {
   assert.equal(trigger().getAttribute("aria-expanded"), "true")
+  const stack = root.querySelector('[data-component="board-participant-stack"]')
+  assert(stack)
+  assert.equal(stack.querySelectorAll('[data-component="icon"]').length, 1)
+  assert.equal(stack.querySelectorAll('[data-component="agent-avatar"]').length, 2)
   assert.equal(root.querySelector('[data-slot="board-message-body"] strong')?.textContent, label)
   assert.equal(root.querySelector(".board-route-sender")?.textContent, `Worker ${label}`)
   assert.equal(root.querySelector(".board-route-recipient")?.textContent, "Coordinator")
@@ -117,6 +144,14 @@ const visible = (label: string) => {
 
 try {
   await settle()
+  const recipient = broadcastRoot.querySelector('[data-slot="board-route-recipient-icon"]')
+  assert(recipient)
+  assert.equal(recipient.querySelectorAll('[data-component="board-participant-stack"]').length, 1)
+  assert.equal(recipient.querySelectorAll('[data-component="agent-avatar"]').length, 2)
+  const workerRecipient = workerBroadcastRoot.querySelector('[data-slot="board-route-recipient-icon"]')
+  assert(workerRecipient)
+  assert.equal(workerRecipient.querySelectorAll('[data-component="board-participant-stack"]').length, 0)
+  assert.equal(workerRecipient.querySelectorAll('[data-component="icon"]').length, 2)
   for (const index of [0, 1, 2]) {
     if (index) await update(index)
     assert.equal(trigger().getAttribute("aria-expanded"), "false")
@@ -129,7 +164,7 @@ try {
   trigger().click()
   await settle()
   visible("latest")
-  assert.deepEqual(parsed, ["**latest** body"])
+  assert.deepEqual(parsed, ["**latest** body", "Secondary body"])
 
   trigger().click()
   await settle()
@@ -149,6 +184,8 @@ try {
   assert.deepEqual(decoded, outputs)
 } finally {
   dispose()
+  disposeBroadcast()
+  disposeWorkerBroadcast()
   JSON.parse = decode
   await window.happyDOM.cancelAsync()
   await window.happyDOM.close()
