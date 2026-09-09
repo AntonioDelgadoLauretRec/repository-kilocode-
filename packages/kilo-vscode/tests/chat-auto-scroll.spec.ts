@@ -33,7 +33,7 @@ async function open(page: Page) {
 
   await list.hover()
   await page.mouse.wheel(0, -2 * (await list.evaluate((el) => el.clientHeight)))
-  const bottom = page.getByRole("button", { name: "Scroll to bottom" })
+  const bottom = page.locator(".scroll-to-bottom-button")
   await expect(bottom).toBeVisible()
   await settle(page, 10)
   await bottom.click()
