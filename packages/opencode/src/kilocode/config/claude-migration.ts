@@ -11,6 +11,7 @@ import { ConfigParse } from "@/config/parse"
 import { ConfigMarkdown } from "@/config/markdown"
 import { KilocodeConfig } from "./config"
 import { BUILTIN_SKILLS } from "../skills/builtin"
+import { SkillInject } from "../skills/inject"
 
 export namespace ClaudeMigration {
   export const VERSION = 1
@@ -777,7 +778,12 @@ export namespace ClaudeMigration {
   }
 
   function unsafeMarkdown(text: string) {
-    return active(text, /\{(?:env|file):[^}]+\}/g) || text.includes("\0")
+    return (
+      dynamicFiles(text) ||
+      SkillInject.hasLiveShell(text) ||
+      active(text, /\{(?:env|file):[^}]+\}/g) ||
+      text.includes("\0")
+    )
   }
 
   function unsafeSkillMarkdown(text: string) {
@@ -795,6 +801,14 @@ export namespace ClaudeMigration {
   function commented(text: string, index: number) {
     const start = text.lastIndexOf("\n", index - 1) + 1
     return text.slice(start, index).trimStart().startsWith("//")
+  }
+
+  function dynamicFiles(text: string) {
+    return ConfigMarkdown.files(text).some((match) => !packageReference(match[0]))
+  }
+
+  function packageReference(value: string) {
+    return /^@[A-Za-z0-9][A-Za-z0-9._-]*\/[A-Za-z0-9][A-Za-z0-9_-]*(?:\/[A-Za-z0-9][A-Za-z0-9_-]*)*$/.test(value)
   }
 
   function keys(value: RecordValue, allowed: string[]) {

@@ -190,6 +190,9 @@ describe("Claude global configuration migration", () => {
     await fs.mkdir(path.join(home, ".claude", "skills", "metadata"), { recursive: true })
     await fs.mkdir(path.join(home, ".claude", "skills", "dynamic"), { recursive: true })
     await fs.mkdir(path.join(home, ".claude", "skills", "bundle"), { recursive: true })
+    await fs.mkdir(path.join(home, ".claude", "skills", "file-reference"), { recursive: true })
+    await fs.mkdir(path.join(home, ".claude", "skills", "shell"), { recursive: true })
+    await fs.mkdir(path.join(home, ".claude", "skills", "shell-docs"), { recursive: true })
     await fs.mkdir(config, { recursive: true })
     await fs.writeFile(
       path.join(home, ".claude", "skills", "metadata", "SKILL.md"),
@@ -198,6 +201,9 @@ describe("Claude global configuration migration", () => {
     await fs.writeFile(path.join(home, ".claude", "skills", "dynamic", "SKILL.md"), "Use $ARGUMENTS[0].\n")
     await fs.writeFile(path.join(home, ".claude", "skills", "bundle", "SKILL.md"), "Body\n")
     await fs.writeFile(path.join(home, ".claude", "skills", "bundle", "helper.txt"), "Helper\n")
+    await fs.writeFile(path.join(home, ".claude", "skills", "file-reference", "SKILL.md"), "Use @src/index.ts.\n")
+    await fs.writeFile(path.join(home, ".claude", "skills", "shell", "SKILL.md"), "Run !`printf hi`.\n")
+    await fs.writeFile(path.join(home, ".claude", "skills", "shell-docs", "SKILL.md"), "```sh\n!`printf hi`\n```\n")
 
     const previous = Global.Path.config
     ;(Global.Path as { config: string }).config = config
@@ -208,10 +214,15 @@ describe("Claude global configuration migration", () => {
       expect(await fs.readFile(path.join(config, "skills", "metadata", "SKILL.md"), "utf8")).toBe(
         '---\nname: "metadata"\ndescription: "Review: changed files"\nlicense: "MIT"\ncompatibility: "node"\nmetadata: {"owner":"team"}\n---\nUse @acme/ui components.\n// {env:EXAMPLE}\n',
       )
+      expect(await fs.readFile(path.join(config, "skills", "shell-docs", "SKILL.md"), "utf8")).toBe(
+        '---\nname: "shell-docs"\n---\n```sh\n!`printf hi`\n```\n',
+      )
       expect(result.receipt.items).toEqual(
         expect.arrayContaining([
           expect.objectContaining({ name: "dynamic", reason: "unsupported-markdown", status: "skipped" }),
           expect.objectContaining({ name: "bundle", reason: "skill-bundle-unsupported", status: "skipped" }),
+          expect.objectContaining({ name: "file-reference", reason: "unsupported-markdown", status: "skipped" }),
+          expect.objectContaining({ name: "shell", reason: "unsupported-markdown", status: "skipped" }),
         ]),
       )
     } finally {
