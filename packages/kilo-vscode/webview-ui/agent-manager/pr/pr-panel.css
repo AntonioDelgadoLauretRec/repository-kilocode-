@@ -675,9 +675,13 @@
 }
 
 .am-pr-panel-reviewer {
-  gap: 6px;
+  gap: 8px;
   padding: 3px 0;
   font-size: var(--kilo-font-size-12);
+}
+
+.am-pr-panel-reviewer [data-component="avatar"] {
+  border-radius: 50%;
 }
 
 .am-pr-reviewer-icon {
@@ -688,7 +692,7 @@
   color: var(--vscode-testing-iconPassed, #34d399);
 }
 .am-pr-panel-reviewer[data-state="changes_requested"] .am-pr-reviewer-icon {
-  color: var(--vscode-charts-yellow, #fbbf24);
+  color: var(--vscode-testing-iconFailed, #f87171);
 }
 .am-pr-panel-reviewer[data-state="commented"] .am-pr-reviewer-icon {
   color: var(--text-weak);
@@ -700,11 +704,14 @@
 .am-pr-reviewer-login {
   flex: 1;
   color: var(--vscode-foreground);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .am-pr-reviewer-state {
-  color: var(--text-weak);
   flex-shrink: 0;
+  color: var(--text-weak);
 }
 
 .am-pr-panel-checks {

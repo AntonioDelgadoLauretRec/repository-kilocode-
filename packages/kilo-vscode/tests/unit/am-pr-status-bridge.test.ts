@@ -166,6 +166,37 @@ describe("PRStatusPoller batched GitHub queries", () => {
     poller.stop()
   })
 
+  it("merges reviewer avatars from the GraphQL query and caches them per login", async () => {
+    const poller = new PRStatusPoller({
+      getWorktrees: () => [],
+      getWorkspaceRoot: () => "/repo",
+      onStatus: () => undefined,
+      log: () => undefined,
+    })
+    const internal = poller as unknown as {
+      reviewers: (
+        pr: { number: number; reviewers?: Array<{ login: string; state: string; avatar?: string }> },
+        cwd: string,
+      ) => Promise<Array<{ login: string; state: string; avatar?: string }>>
+      fetchReviewers: (number: number, cwd: string) => Promise<Array<{ login: string; state: string; avatar?: string }>>
+    }
+    const fetches: number[] = []
+    internal.fetchReviewers = async (number) => {
+      fetches.push(number)
+      return [{ login: "eshurakov", state: "commented", avatar: "https://avatar/eshurakov" }]
+    }
+    const result = [{ login: "eshurakov", state: "approved", avatar: "https://avatar/eshurakov" }]
+
+    expect(
+      await internal.reviewers({ number: 7, reviewers: [{ login: "eshurakov", state: "approved" }] }, "/repo"),
+    ).toEqual(result)
+    expect(
+      await internal.reviewers({ number: 7, reviewers: [{ login: "eshurakov", state: "approved" }] }, "/repo"),
+    ).toEqual(result)
+    expect(fetches).toEqual([7])
+    poller.stop()
+  })
+
   it("forwards the actual branch for null PR results", async () => {
     const values: Array<{ pr: PRStatus | null; branch?: string }> = []
     const branches: string[] = []

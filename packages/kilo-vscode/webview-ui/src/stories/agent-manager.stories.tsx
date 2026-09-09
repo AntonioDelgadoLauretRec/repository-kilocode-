@@ -33,7 +33,8 @@ import { ThinkingSelectorBase } from "../components/shared/ThinkingSelector"
 import { DeferredPopover } from "../components/shared/DeferredPopover"
 import { ProjectSelect } from "../../agent-manager/ProjectSelect"
 import { PRComments } from "../../agent-manager/pr/PRComments"
-import type { PRComment } from "../../agent-manager/pr/pr-types"
+import { PRReviewers } from "../../agent-manager/pr/PRReviewers"
+import type { PRComment, PRReviewer } from "../../agent-manager/pr/pr-types"
 import { For, createSignal, onCleanup, onMount, type JSX } from "solid-js"
 import type {
   AgentProjectSnapshot,
@@ -2066,6 +2067,24 @@ const prComments: NonNullable<PRStatus["comments"]> = {
       outdated: false,
     },
   ],
+}
+
+const prReviewers: PRReviewer[] = [
+  { login: "marius-kilocode", state: "approved" },
+  { login: "reviewer-changes", state: "changes_requested" },
+  { login: "reviewer-comment", state: "commented" },
+  { login: "reviewer-pending", state: "pending" },
+]
+
+export const PRPanelReviewers: Story = {
+  name: "PR panel — reviewers",
+  render: () => (
+    <StoryProviders noPadding>
+      <div style={{ background: "var(--vscode-editor-background)", width: "320px" }}>
+        <PRReviewers reviewers={prReviewers} />
+      </div>
+    </StoryProviders>
+  ),
 }
 
 export const PRPanelComments: Story = {
