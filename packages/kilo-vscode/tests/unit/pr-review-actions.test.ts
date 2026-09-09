@@ -530,13 +530,14 @@ describe("GitHub PR merge actions", () => {
     const sent: Array<PRMergeResult> = []
     const completion = Promise.withResolvers<PRMergeResult>()
     const save = spyOn({ run: async (_repo: string, _method: "merge" | "squash" | "rebase") => {} }, "run")
+    const refresh = spyOn({ run: (_value: PRReviewContext, _settle?: boolean) => {} }, "run")
     const host = {
       context: (_message: Record<string, unknown>) => context,
       post: (message: PRMergeResult) => {
         sent.push(message)
         completion.resolve(message)
       },
-      refresh: spyOn({ run: (_value: PRReviewContext) => {} }, "run"),
+      refresh,
       dirtyFiles: () => [],
       savePRMergeMethod: save,
     }
@@ -563,6 +564,7 @@ describe("GitHub PR merge actions", () => {
       "--auto",
     ])
     expect(save).toHaveBeenCalledWith("owner/repo", "squash")
+    expect(refresh).toHaveBeenCalledWith(context, true)
   })
 
   it("loads conflicting files without refreshing the pull request", async () => {

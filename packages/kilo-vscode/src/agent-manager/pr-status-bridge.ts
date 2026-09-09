@@ -87,8 +87,8 @@ export class PRStatusBridge {
     const actions: PRReviewHost = {
       context: (message) => this.context(message),
       post: (message) => host.postToWebview(message),
-      refresh: (context) => {
-        if (host.projectId?.() === context.projectId) this.poller.refresh(context.worktreeId)
+      refresh: (context, settle) => {
+        if (host.projectId?.() === context.projectId) this.poller.refresh(context.worktreeId, settle)
       },
       dirtyFiles: () => host.dirtyFiles?.() ?? [],
       conflicts: async (context, base, head) =>

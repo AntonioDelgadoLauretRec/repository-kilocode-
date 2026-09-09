@@ -137,7 +137,7 @@ export class PRMergeActions {
       if (context.pr.state !== "open") throw new Error("The pull request is no longer open.")
       const extra = await this.execute(initial, context)
       this.host.post({ ...result(initial, true), ...extra } as PRMergeResult)
-      if (initial.type !== "agentManager.loadPRConflicts") this.refresh(context)
+      if (initial.type !== "agentManager.loadPRConflicts") this.refresh(context, true)
     } catch (error) {
       const reason = error instanceof Error ? ghErrorReason(error.message) : String(error)
       this.host.post({ ...fallback, success: false, error: reason } as PRMergeResult)
@@ -199,9 +199,9 @@ export class PRMergeActions {
     await save(repo, method).catch((error) => console.error("[Kilo New] Failed to save PR merge method", error))
   }
 
-  private refresh(context: PRReviewContext): void {
+  private refresh(context: PRReviewContext, settle = false): void {
     try {
-      this.host.refresh(context)
+      this.host.refresh(context, settle)
     } catch (error) {
       console.error("[Kilo New] Failed to refresh pull request after merge action", error)
     }

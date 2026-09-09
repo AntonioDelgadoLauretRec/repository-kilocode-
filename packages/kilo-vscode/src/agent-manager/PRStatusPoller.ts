@@ -75,6 +75,7 @@ export class PRStatusPoller {
   private activeWorktreeId: string | undefined
   private cachedRepo: RepoInfo | undefined
   private repoRequest: { root: string; promise: Promise<RepoInfo> } | undefined
+  private readonly refreshTimers = new Map<string, ReturnType<typeof setTimeout>[]>()
   private prCache = new Map<string, { result: PRResult | null; expires: number }>()
   private lastFullSync = 0 // timestamp of last full (all-worktree) sync
   private readonly intervalMs: number
@@ -138,6 +139,7 @@ export class PRStatusPoller {
       clearTimeout(this.timer)
       this.timer = undefined
     }
+    this.clearRefreshTimers()
   }
 
   stop(): void {
@@ -158,15 +160,42 @@ export class PRStatusPoller {
     this.repoRequest = undefined
     this.prCache.clear()
     this.lastFullSync = 0
+    this.clearRefreshTimers()
   }
 
   /** Force-refresh a specific worktree immediately, bypassing the PR cache. */
-  refresh(worktreeId: string): void {
+  refresh(worktreeId: string, settle = false): void {
+    this.clearRefreshTimers(worktreeId)
     const wt = this.options.getWorktrees().find((w) => w.id === worktreeId)
     if (wt) this.prCache.delete(this.key(wt.branch, wt.path))
     this.lastHash.delete(worktreeId)
     if (!this.active) return
-    void this.fetchOne(worktreeId, this.generation, true)
+    const generation = this.generation
+    void this.fetchOne(worktreeId, generation, true).catch(() => undefined)
+    if (!settle || !this.visible) return
+    const delays = [2_000, 8_000]
+    const timers = delays.map((delay) =>
+      setTimeout(() => {
+        if (!this.active || !this.visible || this.stale(generation)) return
+        const current = this.options.getWorktrees().find((w) => w.id === worktreeId)
+        if (current) this.prCache.delete(this.key(current.branch, current.path))
+        this.lastHash.delete(worktreeId)
+        void this.fetchOne(worktreeId, generation, true).catch(() => undefined)
+      }, delay),
+    )
+    this.refreshTimers.set(worktreeId, timers)
+  }
+
+  private clearRefreshTimers(worktreeId?: string): void {
+    if (worktreeId) {
+      for (const timer of this.refreshTimers.get(worktreeId) ?? []) clearTimeout(timer)
+      this.refreshTimers.delete(worktreeId)
+      return
+    }
+    for (const timers of this.refreshTimers.values()) {
+      for (const timer of timers) clearTimeout(timer)
+    }
+    this.refreshTimers.clear()
   }
 
   setActiveWorktreeId(id: string | undefined): void {
