@@ -41,6 +41,7 @@ export namespace TsClient {
       checked = undefined
       // A change can also invalidate dependent files and removed source paths.
       diagnostics.clear()
+      pending?.controller.abort()
     }
 
     function changed(event: GlobalEvent) {
@@ -142,7 +143,7 @@ export namespace TsClient {
         const task = run()
         // Unknown or slow checkers must not block the tool. The check keeps
         // running and the next tool call sees its result.
-        if (duration === undefined || duration > SLOW_CHECK_MS) return
+        if (duration !== undefined && duration > SLOW_CHECK_MS) return
         await withTimeout(task, WAIT_BUDGET_MS).catch(() => {
           log.debug("ts check still running, returning without diagnostics", { path: input.path })
         })

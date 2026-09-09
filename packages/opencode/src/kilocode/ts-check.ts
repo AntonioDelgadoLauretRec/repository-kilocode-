@@ -57,6 +57,7 @@ export namespace TsCheck {
     if (!proc) return undefined
 
     const TIMEOUT = 30_000
+    const GRACE = 1_000
     let stopped = false
     const stop = () => {
       if (stopped || proc.exitCode != null) return
@@ -67,14 +68,29 @@ export namespace TsCheck {
         log.error("failed to kill typescript checker", { root, error })
       }
     }
+    const done = Promise.all([new Response(proc.stdout).text(), new Response(proc.stderr).text(), proc.exited])
+    void done.catch((error) => {
+      log.error("failed to collect typescript checker output", { root, error })
+    })
     const reap = async () => {
       stop()
+      const exited = await Promise.race([
+        proc.exited.then(() => true).catch(() => true),
+        Bun.sleep(GRACE).then(() => false),
+      ])
+      if (!exited && proc.exitCode == null) {
+        try {
+          proc.kill(9)
+        } catch (error) {
+          log.error("failed to force kill typescript checker", { root, error })
+        }
+      }
       await proc.exited.catch((error) => {
         log.error("failed to reap typescript checker", { root, error })
       })
+      await done.catch(() => undefined)
     }
 
-    const done = Promise.all([new Response(proc.stdout).text(), new Response(proc.stderr).text(), proc.exited])
     const timeout = Promise.withResolvers<"timeout">()
     const cancel = Promise.withResolvers<"abort">()
     const abort = () => {
