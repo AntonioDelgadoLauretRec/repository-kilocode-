@@ -178,7 +178,7 @@ export namespace ClaudeMigration {
           ? `\n- ${omitted} more item${omitted === 1 ? "" : "s"} omitted; see the receipt for the full list.`
           : "") +
         (changed.length > 0
-          ? `\nReview the original Claude files and receipt, then finish skipped or failed items manually; this migration runs once.\n`
+          ? `\nReview the original Claude files and receipt, then merge skipped instructions or skills manually and resolve failed items; this migration runs once.\n`
           : "") +
         `Original Claude files were left unchanged. ` +
         `Imported MCP servers are disabled until you enable them. Future global changes belong in Kilo; keep the Claude files if you still use Claude Code. ` +
@@ -196,7 +196,13 @@ export namespace ClaudeMigration {
         : item.category === "skill"
           ? `Skill "${name}"`
           : `MCP server "${name}"`
-    return `${label}: ${item.reason ? (REASONS[item.reason] ?? `migration skipped it for safety (${item.reason}).`) : "not imported."}`
+    const text =
+      item.category === "instructions" && item.reason === "destination-exists"
+        ? `Kilo already has ${path.basename(item.destination ?? "AGENTS.md")}; existing instructions were kept.`
+        : item.reason
+          ? (REASONS[item.reason] ?? `migration skipped it for safety (${item.reason}).`)
+          : "not imported."
+    return `${label}: ${text}`
   }
 
   export async function run(input: { enabled?: boolean; roots?: Partial<Roots> } = {}): Promise<Result> {

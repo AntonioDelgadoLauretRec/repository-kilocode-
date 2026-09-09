@@ -165,10 +165,12 @@ describe("Claude global configuration migration", () => {
         enabled: false,
       })
       const notice = await ClaudeMigration.notification({ state })
-      expect(notice?.message).toContain("Global CLAUDE.md: Kilo already has a destination with that name")
+      expect(notice?.message).toContain(
+        "Global CLAUDE.md: Kilo already has AGENTS.md; existing instructions were kept.",
+      )
       expect(notice?.message).toContain('Skill "unsafe": it contains additional files')
       expect(notice?.message).toContain('MCP server "existing": Kilo already has an MCP server with that name')
-      expect(notice?.message).toContain("finish skipped or failed items manually")
+      expect(notice?.message).toContain("merge skipped instructions or skills manually")
       expect(notice?.message).toContain("this migration runs once.\nOriginal Claude files")
       await fs.writeFile(path.join(home, ".claude", "CLAUDE.md"), "changed source")
       await fs.mkdir(path.join(home, ".claude", "skills", "new"))
@@ -201,7 +203,10 @@ describe("Claude global configuration migration", () => {
     await fs.writeFile(path.join(home, ".claude", "skills", "dynamic", "SKILL.md"), "Use $ARGUMENTS[0].\n")
     await fs.writeFile(path.join(home, ".claude", "skills", "bundle", "SKILL.md"), "Body\n")
     await fs.writeFile(path.join(home, ".claude", "skills", "bundle", "helper.txt"), "Helper\n")
-    await fs.writeFile(path.join(home, ".claude", "skills", "file-reference", "SKILL.md"), "Use @src/index.ts.\n")
+    await fs.writeFile(
+      path.join(home, ".claude", "skills", "file-reference", "SKILL.md"),
+      "Use @./guide.md and @src/index.ts.\n",
+    )
     await fs.writeFile(path.join(home, ".claude", "skills", "shell", "SKILL.md"), "Run !`printf hi`.\n")
     await fs.writeFile(path.join(home, ".claude", "skills", "shell-docs", "SKILL.md"), "```sh\n!`printf hi`\n```\n")
 
