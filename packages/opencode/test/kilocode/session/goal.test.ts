@@ -1177,7 +1177,8 @@ it.instance(
       })
       .pipe(Effect.forkChild)
     yield* run.wait(1)
-    expect(KiloSessionPromptQueue.active(run.session.id)).toBeDefined()
+    const base = KiloSessionPromptQueue.active(run.session.id)
+    expect(base).toBeDefined()
 
     yield* run.llm.hang
     const ack = yield* run.prompt.command({
@@ -1193,7 +1194,8 @@ it.instance(
       ...retained,
       "kilo.goal": { text: objective, active: true, status: "active" },
     })
-    expect(Exit.hasInterrupts(yield* Fiber.await(ordinary))).toBe(true)
+    yield* awaitWithTimeout(Fiber.await(ordinary), "ordinary response was not replaced")
+    expect(KiloSessionPromptQueue.active(run.session.id)).not.toBe(base)
     yield* run.prompt.cancel(run.session.id)
   }),
   30_000,
