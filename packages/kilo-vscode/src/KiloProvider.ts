@@ -3886,6 +3886,10 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
     return vscode.workspace.getConfiguration("kilo-code.new").get<string>("languageCommitMessage", "sync")
   }
 
+  private multiProjectSetting(): boolean {
+    return vscode.workspace.getConfiguration("kilo-code.new.experimental").get<boolean>("multiProject", false)
+  }
+
   private claudeMigrationSetting(): boolean {
     return vscode.workspace.getConfiguration("kilo-code.new.experimental").get<boolean>("claudeMigration", false)
   }
@@ -3970,6 +3974,7 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
     return {
       maxCost: this.maxCostSetting(),
       languageCommitMessage: this.commitMessageLanguageSetting(),
+      multiProject: this.multiProjectSetting(),
       claudeMigration: this.claudeMigrationSetting(),
       browserAutomation: this.browserAutomationSetting(),
       "agentManager.autoBranchNaming": naming.get<boolean>("autoBranchNaming", true),
