@@ -204,8 +204,12 @@ export function PRMerge(props: Props) {
                       size="small"
                       class="am-pr-merge-action"
                       disabled={blocked()}
+                      aria-busy={pending()}
                       onClick={() => (state() === "clean" ? confirm() : mergePR(true))}
                     >
+                      <Show when={pending()}>
+                        <Spinner class="am-pr-merge-spinner" />
+                      </Show>
                       {state() === "clean"
                         ? t("agentManager.pr.merge.button", { method: label(selected(), t) })
                         : t("agentManager.pr.merge.autoButton")}

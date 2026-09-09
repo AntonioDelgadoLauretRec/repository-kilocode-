@@ -988,6 +988,12 @@
   font-size: var(--kilo-font-size-11);
 }
 
+.am-pr-merge-spinner {
+  width: 12px;
+  height: 12px;
+  margin-right: 4px;
+}
+
 .am-pr-merge-confirm {
   display: flex;
   align-items: center;
