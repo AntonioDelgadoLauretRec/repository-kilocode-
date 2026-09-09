@@ -86,8 +86,10 @@ function createPollerPair(ctx: ProjectContext, deps: PollerDeps): PollerPair {
     semaphore: deps.semaphore,
     projectId: () => ctx.id,
     conflicts: (cwd, remote, base, head) => deps.git.conflicts(cwd, remote, base, head),
-    getPRMergeMethod: deps.mergeMethods?.getPRMergeMethod,
-    savePRMergeMethod: deps.mergeMethods?.savePRMergeMethod,
+    getPRMergeMethod: (repo) => deps.mergeMethods?.getPRMergeMethod?.(repo),
+    savePRMergeMethod: async (repo, method) => {
+      await deps.mergeMethods?.savePRMergeMethod?.(repo, method)
+    },
   })
   return { stats, pr }
 }
@@ -223,8 +225,10 @@ export function createPollers(opts: {
     semaphore: opts.semaphore,
     projectId: opts.activeId,
     conflicts: (cwd, remote, base, head) => opts.git.conflicts(cwd, remote, base, head),
-    getPRMergeMethod: opts.mergeMethods?.getPRMergeMethod,
-    savePRMergeMethod: opts.mergeMethods?.savePRMergeMethod,
+    getPRMergeMethod: (repo) => opts.mergeMethods?.getPRMergeMethod?.(repo),
+    savePRMergeMethod: async (repo, method) => {
+      await opts.mergeMethods?.savePRMergeMethod?.(repo, method)
+    },
   })
   const projects = new ProjectPollers({
     dirtyFiles: opts.dirtyFiles,

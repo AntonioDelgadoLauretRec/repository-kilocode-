@@ -772,6 +772,14 @@ describe("GitOps", () => {
 })
 
 describe("GitOps conflicts", () => {
+  it("rejects non-OID conflict revisions before invoking Git", async () => {
+    const git = new GitOps({ log: () => undefined })
+    await expect(git.conflicts("/repo", "origin", "refs/heads/main", "head")).rejects.toThrow(
+      "Invalid pull request commit ID",
+    )
+    git.dispose()
+  })
+
   it("parses merge-tree name-only output", () => {
     expect(
       parseConflictPaths("treeoid\na.txt\nb.txt\n\nAuto-merging a.txt\nCONFLICT (content): Merge conflict in a.txt"),
@@ -798,9 +806,12 @@ describe("GitOps conflicts", () => {
 
       const git = new GitOps({ log: () => undefined })
       expect(await git.conflicts(cwd, "origin", base, head)).toEqual(["a.txt"])
+      expect(await git.conflicts(cwd, "origin", base, head)).toEqual(["a.txt"])
+      expect((git as unknown as { conflictCache: Map<string, unknown> }).conflictCache.size).toBe(1)
       expect(await fs.readFile(nodePath.join(cwd, "a.txt"), "utf8")).toBe("main\n")
       expect(runGit(cwd, ["status", "--porcelain"])).toBe("")
       git.dispose()
+      expect((git as unknown as { conflictCache: Map<string, unknown> }).conflictCache.size).toBe(0)
     })
   })
 })

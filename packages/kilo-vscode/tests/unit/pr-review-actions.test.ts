@@ -60,6 +60,7 @@ function harness() {
       title: "Review",
       state: "open",
       review: null,
+      baseRefOid: base,
       headRefOid: head,
       checks: { status: "none", total: 0, passed: 0, failed: 0, pending: 0, checks: [] },
       reviewers: [],
@@ -567,7 +568,10 @@ describe("GitHub PR merge actions", () => {
   it("loads conflicting files without refreshing the pull request", async () => {
     const context = harness().context
     const completion = Promise.withResolvers<PRMergeResult>()
-    const conflicts = spyOn({ run: async (_context: PRReviewContext, _base: string, _head: string) => ["a.txt"] }, "run")
+    const conflicts = spyOn(
+      { run: async (_context: PRReviewContext, _base: string, _head: string) => ["a.txt"] },
+      "run",
+    )
     const refresh = spyOn({ run: (_value: PRReviewContext) => {} }, "run")
     const host = {
       context: (_message: Record<string, unknown>) => context,
@@ -596,5 +600,37 @@ describe("GitHub PR merge actions", () => {
     })
     expect(conflicts).toHaveBeenCalledWith(context, base, head)
     expect(refresh).not.toHaveBeenCalled()
+  })
+
+  it("rejects stale or unsafe conflict revisions", async () => {
+    const context = harness().context
+    const completion = Promise.withResolvers<PRMergeResult>()
+    const conflicts = spyOn(
+      { run: async (_context: PRReviewContext, _base: string, _head: string) => ["a.txt"] },
+      "run",
+    )
+    const host = {
+      context: (_message: Record<string, unknown>) => context,
+      post: (message: PRMergeResult) => completion.resolve(message),
+      refresh: spyOn({ run: (_value: PRReviewContext) => {} }, "run"),
+      dirtyFiles: () => [],
+      conflicts,
+    }
+    const actions = new PRMergeActions(host)
+    actions.handle({
+      type: "agentManager.loadPRConflicts",
+      projectId: context.projectId,
+      worktreeId: context.worktreeId,
+      requestId: "stale-conflicts",
+      prNumber: context.pr.number,
+      prUrl: context.pr.url,
+      base: "c".repeat(40),
+      head,
+    })
+    expect(await completion.promise).toMatchObject({
+      type: "agentManager.loadPRConflictsResult",
+      success: false,
+    })
+    expect(conflicts).not.toHaveBeenCalled()
   })
 })

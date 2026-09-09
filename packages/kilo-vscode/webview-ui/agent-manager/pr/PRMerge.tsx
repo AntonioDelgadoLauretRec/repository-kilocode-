@@ -2,7 +2,7 @@ import { Button } from "@kilocode/kilo-ui/button"
 import { DropdownMenu } from "@kilocode/kilo-ui/dropdown-menu"
 import { Icon } from "@kilocode/kilo-ui/icon"
 import { Spinner } from "@kilocode/kilo-ui/spinner"
-import { Show, For, createEffect, createSignal } from "solid-js"
+import { Show, For, createEffect, createSignal, onCleanup } from "solid-js"
 import { useLanguage } from "../../src/context/language"
 import { useVSCode } from "../../src/context/vscode"
 import type { PRMergeMethod, PRStatus } from "../../src/types/messages"
@@ -43,6 +43,15 @@ export function PRMerge(props: Props) {
     return value && methods().includes(value) ? value : (merge()?.method ?? methods().at(0) ?? "squash")
   }
   const state = () => merge()?.state ?? "unknown"
+  const auto = () => {
+    const value = merge()
+    const current = state()
+    return (
+      value?.autoAllowed === true &&
+      value.mergeable === "mergeable" &&
+      (current === "clean" || current === "blocked" || current === "unstable" || current === "has_hooks")
+    )
+  }
   const target = () => ({
     projectId: props.projectId,
     worktreeId: props.worktreeId,
@@ -84,16 +93,21 @@ export function PRMerge(props: Props) {
   const disableAuto = () => {
     send({ ...target(), type: "agentManager.disablePRAutoMerge", requestId: crypto.randomUUID() })
   }
+  let requestKey: string | undefined
+  let cancel: (() => void) | undefined
   createEffect(() => {
+    if (props.mode !== "status") return
     const value = merge()
     if (value?.mergeable !== "conflicting") return
     const base = props.pr.baseRefOid
     const head = props.pr.headRefOid
     if (!base || !head) return
     const key = conflictKey()
-    if (conflictFiles(key) || conflictFailed(key) || loadingConflicts()) return
+    if (conflictFiles(key) || conflictFailed(key) || requestKey === key) return
+    cancel?.()
+    requestKey = key
     setLoadingConflicts(true)
-    reviewRequest(
+    const dispose = reviewRequest(
       { ...target(), type: "agentManager.loadPRConflicts", requestId: crypto.randomUUID(), base, head },
       vscode.postMessage,
       (result) => {
@@ -102,7 +116,18 @@ export function PRMerge(props: Props) {
         if (result.success) setConflictFiles(key, result.files ?? [])
         else setConflictFailed(key)
       },
+      30_000,
+      true,
     )
+    cancel = dispose
+    onCleanup(() => {
+      dispose()
+      if (cancel === dispose) cancel = undefined
+      if (requestKey === key) {
+        requestKey = undefined
+        setLoadingConflicts(false)
+      }
+    })
   })
   const confirm = () => {
     setConfirming(true)
@@ -163,7 +188,7 @@ export function PRMerge(props: Props) {
                       variant="primary"
                       size="small"
                       class="am-pr-merge-action"
-                      disabled={pending() || (state() !== "clean" && !merge()?.autoAllowed)}
+                      disabled={pending() || (state() !== "clean" && !auto())}
                       onClick={() => (state() === "clean" ? confirm() : mergePR(true))}
                     >
                       {state() === "clean"
@@ -180,7 +205,7 @@ export function PRMerge(props: Props) {
                       </DropdownMenu.Trigger>
                       <DropdownMenu.Portal>
                         <DropdownMenu.Content class="am-split-menu">
-                          <Show when={merge()?.autoAllowed}>
+                          <Show when={auto()}>
                             <DropdownMenu.Item onSelect={() => mergePR(true)}>
                               <span class="am-menu-check" aria-hidden="true" />
                               <DropdownMenu.ItemLabel>

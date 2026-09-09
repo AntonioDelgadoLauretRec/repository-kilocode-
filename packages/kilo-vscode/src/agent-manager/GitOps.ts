@@ -13,6 +13,7 @@ import {
 } from "./git-import"
 import type { Semaphore } from "./semaphore"
 import { lines } from "./git-stats-snapshot"
+import { oid } from "../shared/pr-comment-preview"
 
 interface GitOpsOptions {
   log: (...args: unknown[]) => void
@@ -129,7 +130,7 @@ export class GitOps {
   private readonly injected: boolean
   private executableCache: Promise<string> | undefined
   private readonly resolutionCache = new Map<string, { value: string; expires: number }>()
-  private readonly conflictCache = new Map<string, Promise<string[]>>()
+  private readonly conflictCache = new Map<string, { value: Promise<string[]>; expires: number }>()
   private static readonly CACHE_TTL_MS = 60000
   private static readonly DEFAULT_BRANCH_CACHE_TTL_MS = 10 * 60_000
   private static readonly MAX_CACHE_SIZE = 100
@@ -169,6 +170,7 @@ export class GitOps {
       this.controller.abort()
     }
     this.resolutionCache.clear()
+    this.conflictCache.clear()
   }
 
   private getCached(key: string): string | undefined {
@@ -592,14 +594,29 @@ export class GitOps {
    * fetched first because a conflicting PR head often only exists remotely.
    */
   conflicts(cwd: string, remote: string, base: string, head: string): Promise<string[]> {
+    if (!oid(base) || !oid(head)) return Promise.reject(new Error("Invalid pull request commit ID"))
+    if (!/^[A-Za-z0-9._-]+$/.test(remote)) return Promise.reject(new Error("Invalid Git remote"))
     const key = `${cwd}\u0000${remote}\u0000${base}\u0000${head}`
+    const now = Date.now()
     const cached = this.conflictCache.get(key)
-    if (cached) return cached
-    const task = this.computeConflicts(cwd, remote, base, head).catch((error) => {
-      this.conflictCache.delete(key)
-      throw error
+    if (cached && cached.expires > now) return cached.value
+    if (cached) this.conflictCache.delete(key)
+    const task = this.computeConflicts(cwd, remote, base, head)
+    if (this.conflictCache.size >= GitOps.MAX_CACHE_SIZE) {
+      let oldestKey: string | undefined
+      let oldestExpiry = Infinity
+      for (const [entryKey, entry] of this.conflictCache) {
+        if (entry.expires < oldestExpiry) {
+          oldestExpiry = entry.expires
+          oldestKey = entryKey
+        }
+      }
+      if (oldestKey) this.conflictCache.delete(oldestKey)
+    }
+    this.conflictCache.set(key, { value: task, expires: now + GitOps.CACHE_TTL_MS })
+    void task.catch(() => {
+      if (this.conflictCache.get(key)?.value === task) this.conflictCache.delete(key)
     })
-    this.conflictCache.set(key, task)
     return task
   }
 
@@ -610,7 +627,10 @@ export class GitOps {
       if (probe.code !== 0) missing.push(sha)
     }
     if (missing.length > 0) {
-      const fetch = await this.exec(["fetch", "--no-tags", remote, ...missing], cwd, { timeout: 60_000 })
+      const fetch = await this.exec(["fetch", "--no-tags", remote, "--", ...missing], cwd, {
+        env: nonInteractiveEnv(),
+        timeout: 60_000,
+      })
       if (fetch.code !== 0) throw new Error(fetch.stderr.trim() || "Failed to fetch pull request commits")
     }
     const result = await this.exec(

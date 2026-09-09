@@ -1,4 +1,5 @@
 import type { PRMergeRequest, PRMergeResult } from "../../shared/pr-comment-actions"
+import { oid } from "../../shared/pr-comment-preview"
 import { execGhRead } from "../gh"
 import { ghErrorReason } from "./am-pr-utils"
 import type { PRReviewContext, PRReviewHost } from "./review-context"
@@ -24,11 +25,7 @@ function request(message: Record<string, unknown>): PRMergeRequest | undefined {
   )
     return { ...base, type: message.type, method: message.method, auto: message.auto, head: message.head }
   if (message.type === "agentManager.disablePRAutoMerge") return { ...base, type: message.type }
-  if (
-    message.type === "agentManager.loadPRConflicts" &&
-    typeof message.base === "string" &&
-    typeof message.head === "string"
-  )
+  if (message.type === "agentManager.loadPRConflicts" && oid(message.base) && oid(message.head))
     return { ...base, type: message.type, base: message.base, head: message.head }
   return undefined
 }
@@ -130,10 +127,11 @@ export class PRMergeActions {
     try {
       if (!initial) throw new Error("Invalid pull request merge request.")
       const context = this.host.context(message)
+      if (initial.type !== "agentManager.disablePRAutoMerge" && initial.head !== context.pr.headRefOid)
+        throw new Error("Pull request changed. Refresh and try again.")
       if (
-        initial.type !== "agentManager.disablePRAutoMerge" &&
-        initial.type !== "agentManager.loadPRConflicts" &&
-        initial.head !== context.pr.headRefOid
+        initial.type === "agentManager.loadPRConflicts" &&
+        (initial.base !== context.pr.baseRefOid || initial.head !== context.pr.headRefOid)
       )
         throw new Error("Pull request changed. Refresh and try again.")
       if (context.pr.state !== "open") throw new Error("The pull request is no longer open.")
