@@ -59,7 +59,7 @@ describe("Claude global configuration migration", () => {
     await fs.mkdir(path.join(home, ".claude", "skills", "audit"), { recursive: true })
     await fs.mkdir(config, { recursive: true })
     const source = {
-      rules: "Use the repository's existing test conventions.\n",
+      rules: "Use the repository's existing test conventions.\nUse @acme/ui components.\n// {env:EXAMPLE}\n",
       skill: "Review the changed files and report only actionable findings.\n",
       mcp: JSON.stringify({
         mcpServers: {
@@ -164,6 +164,12 @@ describe("Claude global configuration migration", () => {
         command: ["npx", "example-mcp"],
         enabled: false,
       })
+      const notice = await ClaudeMigration.notification({ state })
+      expect(notice?.message).toContain("Global CLAUDE.md: Kilo already has a destination with that name")
+      expect(notice?.message).toContain('Skill "unsafe": it contains additional files')
+      expect(notice?.message).toContain('MCP server "existing": Kilo already has an MCP server with that name')
+      expect(notice?.message).toContain("finish skipped or failed items manually")
+      expect(notice?.message).toContain("this migration runs once.\nOriginal Claude files")
       await fs.writeFile(path.join(home, ".claude", "CLAUDE.md"), "changed source")
       await fs.mkdir(path.join(home, ".claude", "skills", "new"))
       await fs.writeFile(path.join(home, ".claude", "skills", "new", "SKILL.md"), "new skill")
@@ -187,7 +193,7 @@ describe("Claude global configuration migration", () => {
     await fs.mkdir(config, { recursive: true })
     await fs.writeFile(
       path.join(home, ".claude", "skills", "metadata", "SKILL.md"),
-      "---\ndescription: Review files\n---\nBody\n",
+      "---\ndescription: Review: changed files\nlicense: MIT\ncompatibility: node\nmetadata:\n  owner: team\n---\nUse @acme/ui components.\n// {env:EXAMPLE}\n",
     )
     await fs.writeFile(path.join(home, ".claude", "skills", "dynamic", "SKILL.md"), "Use $ARGUMENTS[0].\n")
     await fs.writeFile(path.join(home, ".claude", "skills", "bundle", "SKILL.md"), "Body\n")
@@ -200,7 +206,7 @@ describe("Claude global configuration migration", () => {
       expect(result.status).toBe("complete")
       if (result.status !== "complete") return
       expect(await fs.readFile(path.join(config, "skills", "metadata", "SKILL.md"), "utf8")).toBe(
-        '---\nname: "metadata"\ndescription: "Review files"\n---\nBody\n',
+        '---\nname: "metadata"\ndescription: "Review: changed files"\nlicense: "MIT"\ncompatibility: "node"\nmetadata: {"owner":"team"}\n---\nUse @acme/ui components.\n// {env:EXAMPLE}\n',
       )
       expect(result.receipt.items).toEqual(
         expect.arrayContaining([

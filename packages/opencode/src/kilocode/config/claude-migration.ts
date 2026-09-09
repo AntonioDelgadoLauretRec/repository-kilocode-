@@ -21,9 +21,45 @@ export namespace ClaudeMigration {
   const MAX_MARKDOWN = 1024 * 1024
   const MAX_CONFIG = 8 * 1024 * 1024
   const MAX_SKILLS = 256
+  const MAX_NOTICE_ITEMS = 8
   const HANDOFF = new Set(["complete", "incomplete", "started"])
   const SAFE_NAME = /^[A-Za-z0-9][A-Za-z0-9._-]*$/
   const log = Log.create({ service: "kilocode.claude-migration" })
+  const REASONS: Record<string, string> = {
+    "destination-exists": "Kilo already has a destination with that name; existing content was kept.",
+    "skill-name-conflict": "Kilo already has a skill with that name; existing content was kept.",
+    "mcp-name-conflict": "Kilo already has an MCP server with that name; existing configuration was kept.",
+    "unsupported-markdown": "it contains dynamic content outside the supported migration subset.",
+    "skill-frontmatter-unsupported": "it uses frontmatter fields outside the supported migration subset.",
+    "skill-frontmatter-invalid": "its frontmatter could not be parsed, even with Kilo's compatibility fallback.",
+    "skill-bundle-unsupported": "it contains additional files that this migration does not copy.",
+    "destination-write-failed": "Kilo could not write the destination.",
+    "destination-unsafe": "the destination path was not safe to write.",
+    "source-changed": "the Claude source changed during migration, so it was not copied.",
+    "source-unreadable": "the Claude source could not be read.",
+    "source-not-regular": "the Claude source was not a regular file or directory.",
+    "source-too-large": "the Claude source exceeded the migration size limit.",
+    "source-not-text": "the Claude source was not valid text.",
+    "empty-source": "the Claude source was empty.",
+    "skill-limit": "the skills directory exceeded the migration limit.",
+    "unsafe-skill-name": "the skill name was not safe to use as a destination.",
+    "unsafe-mcp-name": "the MCP server name was not safe to use as a destination.",
+    "source-json-invalid": "the Claude MCP file was not valid JSON.",
+    "mcp-entry-invalid": "the MCP definition was invalid.",
+    "mcp-field-unsupported": "the MCP definition uses fields outside the supported migration subset.",
+    "mcp-interpolation-unsupported": "the MCP definition contains dynamic interpolation.",
+    "mcp-relative-path-unsupported": "the MCP definition depends on a relative command or argument.",
+    "mcp-environment-invalid": "the MCP environment values were not static strings.",
+    "mcp-transport-unsupported": "the MCP transport is not supported by this migration.",
+    "mcp-url-invalid": "the MCP URL was not a valid HTTP(S) URL.",
+    "mcp-headers-invalid": "the MCP headers were not static strings.",
+    "existing-config-unreadable": "an existing Kilo configuration could not be read safely.",
+    "existing-mcp-invalid": "an existing Kilo MCP configuration was invalid.",
+    "existing-skills-unreadable": "an existing Kilo skill could not be read safely.",
+    "skill-name-invalid": "the skill name was invalid.",
+    "skill-description-invalid": "the skill description was not a string.",
+    "migration-failed": "the migration stopped before this item could be completed.",
+  }
 
   export type Roots = {
     home: string
@@ -127,18 +163,39 @@ export namespace ClaudeMigration {
             : imported > 0
               ? "Claude Code migration imported supported"
               : "Claude Code migration completed without supported items"
+    const changed = items.filter((item) => item.status !== "imported")
+    const details = changed.slice(0, MAX_NOTICE_ITEMS).map(describe)
+    const omitted = changed.length - details.length
     return {
       id: NOTIFICATION_ID,
       title: "Claude Code configuration migration",
       message:
         `${outcome} global Claude Code configuration into Kilo ` +
         `(imported ${imported}, skipped ${skipped}, failed ${failed}). ` +
+        (details.length > 0 ? `\n${details.map((item) => `- ${item}`).join("\n")}` : "") +
+        (omitted > 0
+          ? `\n- ${omitted} more item${omitted === 1 ? "" : "s"} omitted; see the receipt for the full list.`
+          : "") +
+        (changed.length > 0
+          ? `\nReview the original Claude files and receipt, then finish skipped or failed items manually; this migration runs once.\n`
+          : "") +
         `Original Claude files were left unchanged. ` +
         `Imported MCP servers are disabled until you enable them. Future global changes belong in Kilo; keep the Claude files if you still use Claude Code. ` +
         `Details: ${file}`,
       action: { actionText: "Learn more", actionURL: DOCS_URL },
       showIn: ["cli", "extension"],
     }
+  }
+
+  function describe(item: Item) {
+    const name = item.name.replace(/\s+/g, " ").trim().slice(0, 80) || "unnamed"
+    const label =
+      item.category === "instructions"
+        ? "Global CLAUDE.md"
+        : item.category === "skill"
+          ? `Skill "${name}"`
+          : `MCP server "${name}"`
+    return `${label}: ${item.reason ? (REASONS[item.reason] ?? `migration skipped it for safety (${item.reason}).`) : "not imported."}`
   }
 
   export async function run(input: { enabled?: boolean; roots?: Partial<Roots> } = {}): Promise<Result> {
@@ -679,24 +736,40 @@ export namespace ClaudeMigration {
     try {
       parsed = matter(text)
     } catch {
-      return { ok: false, reason: "skill-frontmatter-invalid" }
+      try {
+        parsed = matter(ConfigMarkdown.fallbackSanitization(text))
+      } catch {
+        return { ok: false, reason: "skill-frontmatter-invalid" }
+      }
     }
-    if (!record(parsed.data) || !keys(parsed.data, ["name", "description"]))
+    if (!record(parsed.data) || !keys(parsed.data, ["name", "description", "license", "compatibility", "metadata"]))
       return { ok: false, reason: "skill-frontmatter-unsupported" }
     if (parsed.data.name !== undefined && typeof parsed.data.name !== "string")
       return { ok: false, reason: "skill-name-invalid" }
     if (parsed.data.description !== undefined && typeof parsed.data.description !== "string") {
       return { ok: false, reason: "skill-description-invalid" }
     }
+    if (parsed.data.license !== undefined && typeof parsed.data.license !== "string")
+      return { ok: false, reason: "skill-frontmatter-unsupported" }
+    if (parsed.data.compatibility !== undefined && typeof parsed.data.compatibility !== "string")
+      return { ok: false, reason: "skill-frontmatter-unsupported" }
+    if (parsed.data.metadata !== undefined && !stringRecord(parsed.data.metadata))
+      return { ok: false, reason: "skill-frontmatter-unsupported" }
     if (parsed.content.trim() === "" || unsafeSkillMarkdown(parsed.content))
       return { ok: false, reason: "unsupported-markdown" }
     if (parsed.data.name !== undefined && parsed.data.name.trim() === "")
       return { ok: false, reason: "skill-name-invalid" }
     const description = typeof parsed.data.description === "string" ? parsed.data.description : undefined
+    const license = typeof parsed.data.license === "string" ? parsed.data.license : undefined
+    const compatibility = typeof parsed.data.compatibility === "string" ? parsed.data.compatibility : undefined
+    const metadata = stringRecord(parsed.data.metadata) ? parsed.data.metadata : undefined
     const frontmatter = [
       "---",
       `name: ${JSON.stringify(name)}`,
-      ...(description ? [`description: ${JSON.stringify(description)}`] : []),
+      ...(description !== undefined ? [`description: ${JSON.stringify(description)}`] : []),
+      ...(license !== undefined ? [`license: ${JSON.stringify(license)}`] : []),
+      ...(compatibility !== undefined ? [`compatibility: ${JSON.stringify(compatibility)}`] : []),
+      ...(metadata !== undefined ? [`metadata: ${JSON.stringify(metadata)}`] : []),
       "---",
       "",
     ].join("\n")
@@ -704,20 +777,24 @@ export namespace ClaudeMigration {
   }
 
   function unsafeMarkdown(text: string) {
-    return (
-      ConfigMarkdown.files(text).length > 0 ||
-      ConfigMarkdown.shell(text).length > 0 ||
-      /\{(?:env|file):[^}]+\}/.test(text) ||
-      text.includes("\0")
-    )
+    return active(text, /\{(?:env|file):[^}]+\}/g) || text.includes("\0")
   }
 
   function unsafeSkillMarkdown(text: string) {
     return (
       unsafeMarkdown(text) ||
-      /\$(?:ARGUMENTS(?:\[[^\]]+\])?|\d+)(?![A-Za-z0-9_])/.test(text) ||
-      /\$\{[^}]+\}/.test(text)
+      active(text, /\$(?:ARGUMENTS(?:\[[^\]]+\])?|\d+)(?![A-Za-z0-9_])/g) ||
+      active(text, /\$\{[^}]+\}/g)
     )
+  }
+
+  function active(text: string, pattern: RegExp) {
+    return Array.from(text.matchAll(pattern)).some((match) => !commented(text, match.index ?? 0))
+  }
+
+  function commented(text: string, index: number) {
+    const start = text.lastIndexOf("\n", index - 1) + 1
+    return text.slice(start, index).trimStart().startsWith("//")
   }
 
   function keys(value: RecordValue, allowed: string[]) {
