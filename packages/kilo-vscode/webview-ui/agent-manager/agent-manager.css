@@ -2919,6 +2919,8 @@ body.am-wt-dragging-active * {
 
 /* Fixed footer for the submit button */
 .am-nv-dialog-footer {
+  display: flex;
+  justify-content: flex-end;
   flex-shrink: 0;
   padding: 14px 20px 20px;
 }
@@ -3285,7 +3287,7 @@ body.am-wt-dragging-active * {
 }
 
 .am-nv-submit {
-  width: 100%;
+  width: auto;
   justify-content: center;
 }
 
