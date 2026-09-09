@@ -895,6 +895,7 @@ export interface AgentManagerStateMessage {
   terminalDestination?: TerminalDestination
   terminalFont?: TerminalFont
   browserAutomation?: boolean
+  restricted?: boolean
 }
 
 // A registered Agent Manager project as shown in the sidebar

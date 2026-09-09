@@ -57,6 +57,8 @@ export const dict = {
   "agentManager.project.add": "Projekt hinzufügen",
   "agentManager.project.remove": "Aus Agent Manager entfernen",
   "agentManager.project.missing": "Repository nicht gefunden",
+  "agentManager.project.restricted":
+    "Ihr aktueller VS Code-Arbeitsbereich ist Ihr Home-Ordner oder das Dateisystemstammverzeichnis. Öffnen Sie einen bestimmten Projektordner in VS Code, um den Agent Manager zu verwenden.",
   "agentManager.notGitRepo": "Kein Git-Repository",
 
   "agentManager.updateBase.title": "Von der Basis aktualisieren",

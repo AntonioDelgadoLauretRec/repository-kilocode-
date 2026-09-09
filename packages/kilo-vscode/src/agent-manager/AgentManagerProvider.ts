@@ -83,6 +83,7 @@ import { focusPanelPrompt, revealPanel } from "./focus-panel"
 import type { BrowserBroker } from "../services/browser-automation"
 import { createBrowserLifecycle } from "./browser-lifecycle"
 import { handleSessionLifecycle } from "./session-lifecycle"
+import { isRestrictedRoot } from "./home-workspace"
 export class AgentManagerProvider implements Disposable {
   public static readonly viewType = "kilo-code.new.AgentManagerPanel"
   private panel: PanelContext | undefined
@@ -444,13 +445,11 @@ export class AgentManagerProvider implements Disposable {
     }
     const state = ctx.stateManager()
     const init = await initContextState(ctx, (...args) => this.log(...args))
-
     if (!init.ok) {
       this.postToWebview({ type: "error", message: "Agent Manager state could not be recovered." })
       this.pushState()
       return
     }
-
     // When the .kilocode → .kilo migration rewrote git worktree refs, nudge
     // VS Code's git extension to re-discover them. Without this, worktrees
     // won't appear in Source Control until the next VS Code restart.
@@ -463,7 +462,6 @@ export class AgentManagerProvider implements Disposable {
     await pruneSubagents(state, this.panel?.sessions, (message) => this.log(message))
     for (const s of state.getSessions()) this.panel?.sessions.trackSession(s.id)
     this.pushState()
-
     // Always list sessions, even when the state tracks none: the backend may
     // still hold sessions for this project, and without the listing the
     // sessionsLoaded message never reaches the webview, leaving the sidebar
@@ -1410,6 +1408,7 @@ export class AgentManagerProvider implements Disposable {
       terminalFont: readTerminalFont(),
       browserAutomation: this.host.browserAutomation(),
       isGitRepo: true,
+      restricted: isRestrictedRoot(target.root),
       defaultBaseBranch: state.getDefaultBaseBranch(),
       activeTarget: state.getActiveTarget(),
       ...(active ? this.runStateFor(target) : {}),
@@ -1440,6 +1439,7 @@ export class AgentManagerProvider implements Disposable {
       terminalDestination: this.destination.value(),
       terminalFont: readTerminalFont(),
       isGitRepo: false,
+      restricted: isRestrictedRoot(this.contexts.active()?.root),
       runStatuses: [],
       runScriptConfigured: false,
       browserAutomation: this.host.browserAutomation(),
