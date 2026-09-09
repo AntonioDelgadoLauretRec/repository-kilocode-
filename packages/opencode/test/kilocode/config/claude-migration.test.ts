@@ -121,7 +121,12 @@ describe("Claude global configuration migration", () => {
     await fs.writeFile(path.join(home, ".claude", "skills", "unsafe", "helper.txt"), "dependency")
     await fs.writeFile(
       path.join(home, ".claude.json"),
-      JSON.stringify({ mcpServers: { existing: { command: "ignored" } } }),
+      JSON.stringify({
+        mcpServers: {
+          existing: { command: "ignored" },
+          imported: { command: "npx", args: ["example-mcp"] },
+        },
+      }),
     )
     await fs.writeFile(path.join(config, "AGENTS.md"), "existing rules")
     await fs.writeFile(
@@ -150,8 +155,15 @@ describe("Claude global configuration migration", () => {
             reason: "mcp-name-conflict",
             status: "skipped",
           }),
+          expect.objectContaining({ category: "mcp", name: "imported", status: "imported" }),
         ]),
       )
+      const native = JSON.parse(await fs.readFile(path.join(config, "kilo.jsonc"), "utf8"))
+      expect(native.mcp.imported).toEqual({
+        type: "local",
+        command: ["npx", "example-mcp"],
+        enabled: false,
+      })
       await fs.writeFile(path.join(home, ".claude", "CLAUDE.md"), "changed source")
       await fs.mkdir(path.join(home, ".claude", "skills", "new"))
       await fs.writeFile(path.join(home, ".claude", "skills", "new", "SKILL.md"), "new skill")

@@ -1,7 +1,7 @@
 import matter from "gray-matter"
 import { createHash, randomUUID } from "crypto"
 import { existsSync } from "fs"
-import { link, lstat, mkdir, opendir, readFile, rename, rm, stat, writeFile } from "fs/promises"
+import { link, lstat, mkdir, opendir, readFile, rename, rm, writeFile } from "fs/promises"
 import path from "path"
 import { ConfigMCPV1 as ConfigMCP } from "@opencode-ai/core/v1/config/mcp"
 import { Global } from "@opencode-ai/core/global"
@@ -497,7 +497,6 @@ export namespace ClaudeMigration {
     const target = await globalTarget(base.config)
     if (!target.safe) return false
     if (!(await safeDestination(target.path, base.config))) return false
-    if (target.exists && ((await stat(target.path)).mode & 0o077) !== 0) return false
     const before = target.exists ? await readFile(target.path, "utf8") : "{}"
     const revision = hash(target.path, target.exists, target.exists ? before : "")
     try {
