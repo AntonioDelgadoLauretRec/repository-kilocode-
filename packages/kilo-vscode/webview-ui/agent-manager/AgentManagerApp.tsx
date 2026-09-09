@@ -2277,6 +2277,7 @@ const AgentManagerContent: Component = () => {
             onCreate={creation.schedule}
             onSelect={activateSelection}
             onOpenComments={(projectId, worktreeId) => comments.open({ projectId, worktreeId })}
+            onOpenPR={(projectId, worktreeId) => comments.open({ projectId, worktreeId })}
             bindings={kb()}
             t={t}
             onSearchRef={(ref) => (sidebarSearchMenu = ref)}
@@ -2295,6 +2296,7 @@ const AgentManagerContent: Component = () => {
             selectLocal={selectLocal}
             selectWorktree={selectWorktree}
             onOpenComments={(worktreeId) => comments.open({ projectId: activeProjectId(), worktreeId })}
+            onOpenPR={(worktreeId) => comments.open({ projectId: activeProjectId(), worktreeId })}
             activityFor={(id) => (id === null ? activity.local() : activity.agent(id))}
             repoBranch={repoBranch}
             localStats={localStats}

@@ -17,6 +17,24 @@
   }
 }
 
+[data-slot="task-agent-avatar"][data-clickable="true"] {
+  display: inline-flex;
+  flex: 0 0 18px;
+  width: 18px;
+  height: 18px;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+
+  [data-component="agent-avatar"] {
+    transition: filter 120ms ease;
+  }
+
+  &:hover [data-component="agent-avatar"] {
+    filter: drop-shadow(0 0 3px currentColor);
+  }
+}
+
 [data-component="tool-output"][data-scrollable]:has([data-component="task-tools"]) {
   margin-inline: -6px;
   max-height: 200px;

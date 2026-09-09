@@ -337,14 +337,13 @@ const resolvedRow = rows.find((node) => /reviewer/.test(node.textContent ?? ""))
 assert.ok(resolvedRow, "resolved row is present")
 assert.equal(resolvedRow!.getAttribute("aria-expanded"), "false")
 assert.ok(resolvedRow!.querySelector(".am-pr-comment-preview"), "collapsed row shows a preview")
-const summary = resolvedRow!.querySelector(".am-pr-comment-preview")!.textContent
 assert.doesNotMatch(root.textContent ?? "", /second paragraph only shows when expanded/)
 
 // The row expands into a full card whose unresolve action is enabled.
 ;(resolvedRow as HTMLButtonElement).click()
 await window.happyDOM.waitUntilComplete()
 assert.equal(resolvedRow!.getAttribute("aria-expanded"), "true")
-assert.equal(resolvedRow!.querySelector(".am-pr-comment-preview")!.textContent, summary)
+assert.equal(resolvedRow!.querySelector(".am-pr-comment-preview"), null)
 assert.match(root.textContent ?? "", /second paragraph only shows when expanded/)
 const card = resolvedRow!.parentElement!
 assert.equal(card.querySelector(".am-pr-diff-file")!.textContent, "packages/kilo-ui/src/components/other.tsx:3")
@@ -936,7 +935,7 @@ const release = render(
             openKeybind=""
             pr={badge()}
             onOpenComments={() => navigation.open(target)}
-            onOpenPR={() => clicked.push("external")}
+            onOpenPR={() => navigation.open(target)}
             onClick={() => clicked.push("row")}
             onDelete={noop}
             onStartRename={noop}
@@ -966,6 +965,16 @@ const release = render(
   second,
 )
 const indicator = () => second.querySelector<HTMLButtonElement>(".am-pr-badge-comments")
+second.querySelector<HTMLElement>(".am-pr-badge")!.click()
+setProject(target.projectId)
+setSelection(target.worktreeId)
+await window.happyDOM.waitUntilComplete()
+assert.equal(visible(), true)
+assert.deepEqual(clicked, ["select", "refresh"])
+setVisible(false)
+clicked.length = 0
+setProject("project-a")
+setSelection("local")
 assert.equal(indicator(), null)
 setBadge({ ...base, unresolvedThreads: 1 })
 assert.equal(indicator()?.getAttribute("aria-label"), "1 unresolved review thread")
@@ -1083,7 +1092,7 @@ assert.equal(commentState(target.worktreeId).open, true)
 assert.equal(jumps, 1)
 
 // Conversation comments render at the bottom of the PR panel
-assert.match(second.textContent ?? "", /PR Comments/)
+assert.match(second.textContent ?? "", /Conversation/)
 assert.match(second.textContent ?? "", /lead-reviewer/)
 assert.match(second.textContent ?? "", /Consider simplifying the signature serializer/)
 assert.match(second.textContent ?? "", /Approved/)
@@ -1154,7 +1163,7 @@ await window.happyDOM.waitUntilComplete()
 assert.equal(second.querySelector(".am-pr-panel-title")?.textContent, "Updated")
 assert.equal(jumps, 2)
 second.querySelector<HTMLElement>(".am-pr-badge-number")!.click()
-assert.equal(clicked.at(-1), "external")
+assert.equal(clicked.at(-1), "refresh")
 assert.ok(!clicked.includes("row"))
 setBadge((prev) => ({ ...prev, unresolvedThreads: 0 }))
 assert.equal(indicator(), null)

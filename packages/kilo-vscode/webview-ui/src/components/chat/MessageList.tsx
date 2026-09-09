@@ -89,6 +89,7 @@ interface MessageListProps {
   onShowHistory?: () => void
   onForkMessage?: (sessionId: string, messageId: string) => void
   onEditMessage?: (sessionID: string, messageID: string) => void
+  onScrollToBottomReady?: (handler: (() => void) | undefined) => void
   /** Non-tool question requests to render inline at the bottom of the message list */
   questions?: () => QuestionRequest[]
   /** Non-tool suggestion requests to render inline at the bottom of the message list */
@@ -126,6 +127,8 @@ export const MessageList: Component<MessageListProps> = (props) => {
   const autoScroll = createAutoScroll({
     working: () => session.status() !== "idle",
   })
+  props.onScrollToBottomReady?.(() => autoScroll.resume())
+  onCleanup(() => props.onScrollToBottomReady?.(undefined))
   const [announcement, setAnnouncement] = createSignal("")
   createEffect(
     (prev: { sid?: string; working: boolean }) => {
