@@ -964,7 +964,6 @@ describe("KiloSnapshotTrack default hooks", () => {
       Effect.gen(function* () {
         const test = yield* TestInstance
         const ctx = yield* requireInstance
-
         const session = yield* Effect.promise(() =>
           AppRuntime.runPromise(
             Session.Service.use((svc) => svc.create({ title: "snapshot progress" })).pipe(
@@ -1019,8 +1018,8 @@ describe("KiloSnapshotTrack default hooks", () => {
         const progress = seen.filter(
           (event) => event.payload?.type === "message.part.updated" || event.payload?.type === "message.part.removed",
         )
-        expect(progress.some((event) => event.payload.type === "message.part.updated")).toBe(true)
-        expect(progress.some((event) => event.payload.type === "message.part.removed")).toBe(true)
+        expect(progress.some((event) => event.payload?.type === "message.part.updated")).toBe(true)
+        expect(progress.some((event) => event.payload?.type === "message.part.removed")).toBe(true)
         for (const event of progress) expect(event.directory).toBe(test.directory)
       }),
     { git: true },
