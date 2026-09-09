@@ -11,6 +11,14 @@ const icons: Record<string, { path: string; viewBox: string }> = {
     // Stroked at 1.25 on the 20-unit grid (1px at 16px) to match the other outline icons.
     path: `<circle cx="4.6875" cy="4.0625" r="1.875" stroke="currentColor" stroke-width="1.25"/><circle cx="4.6875" cy="15.9375" r="1.875" stroke="currentColor" stroke-width="1.25"/><circle cx="15.9375" cy="15.9375" r="1.875" stroke="currentColor" stroke-width="1.25"/><path d="M4.6875 5.9375V14.0625M15.9375 14.0625V6.25A2.5 2.5 0 0 0 13.4375 3.75H9.6875M11.5625 1.875L9.6875 3.75L11.5625 5.625" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>`,
   },
+  "git-commit": {
+    viewBox: "0 0 20 20",
+    path: `<circle cx="10" cy="10" r="2.5" stroke="currentColor" stroke-width="1.25"/><path d="M1.875 10H7.5M12.5 10H18.125" stroke="currentColor" stroke-width="1.25" stroke-linecap="square"/>`,
+  },
+  "git-merge": {
+    viewBox: "0 0 20 20",
+    path: `<circle cx="5" cy="5" r="2.5" stroke="currentColor" stroke-width="1.25"/><circle cx="15" cy="15" r="2.5" stroke="currentColor" stroke-width="1.25"/><path d="M5 17.5V7.5A7.5 7.5 0 0 0 12.5 15" stroke="currentColor" stroke-width="1.25" stroke-linecap="square"/>`,
+  },
   refresh: {
     viewBox: "0 0 20 20",
     path: `<path d="M17.0837 10.0003C17.0837 13.9123 13.9123 17.0837 10.0003 17.0837C6.08833 17.0837 2.91699 13.9123 2.91699 10.0003C2.91699 6.08833 6.08833 2.91699 10.0003 2.91699C12.3717 2.91699 14.4722 4.07428 15.7698 5.83366M15.7698 5.83366V2.91699M15.7698 5.83366H12.8532" stroke="currentColor" stroke-linecap="square"/>`,

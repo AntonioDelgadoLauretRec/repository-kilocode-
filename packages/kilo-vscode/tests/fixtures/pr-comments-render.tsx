@@ -337,14 +337,13 @@ const resolvedRow = rows.find((node) => /reviewer/.test(node.textContent ?? ""))
 assert.ok(resolvedRow, "resolved row is present")
 assert.equal(resolvedRow!.getAttribute("aria-expanded"), "false")
 assert.ok(resolvedRow!.querySelector(".am-pr-comment-preview"), "collapsed row shows a preview")
-const summary = resolvedRow!.querySelector(".am-pr-comment-preview")!.textContent
 assert.doesNotMatch(root.textContent ?? "", /second paragraph only shows when expanded/)
 
 // The row expands into a full card whose unresolve action is enabled.
 ;(resolvedRow as HTMLButtonElement).click()
 await window.happyDOM.waitUntilComplete()
 assert.equal(resolvedRow!.getAttribute("aria-expanded"), "true")
-assert.equal(resolvedRow!.querySelector(".am-pr-comment-preview")!.textContent, summary)
+assert.equal(resolvedRow!.querySelector(".am-pr-comment-preview"), null)
 assert.match(root.textContent ?? "", /second paragraph only shows when expanded/)
 const card = resolvedRow!.parentElement!
 assert.equal(card.querySelector(".am-pr-diff-file")!.textContent, "packages/kilo-ui/src/components/other.tsx:3")
@@ -1083,7 +1082,7 @@ assert.equal(commentState(target.worktreeId).open, true)
 assert.equal(jumps, 1)
 
 // Conversation comments render at the bottom of the PR panel
-assert.match(second.textContent ?? "", /PR Comments/)
+assert.match(second.textContent ?? "", /Conversation/)
 assert.match(second.textContent ?? "", /lead-reviewer/)
 assert.match(second.textContent ?? "", /Consider simplifying the signature serializer/)
 assert.match(second.textContent ?? "", /Approved/)

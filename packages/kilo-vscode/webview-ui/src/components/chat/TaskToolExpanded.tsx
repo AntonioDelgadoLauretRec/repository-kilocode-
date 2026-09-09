@@ -207,7 +207,20 @@ const TaskToolRenderer: Component<ToolProps> = (props) => {
     <div data-component="tool-part-wrapper">
       <BasicTool
         icon="task"
-        iconNode={<AgentAvatar id={childSessionId() ?? ""} status={avatar()} />}
+        iconNode={
+          <Show when={childSessionId()} fallback={<AgentAvatar id="" status={avatar()} />}>
+            {(id) => (
+              <span
+                data-slot="task-agent-avatar"
+                data-clickable="true"
+                title={worktree ? "Open sub-agent in panel" : "Open sub-agent in tab"}
+                onClick={openInTab}
+              >
+                <AgentAvatar id={id()} status={avatar()} />
+              </span>
+            )}
+          </Show>
+        }
         status={props.status}
         tool={props.tool}
         partID={props.partID}
