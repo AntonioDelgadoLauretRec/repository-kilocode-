@@ -1846,7 +1846,6 @@ export class AgentManagerProvider implements Disposable {
       (...args) => this.log(...args),
     )
   }
-
   public postMessage(message: unknown): void {
     this.panel?.postMessage(message)
   }
@@ -1867,7 +1866,6 @@ export class AgentManagerProvider implements Disposable {
     }
     this.pushState()
   }
-
   private async disposeAsync(): Promise<void> {
     await this.stateReady?.catch((err) => this.log("dispose: stateReady rejected:", err))
     await this.contexts.dispose()
