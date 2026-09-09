@@ -52,6 +52,13 @@
   }
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .am-pr-panel-badge.am-pr-badge-pending {
+    animation: none;
+    opacity: 1;
+  }
+}
+
 .am-pr-panel-title {
   font-size: var(--kilo-font-size-14);
   color: var(--vscode-foreground);
