@@ -344,6 +344,8 @@ export const dict = {
   "agentManager.pr.summary.comments.other": "{{count}} comments",
   "agentManager.pr.summary.conversation.one": "{{count}} PR comment",
   "agentManager.pr.summary.conversation.other": "{{count}} PR comments",
+  "agentManager.pr.summary.approvedCount.one": "{{count}} approval",
+  "agentManager.pr.summary.approvedCount.other": "{{count}} approvals",
   "agentManager.pr.summary.jump.checks": "Go to checks",
   "agentManager.pr.summary.jump.comments": "Go to comments",
   "agentManager.pr.summary.jump.conversation": "Go to conversation",
