@@ -54,6 +54,9 @@ export const anacondaDesktopDict = {
 } as const
 
 export const dict = {
+  "session.goal.complete": "Voltooid (gemeld door het model)",
+  "session.goal.blocked": "Geblokkeerd",
+  "session.goal.restart": "Doel opnieuw starten",
   ...anacondaDesktopDict,
   ...cloudProviderDict,
   "task.swarm.title": "Bord",
@@ -749,6 +752,14 @@ export const dict = {
   "session.outcome.interrupted": "Beurt onderbroken",
   "session.outcome.error": "Beurt mislukt",
   "session.outcome.finish": "Voltooiingsreden: {{reason}}",
+  "session.goal.label": "Doel",
+  "prompt.goal.set": "Doel instellen",
+  "prompt.goal.start": "Doel starten",
+  "session.goal.active": "Actief",
+  "session.goal.paused": "Gepauzeerd",
+  "session.goal.pause": "Pauzeren",
+  "session.goal.resume": "Hervatten",
+  "session.goal.clear": "Doel wissen",
   "session.costAlert.header": "Sessiekostenwaarschuwing",
   "session.costAlert.continue": "Doorgaan",
   "session.costAlert.question":
@@ -853,7 +864,17 @@ export const dict = {
   "settings.notifications.enable.title": "Geluidsmeldingen inschakelen",
   "settings.notifications.enable.description":
     "Geluiden afspelen wanneer sessies worden voltooid, er een fout optreedt of uw invoer vereist is",
+  "settings.notifications.workbench.title": "VS Code-meldingen inschakelen",
+  "settings.notifications.workbench.description":
+    "VS Code-meldingen tonen wanneer Kilo een taak voltooit of uw invoer vereist",
+  "settings.notifications.os.title": "Besturingssysteemmeldingen inschakelen",
+  "settings.notifications.os.description":
+    "Systeemeigen meldingswaarschuwingen tonen wanneer Kilo een taak voltooit of uw invoer vereist terwijl VS Code niet actief is.",
   "settings.notifications.testSound": "Testen",
+  "settings.notifications.testOS": "Testen",
+  "settings.notifications.testOS.testing": "Testmelding wordt verzonden…",
+  "settings.notifications.testOS.success": "Testmelding verzonden.",
+  "settings.notifications.testOS.error": "Testmelding mislukt",
   "settings.notifications.sound.default": "Standaard",
   "settings.notifications.sound.system": "Systeem",
   "settings.notifications.sound.description":
@@ -971,6 +992,9 @@ export const dict = {
   "settings.agentBehaviour.instructionFiles": "Aanvullende Instructiebestanden",
   "settings.agentBehaviour.instructionFiles.description":
     "Paden naar aanvullende instructiebestanden die zijn opgenomen in de systeem prompt",
+  "settings.agentBehaviour.pushFixes.title": "Pull request-fixes pushen",
+  "settings.agentBehaviour.pushFixes.description":
+    "Wanneer je CI-fouten of reviewopmerkingen van een pull request naar de agent stuurt, of een worktree bijwerkt vanaf de basis, vraag de agent dan te committen en te pushen zodat de pull request wordt bijgewerkt. Toestemmingsvragen blijven gelden. Schakel uit om handmatig te committen.",
   "settings.agentBehaviour.claudeCompat.heading": "Claude Code-compatibiliteit",
   "settings.agentBehaviour.claudeCompat.title": "Claude Code-bestanden laden",
   "settings.agentBehaviour.claudeCompat.description":

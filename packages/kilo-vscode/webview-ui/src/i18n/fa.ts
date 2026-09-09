@@ -54,6 +54,9 @@ export const anacondaDesktopDict = {
 } as const
 
 export const dict = {
+  "session.goal.complete": "تکمیل‌شده (گزارش مدل)",
+  "session.goal.blocked": "مسدود",
+  "session.goal.restart": "شروع مجدد هدف",
   ...anacondaDesktopDict,
   ...cloudProviderDict,
   "task.swarm.title": "برد",
@@ -709,6 +712,14 @@ export const dict = {
   "session.outcome.interrupted": "نوبت قطع شد.",
   "session.outcome.error": "نوبت با شکست مواجه شد.",
   "session.outcome.finish": "دلیل فنی پایان: {{reason}}",
+  "session.goal.label": "هدف",
+  "prompt.goal.set": "تعیین هدف",
+  "prompt.goal.start": "شروع هدف",
+  "session.goal.active": "فعال",
+  "session.goal.paused": "متوقف",
+  "session.goal.pause": "توقف موقت",
+  "session.goal.resume": "ازسرگیری",
+  "session.goal.clear": "پاک کردن هدف",
   "session.costAlert.header": "هشدار هزینه جلسه",
   "session.costAlert.continue": "ادامه",
   "session.costAlert.question": "هزینه این جلسه از آستانه هشدار {{limit}} شما فراتر رفت و {{cost}} شد. ادامه می‌دهید؟",
@@ -839,7 +850,17 @@ export const dict = {
   "settings.notifications.sounds": "صداها",
   "settings.notifications.enable.title": "فعال‌سازی اعلان‌های صوتی",
   "settings.notifications.enable.description": "پخش صدا هنگام تکمیل جلسات، بروز خطا یا نیاز به ورودی شما",
+  "settings.notifications.workbench.title": "فعال‌سازی اعلان‌های VS Code",
+  "settings.notifications.workbench.description":
+    "نمایش اعلان‌های VS Code هنگام تکمیل یک وظیفه توسط Kilo یا نیاز به ورودی شما",
+  "settings.notifications.os.title": "فعال‌سازی اعلان‌های سیستم‌عامل",
+  "settings.notifications.os.description":
+    "نمایش هشدارهای اعلان بومی سیستم‌عامل هنگام تکمیل یک وظیفه توسط Kilo یا نیاز به ورودی شما در زمانی که VS Code فعال نیست.",
   "settings.notifications.testSound": "آزمایش",
+  "settings.notifications.testOS": "آزمایش",
+  "settings.notifications.testOS.testing": "در حال ارسال اعلان آزمایشی…",
+  "settings.notifications.testOS.success": "اعلان آزمایشی ارسال شد.",
+  "settings.notifications.testOS.error": "ارسال اعلان آزمایشی ناموفق بود",
   "settings.notifications.sound.default": "پیش‌فرض",
   "settings.notifications.sound.system": "سیستم",
   "settings.notifications.sound.description":
@@ -947,6 +968,9 @@ export const dict = {
   "settings.agentBehaviour.instructionFiles": "فایل‌های دستورالعمل اضافی",
   "settings.agentBehaviour.instructionFiles.description":
     "مسیرهای فایل‌های دستورالعمل اضافی که در پرامپت سیستم گنجانده می‌شوند",
+  "settings.agentBehaviour.pushFixes.title": "پوش کردن اصلاحات درخواست ادغام",
+  "settings.agentBehaviour.pushFixes.description":
+    "وقتی خطاهای CI یا نظرات بازبینی یک درخواست ادغام را برای عامل می‌فرستید، یا یک worktree را از شاخه پایه به‌روز می‌کنید، از عامل بخواهید کامیت و پوش کند تا درخواست ادغام به‌روز شود. درخواست‌های مجوز همچنان اعمال می‌شوند. برای کامیت دستی این گزینه را خاموش کنید.",
   "settings.agentBehaviour.claudeCompat.heading": "سازگاری با Claude Code",
   "settings.agentBehaviour.claudeCompat.title": "بارگذاری فایل‌های Claude Code",
   "settings.agentBehaviour.claudeCompat.description":

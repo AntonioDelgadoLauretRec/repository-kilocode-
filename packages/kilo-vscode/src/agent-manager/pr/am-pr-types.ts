@@ -73,6 +73,44 @@ export interface GhReviewWithBody {
   reactionGroups?: GhReactionGroup[]
 }
 
+export interface GhCommitAuthor {
+  user?: GhAuthor
+  name?: string
+}
+
+export interface GhCommit {
+  oid?: string
+  abbreviatedOid?: string
+  messageHeadline?: string
+  committedDate?: string
+  url?: string
+  author?: GhCommitAuthor
+}
+
+/**
+ * One node of `PullRequest.timelineItems`. Fields are a union of the selected
+ * inline fragments, so only `__typename` plus the matching fields are set.
+ */
+export interface GhTimelineItem {
+  __typename?: string
+  id?: string
+  author?: GhAuthor & { __typename?: string }
+  body?: string
+  createdAt?: string
+  url?: string
+  reactionGroups?: GhReactionGroup[]
+  viewerDidAuthor?: boolean
+  viewerCanUpdate?: boolean
+  viewerCanDelete?: boolean
+  state?: string
+  submittedAt?: string
+  commit?: GhCommit
+  actor?: GhAuthor
+  mergeRefName?: string
+  beforeCommit?: { abbreviatedOid?: string }
+  afterCommit?: { abbreviatedOid?: string }
+}
+
 export interface PRResult {
   id?: string
   number: number
@@ -80,6 +118,8 @@ export interface PRResult {
   headRefOid?: string
   title: string
   body: string
+  author?: string
+  createdAt?: string
   url: string
   state: PRState
   review: ReviewDecision | null

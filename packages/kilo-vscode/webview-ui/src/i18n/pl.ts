@@ -54,6 +54,9 @@ export const anacondaDesktopDict = {
 } as const
 
 export const dict = {
+  "session.goal.complete": "Ukończony (według modelu)",
+  "session.goal.blocked": "Zablokowany",
+  "session.goal.restart": "Uruchom cel ponownie",
   ...anacondaDesktopDict,
   ...cloudProviderDict,
   "task.swarm.title": "Tablica",
@@ -716,6 +719,14 @@ export const dict = {
   "session.outcome.interrupted": "Tura przerwana",
   "session.outcome.error": "Tura nie powiodła się",
   "session.outcome.finish": "Powód zakończenia: {{reason}}",
+  "session.goal.label": "Cel",
+  "prompt.goal.set": "Ustaw cel",
+  "prompt.goal.start": "Rozpocznij cel",
+  "session.goal.active": "Aktywny",
+  "session.goal.paused": "Wstrzymany",
+  "session.goal.pause": "Wstrzymaj",
+  "session.goal.resume": "Wznów",
+  "session.goal.clear": "Wyczyść cel",
   "session.costAlert.header": "Alert kosztu sesji",
   "session.costAlert.continue": "Kontynuuj",
   "session.costAlert.question":
@@ -813,7 +824,17 @@ export const dict = {
   "settings.notifications.enable.title": "Włącz powiadomienia dźwiękowe",
   "settings.notifications.enable.description":
     "Odtwarzaj dźwięki, gdy sesje się zakończą, wystąpi błąd lub będzie potrzebna Twoja reakcja",
+  "settings.notifications.workbench.title": "Włącz powiadomienia VS Code",
+  "settings.notifications.workbench.description":
+    "Pokazuj powiadomienia VS Code, gdy Kilo ukończy zadanie lub będzie potrzebna Twoja reakcja",
+  "settings.notifications.os.title": "Włącz powiadomienia systemu operacyjnego",
+  "settings.notifications.os.description":
+    "Pokazuj natywne alerty powiadomień systemu operacyjnego, gdy Kilo ukończy zadanie lub będzie potrzebna Twoja reakcja, a VS Code nie jest aktywny.",
   "settings.notifications.testSound": "Testuj",
+  "settings.notifications.testOS": "Testuj",
+  "settings.notifications.testOS.testing": "Wysyłanie powiadomienia testowego…",
+  "settings.notifications.testOS.success": "Wysłano powiadomienie testowe.",
+  "settings.notifications.testOS.error": "Nie udało się wysłać powiadomienia testowego",
   "settings.notifications.sound.default": "Domyślny",
   "settings.notifications.sound.system": "System",
   "settings.notifications.sound.description":
@@ -1018,6 +1039,9 @@ export const dict = {
   "settings.agentBehaviour.instructionFiles": "Dodatkowe pliki instrukcji",
   "settings.agentBehaviour.instructionFiles.description":
     "Ścieżki do dodatkowych plików instrukcji w prompcie systemowym",
+  "settings.agentBehaviour.pushFixes.title": "Wypychaj poprawki pull requesta",
+  "settings.agentBehaviour.pushFixes.description":
+    "Gdy wysyłasz do agenta błędy CI lub komentarze z przeglądu pull requesta, albo aktualizujesz worktree z gałęzi bazowej, poproś go o commit i push, aby pull request został zaktualizowany. Prośby o uprawnienia nadal obowiązują. Wyłącz, aby commitować ręcznie.",
   "settings.agentBehaviour.claudeCompat.heading": "Kompatybilność z Claude Code",
   "settings.agentBehaviour.claudeCompat.title": "Wczytuj pliki Claude Code",
   "settings.agentBehaviour.claudeCompat.description":

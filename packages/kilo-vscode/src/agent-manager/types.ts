@@ -59,7 +59,12 @@ import type {
   PRComment,
   ReviewerState,
   PRReviewer,
+  PRStatus,
   PRConversationComment,
+  PRCommitItem,
+  PREventItem,
+  PREventKind,
+  PRTimelineItem,
   PRReaction,
   PRReactionContent,
   PRMergeMethod,
@@ -78,46 +83,18 @@ export type {
   PRComment,
   ReviewerState,
   PRReviewer,
+  PRStatus,
   PRConversationComment,
+  PRCommitItem,
+  PREventItem,
+  PREventKind,
+  PRTimelineItem,
   PRReaction,
   PRReactionContent,
   PRMergeMethod,
   PRMergeability,
   PRMergeState,
   PRMergeStatus,
-}
-
-export interface PRStatus {
-  viewerDidAuthor?: boolean
-  id?: string
-  number: number
-  baseRefOid?: string
-  headRefOid?: string
-  title: string
-  body?: string
-  url: string
-  state: PRState
-  review: ReviewDecision | null
-  merge?: PRMergeStatus
-  checks: {
-    status: AggregateCheckStatus
-    total: number
-    passed: number
-    failed: number
-    pending: number
-    checks: PRCheck[]
-  }
-  reviewers: PRReviewer[]
-  unresolvedThreads?: number
-  comments?: {
-    total: number
-    unresolved: number
-    comments: PRComment[]
-  }
-  conversation?: PRConversationComment[]
-  additions: number
-  deletions: number
-  files: number
 }
 
 // ---------------------------------------------------------------------------
@@ -185,6 +162,7 @@ interface StateMessage {
   terminalDestination?: TerminalDestination
   terminalFont?: TerminalFont
   browserAutomation?: boolean
+  restricted?: boolean
 }
 
 /** Project catalog pushed to the webview after registry or context changes. */

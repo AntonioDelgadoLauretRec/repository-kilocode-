@@ -620,6 +620,10 @@ export interface TestNotificationMessage {
   sound: string
 }
 
+export interface TestOSNotificationMessage {
+  type: "testOSNotification"
+}
+
 export interface ResetAllSettingsRequest {
   type: "resetAllSettings"
 }
@@ -1358,6 +1362,10 @@ export interface ToggleRemoteMessage {
   type: "toggleRemote"
 }
 
+export interface ToggleCaffeinationMessage {
+  type: "toggleCaffeination"
+}
+
 export interface SetRemoteEnabledMessage {
   type: "setRemoteEnabled"
   enabled: boolean
@@ -1660,6 +1668,7 @@ export type WebviewMessage =
   | OpenSettingsTabRequest
   | RequestNotificationSettingsMessage
   | TestNotificationMessage
+  | TestOSNotificationMessage
   | ResetAllSettingsRequest
   | ResetReadNotificationsRequest
   | SettingsTabChangedMessage
@@ -1787,6 +1796,7 @@ export type WebviewMessage =
   | PersistModelSelectionRequest
   | RequestModelSelectionsMessage
   | ToggleRemoteMessage
+  | ToggleCaffeinationMessage
   | SetRemoteEnabledMessage
   | RequestRemoteStatusMessage
   | ContinueInWorktreeRequest

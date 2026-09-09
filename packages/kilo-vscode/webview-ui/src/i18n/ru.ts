@@ -54,6 +54,9 @@ export const anacondaDesktopDict = {
 } as const
 
 export const dict = {
+  "session.goal.complete": "Завершено (по сообщению модели)",
+  "session.goal.blocked": "Заблокировано",
+  "session.goal.restart": "Перезапустить цель",
   ...anacondaDesktopDict,
   ...cloudProviderDict,
   "task.swarm.title": "Доска",
@@ -757,6 +760,14 @@ export const dict = {
   "session.outcome.interrupted": "Раунд прерван",
   "session.outcome.error": "Раунд завершился с ошибкой",
   "session.outcome.finish": "Причина завершения: {{reason}}",
+  "session.goal.label": "Цель",
+  "prompt.goal.set": "Задать цель",
+  "prompt.goal.start": "Начать работу над целью",
+  "session.goal.active": "Активна",
+  "session.goal.paused": "Приостановлена",
+  "session.goal.pause": "Пауза",
+  "session.goal.resume": "Возобновить",
+  "session.goal.clear": "Очистить цель",
   "session.costAlert.header": "Оповещение о стоимости сессии",
   "session.costAlert.continue": "Продолжить",
   "session.costAlert.question":
@@ -853,7 +864,17 @@ export const dict = {
   "settings.notifications.enable.title": "Включить звуковые уведомления",
   "settings.notifications.enable.description":
     "Воспроизводить звуки при завершении сеансов, возникновении ошибки или необходимости вашего участия",
+  "settings.notifications.workbench.title": "Включить уведомления VS Code",
+  "settings.notifications.workbench.description":
+    "Показывать уведомления VS Code, когда Kilo завершает задачу или требуется ваше участие",
+  "settings.notifications.os.title": "Включить уведомления операционной системы",
+  "settings.notifications.os.description":
+    "Показывать нативные уведомления операционной системы, когда Kilo завершает задачу или требуется ваше участие, а VS Code неактивен.",
   "settings.notifications.testSound": "Тест",
+  "settings.notifications.testOS": "Тест",
+  "settings.notifications.testOS.testing": "Отправка тестового уведомления…",
+  "settings.notifications.testOS.success": "Тестовое уведомление отправлено.",
+  "settings.notifications.testOS.error": "Не удалось отправить тестовое уведомление",
   "settings.notifications.sound.default": "По умолчанию",
   "settings.notifications.sound.system": "Системный",
   "settings.notifications.sound.description":
@@ -1015,6 +1036,9 @@ export const dict = {
     "Правила — это файлы инструкций, которые направляют поведение агента. Они включаются в системный промпт для каждого разговора. Добавьте пути к файлам ниже, чтобы включить дополнительные правила.",
   "settings.agentBehaviour.instructionFiles": "Дополнительные файлы инструкций",
   "settings.agentBehaviour.instructionFiles.description": "Пути к дополнительным файлам инструкций в системном промпте",
+  "settings.agentBehaviour.pushFixes.title": "Отправлять исправления пул-реквеста",
+  "settings.agentBehaviour.pushFixes.description":
+    "Когда вы отправляете агенту ошибки CI или комментарии ревью из пул-реквеста либо обновляете worktree из базовой ветки, попросить его сделать коммит и push, чтобы пул-реквест обновился. Запросы разрешений по-прежнему действуют. Отключите, чтобы делать коммиты вручную.",
   "settings.agentBehaviour.claudeCompat.heading": "Совместимость с Claude Code",
   "settings.agentBehaviour.claudeCompat.title": "Загружать файлы Claude Code",
   "settings.agentBehaviour.claudeCompat.description":

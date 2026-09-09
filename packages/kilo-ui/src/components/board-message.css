@@ -31,6 +31,43 @@
   [data-slot="board-route-recipient-icon"] {
     display: inline-flex;
   }
+
+  /* Parent session marker: the spinner grid, static, in the avatar slot size. */
+  .board-route-parent {
+    width: 18px;
+    color: var(--text-weak);
+
+    > rect {
+      animation: none !important;
+    }
+  }
+}
+
+/* Clickable avatars appear both inside a route and as a tool-header stack, so
+   these rules stay outside the route block. */
+[data-slot="board-route-avatar"][data-clickable="true"] {
+  display: inline-flex;
+  flex: 0 0 18px;
+  width: 18px;
+  height: 18px;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+
+  /* The avatar owns its hue, so the glow takes that agent's color. */
+  [data-component="agent-avatar"] {
+    transition: filter 120ms ease;
+  }
+
+  &:hover [data-component="agent-avatar"] {
+    filter: drop-shadow(0 0 3px currentColor);
+  }
+
+  &:focus-visible {
+    border-radius: 3px;
+    outline: 1px solid var(--border-focus, var(--vscode-focusBorder, #007fd4));
+    outline-offset: 1px;
+  }
 }
 
 [data-component="board-messages"] {
@@ -66,7 +103,7 @@
 @container (max-width: 260px) {
   [data-component="board-route"] {
     display: grid;
-    grid-template-columns: 16px auto minmax(0, 1fr);
+    grid-template-columns: 18px auto minmax(0, 1fr);
     gap: 4px 6px;
 
     .board-route-member {
