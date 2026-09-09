@@ -2175,7 +2175,6 @@ export const PRPanelConversation: Story = {
           author="octocat"
           createdAt={Date.now() - 60 * 60 * 1000}
           items={prConversation}
-
           onOpenUrl={() => {}}
         />
       </div>
