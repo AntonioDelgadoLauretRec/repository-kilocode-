@@ -324,8 +324,7 @@ export class PRStatusPoller {
         this.fetchThreads(pr.number, wt.path, full),
       ])
       if (this.stale(generation)) return
-      if (threads && (threads.baseRefOid !== pr.baseRefOid || threads.headRefOid !== pr.headRefOid))
-        this.prCache.delete(this.key(branch ?? wt.branch, wt.path))
+      this.invalidateThreadCache(pr, threads, branch ?? wt.branch, wt.path)
 
       const merge = mergeStatus(pr.merge, repo, this.options.getPRMergeMethod?.(`${repo.owner}/${repo.name}`))
       const status: PRStatus = {
@@ -370,6 +369,17 @@ export class PRStatusPoller {
     if (this.lastHash.get(worktreeId) === hash) return
     this.lastHash.set(worktreeId, hash)
     this.options.onStatus(worktreeId, null, undefined, branch)
+  }
+
+  private invalidateThreadCache(
+    pr: PRResult,
+    threads: { baseRefOid?: string; headRefOid?: string } | undefined,
+    branch: string,
+    cwd: string,
+  ): void {
+    if (!threads) return
+    if (threads.baseRefOid === pr.baseRefOid && threads.headRefOid === pr.headRefOid) return
+    this.prCache.delete(this.key(branch, cwd))
   }
 
   /**
