@@ -380,7 +380,7 @@ export function signature(pr: PRStatus): string {
       pr.checks.total,
       pr.checks.checks.map((check) => [check.name, check.status, check.url ?? "", check.duration ?? ""]),
     ],
-    pr.reviewers.map((r) => [r.login, r.state]),
+    pr.reviewers.map((r) => [r.login, r.state, r.avatar ?? ""]),
     pr.body ?? "",
     [
       pr.comments?.total ?? null,

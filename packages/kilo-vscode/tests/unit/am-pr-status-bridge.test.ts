@@ -178,12 +178,21 @@ describe("PRStatusPoller batched GitHub queries", () => {
         pr: { number: number; reviewers?: Array<{ login: string; state: string; avatar?: string }> },
         cwd: string,
       ) => Promise<Array<{ login: string; state: string; avatar?: string }>>
-      fetchReviewers: (number: number, cwd: string) => Promise<Array<{ login: string; state: string; avatar?: string }>>
+      fetchReviewers: (
+        number: number,
+        cwd: string,
+      ) => Promise<{
+        items: Array<{ login: string; state: string; avatar?: string }>
+        ok: boolean
+      }>
     }
     const fetches: number[] = []
     internal.fetchReviewers = async (number) => {
       fetches.push(number)
-      return [{ login: "eshurakov", state: "commented", avatar: "https://avatar/eshurakov" }]
+      return {
+        items: [{ login: "eshurakov", state: "commented", avatar: "https://avatar/eshurakov" }],
+        ok: true,
+      }
     }
     const result = [{ login: "eshurakov", state: "approved", avatar: "https://avatar/eshurakov" }]
 
