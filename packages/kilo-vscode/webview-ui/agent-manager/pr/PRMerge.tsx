@@ -144,6 +144,20 @@ export function PRMerge(props: Props) {
     if (state() === "clean") return t("agentManager.pr.merge.ready")
     return t("agentManager.pr.merge.checking")
   }
+  const statusHint = () => {
+    if (merge()?.mergeable === "conflicting") return t("agentManager.pr.merge.conflictsHint")
+    if (state() === "behind") return t("agentManager.pr.merge.behindHint")
+    if (state() === "blocked") return t("agentManager.pr.merge.blockedHint")
+    if (state() === "unstable") return t("agentManager.pr.merge.unstableHint")
+    if (state() === "draft") return t("agentManager.pr.merge.draftHint")
+    return undefined
+  }
+  const footerNote = () => {
+    if (merge()?.auto) return t("agentManager.pr.merge.autoNote")
+    if (state() === "clean") return undefined
+    if (auto()) return t("agentManager.pr.merge.autoMethodNote", { method: label(selected(), t) })
+    return t("agentManager.pr.merge.unavailableNote")
+  }
   const statusIcon = () => {
     if (merge()?.mergeable === "conflicting" || state() === "unstable" || state() === "behind") return "warning"
     if (state() === "clean") return "circle-check"
@@ -194,7 +208,7 @@ export function PRMerge(props: Props) {
                     >
                       {state() === "clean"
                         ? t("agentManager.pr.merge.button", { method: label(selected(), t) })
-                        : t("agentManager.pr.merge.autoButton", { method: label(selected(), t) })}
+                        : t("agentManager.pr.merge.autoButton")}
                     </Button>
                     <DropdownMenu gutter={4} placement="bottom-end">
                       <DropdownMenu.Trigger
@@ -206,14 +220,6 @@ export function PRMerge(props: Props) {
                       </DropdownMenu.Trigger>
                       <DropdownMenu.Portal>
                         <DropdownMenu.Content class="am-split-menu">
-                          <Show when={auto()}>
-                            <DropdownMenu.Item onSelect={() => mergePR(true)}>
-                              <span class="am-menu-check" aria-hidden="true" />
-                              <DropdownMenu.ItemLabel>
-                                {t("agentManager.pr.merge.autoButton", { method: label(selected(), t) })}
-                              </DropdownMenu.ItemLabel>
-                            </DropdownMenu.Item>
-                          </Show>
                           <For each={methods()}>
                             {(item) => (
                               <DropdownMenu.Item onSelect={() => setChosen(item)}>
@@ -238,8 +244,8 @@ export function PRMerge(props: Props) {
                   </Button>
                 </div>
               </Show>
-              <Show when={merge()?.auto}>
-                <span class="am-pr-merge-auto-note">{t("agentManager.pr.merge.autoNote")}</span>
+              <Show when={footerNote()}>
+                <span class="am-pr-merge-auto-note">{footerNote()}</span>
               </Show>
             </Show>
           </div>
@@ -257,8 +263,8 @@ export function PRMerge(props: Props) {
             </div>
             <div class="am-pr-summary-main">
               <strong>{statusLabel()}</strong>
-              <Show when={merge()?.mergeable === "conflicting"}>
-                <span class="am-pr-merge-hint">{t("agentManager.pr.merge.conflictsHint")}</span>
+              <Show when={statusHint()}>
+                <span class="am-pr-merge-hint">{statusHint()}</span>
               </Show>
             </div>
             <Show when={merge()?.mergeable === "conflicting"}>
