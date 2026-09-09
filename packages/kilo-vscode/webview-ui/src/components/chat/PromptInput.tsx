@@ -62,7 +62,7 @@ import {
 } from "./prompt-input-utils"
 import { sandboxMessages } from "./prompt-sandbox-messages"
 import type { ExtensionMessage, ReviewCommentEntry, SendMessageFailedMessage, TextPart } from "../../types/messages"
-import { formatReviewCommentsMarkdown } from "../../utils/review-comment-markdown"
+import { formatReviewCommentsMarkdown, pushInstruction } from "../../utils/review-comment-markdown"
 import {
   createdDraftKey,
   failedPrompt,
@@ -1479,9 +1479,11 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
     const imgs = imageAttach.images()
     const pending = reviewComments()
     const review = pending.length > 0 ? formatReviewCommentsMarkdown(pending) : ""
+    // The user's own text comes last so it can override the default push behavior.
+    const push = pushInstruction(pending, settings()["agentManager.pushFixes"] !== false)
     const browserData = browserFeedbackData(browsers())
     const browserText = browserData ? formatBrowserFeedback(browserData.references) : ""
-    const message = [review, browserText, draft].filter(Boolean).join("\n\n")
+    const message = [review, push, browserText, draft].filter(Boolean).join("\n\n")
     if (canSendContinue()) {
       session.resume()
       return
