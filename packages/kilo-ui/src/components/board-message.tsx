@@ -34,7 +34,7 @@ export function BoardRoute(props: Route) {
   const to = () => text(props.to)
   const broadcast = createMemo(() => {
     const values = ids().filter((id) => id !== "main" && id !== from())
-    if (from() !== "main") values.unshift("main")
+    if (from() !== "main" && values.length > 0) values.unshift("main")
     return values
   })
   const label = (id: string, value: unknown) => {

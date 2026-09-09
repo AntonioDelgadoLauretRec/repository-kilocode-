@@ -86,6 +86,8 @@ const root = document.createElement("div")
 document.body.append(root)
 const broadcastRoot = document.createElement("div")
 document.body.append(broadcastRoot)
+const workerBroadcastRoot = document.createElement("div")
+document.body.append(workerBroadcastRoot)
 const dispose = render(
   () => (
     <MarkedProvider
@@ -106,6 +108,14 @@ const disposeBroadcast = render(
     </AgentAvatarPalette>
   ),
   broadcastRoot,
+)
+const disposeWorkerBroadcast = render(
+  () => (
+    <AgentAvatarPalette ids={["worker"]}>
+      <BoardRoute from="worker" to="ALL" fromLabel="Worker" toLabel="All agents" />
+    </AgentAvatarPalette>
+  ),
+  workerBroadcastRoot,
 )
 const settle = async () => {
   await Promise.resolve()
@@ -138,6 +148,10 @@ try {
   assert(recipient)
   assert.equal(recipient.querySelectorAll('[data-component="board-participant-stack"]').length, 1)
   assert.equal(recipient.querySelectorAll('[data-component="agent-avatar"]').length, 2)
+  const workerRecipient = workerBroadcastRoot.querySelector('[data-slot="board-route-recipient-icon"]')
+  assert(workerRecipient)
+  assert.equal(workerRecipient.querySelectorAll('[data-component="board-participant-stack"]').length, 0)
+  assert.equal(workerRecipient.querySelectorAll('[data-component="icon"]').length, 2)
   for (const index of [0, 1, 2]) {
     if (index) await update(index)
     assert.equal(trigger().getAttribute("aria-expanded"), "false")
@@ -171,6 +185,7 @@ try {
 } finally {
   dispose()
   disposeBroadcast()
+  disposeWorkerBroadcast()
   JSON.parse = decode
   await window.happyDOM.cancelAsync()
   await window.happyDOM.close()
