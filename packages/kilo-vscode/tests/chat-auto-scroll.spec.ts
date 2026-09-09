@@ -127,12 +127,12 @@ test("keeps following after a stable-height layout correction", async ({ page })
 
   expect(corrected.height).toBe(before.height)
   expect(before.top - corrected.top).toBe(120)
-  await expect(page.getByRole("button", { name: "Scroll to bottom" })).toBeHidden()
+  await expect(page.locator(".scroll-to-bottom-button")).toBeHidden()
 
   await page.getByTestId("append-stream").click()
 
   await expect.poll(() => distance(page)).toBeLessThanOrEqual(2)
-  await expect(page.getByRole("button", { name: "Scroll to bottom" })).toBeHidden()
+  await expect(page.locator(".scroll-to-bottom-button")).toBeHidden()
 })
 
 test("keeps the reading position when the prompt rail scrolls upward", async ({ page }) => {
@@ -146,13 +146,13 @@ test("keeps the reading position when the prompt rail scrolls upward", async ({ 
   await page.mouse.wheel(0, -240)
 
   await expect.poll(() => distance(page)).toBeGreaterThan(40)
-  await expect(page.getByRole("button", { name: "Scroll to bottom" })).toBeVisible()
+  await expect(page.locator(".scroll-to-bottom-button")).toBeVisible()
   const top = await list.evaluate((el) => el.scrollTop)
 
   await page.getByTestId("append-stream").click()
 
   await expect.poll(() => list.evaluate((el) => el.scrollTop)).toBe(top)
-  await expect(page.getByRole("button", { name: "Scroll to bottom" })).toBeVisible()
+  await expect(page.locator(".scroll-to-bottom-button")).toBeVisible()
 })
 
 test("pauses on a native scrollbar drag and resumes at the bottom", async ({ page }) => {
@@ -207,7 +207,7 @@ test("pauses on a native scrollbar drag and resumes at the bottom", async ({ pag
   expect(await list.getAttribute("data-pointer")).toBe("0")
   expect(await list.getAttribute("data-mouse")).toBe("0")
   expect(await list.getAttribute("data-scroll")).toMatch(/[1-9]/)
-  await expect(page.getByRole("button", { name: "Scroll to bottom" })).toBeVisible()
+  await expect(page.locator(".scroll-to-bottom-button")).toBeVisible()
 
   await page.getByTestId("append-stream").click()
   await expect.poll(() => list.evaluate((el) => el.scrollHeight)).toBeGreaterThan(stable.height)
@@ -215,15 +215,15 @@ test("pauses on a native scrollbar drag and resumes at the bottom", async ({ pag
   const after = await state(page)
   expect(after.top).toBeCloseTo(stable.top, 0)
   expect(after.distance).toBeGreaterThan(40)
-  await expect(page.getByRole("button", { name: "Scroll to bottom" })).toBeVisible()
+  await expect(page.locator(".scroll-to-bottom-button")).toBeVisible()
 
-  await page.getByRole("button", { name: "Scroll to bottom" }).click()
+  await page.locator(".scroll-to-bottom-button").click()
   await expect.poll(() => distance(page)).toBeLessThanOrEqual(2)
-  await expect(page.getByRole("button", { name: "Scroll to bottom" })).toBeHidden()
+  await expect(page.locator(".scroll-to-bottom-button")).toBeHidden()
 
   await page.getByTestId("append-stream").click()
   await expect.poll(() => distance(page)).toBeLessThanOrEqual(2)
-  await expect(page.getByRole("button", { name: "Scroll to bottom" })).toBeHidden()
+  await expect(page.locator(".scroll-to-bottom-button")).toBeHidden()
 })
 
 test("keeps a long native scrollbar drag user-controlled", async ({ page }) => {
@@ -265,7 +265,7 @@ test("keeps a long native scrollbar drag user-controlled", async ({ page }) => {
 
   await expect.poll(() => list.evaluate((el) => Number(el.dataset.scroll ?? "0"))).toBeGreaterThan(0)
   await expect.poll(() => distance(page)).toBeGreaterThan(40)
-  await expect(page.getByRole("button", { name: "Scroll to bottom" })).toBeVisible()
+  await expect(page.locator(".scroll-to-bottom-button")).toBeVisible()
 })
 
 test("pauses on an upward wheel over the Copy response button", async ({ page }) => {
@@ -281,7 +281,7 @@ test("pauses on an upward wheel over the Copy response button", async ({ page })
   await page.mouse.wheel(0, -240)
 
   await expect.poll(() => distance(page)).toBeGreaterThan(40)
-  await expect(page.getByRole("button", { name: "Scroll to bottom" })).toBeVisible()
+  await expect(page.locator(".scroll-to-bottom-button")).toBeVisible()
 })
 
 test("keeps a one-pixel upward wheel pause through delayed streaming", async ({ page }) => {
@@ -306,14 +306,14 @@ test("keeps a one-pixel upward wheel pause through delayed streaming", async ({ 
   const after = await state(page)
   expect(after.top).toBeCloseTo(before.top, 0)
   expect(after.distance).toBeGreaterThan(40)
-  await expect(page.getByRole("button", { name: "Scroll to bottom" })).toBeVisible()
+  await expect(page.locator(".scroll-to-bottom-button")).toBeVisible()
 })
 
 test("keeps the pause after a pending bottom scroll event", async ({ page }) => {
   await open(page)
   const list = page.locator(".message-list")
   const copy = page.getByRole("button", { name: "Copy response" }).first()
-  const bottom = page.getByRole("button", { name: "Scroll to bottom" })
+  const bottom = page.locator(".scroll-to-bottom-button")
   await expect(list).toBeVisible()
   await expect(copy).toBeVisible()
   await settle(page, 10)
@@ -344,7 +344,7 @@ for (const input of ["wheel", "keyboard"] as const) {
   test(`keeps new upward ${input} input before a pending return-to-bottom scroll`, async ({ page }) => {
     await open(page)
     const list = page.locator(".message-list")
-    const bottom = page.getByRole("button", { name: "Scroll to bottom" })
+    const bottom = page.locator(".scroll-to-bottom-button")
     await expect(list).toBeVisible()
     await settle(page, 10)
     await expect.poll(() => distance(page)).toBeLessThanOrEqual(2)
@@ -393,7 +393,7 @@ for (const input of ["wheel", "keyboard"] as const) {
 test("preserves the pause across working status changes", async ({ page }) => {
   await open(page)
   const list = page.locator(".message-list")
-  const bottom = page.getByRole("button", { name: "Scroll to bottom" })
+  const bottom = page.locator(".scroll-to-bottom-button")
   await expect(list).toBeVisible()
   await settle(page, 10)
   await expect.poll(() => distance(page)).toBeLessThanOrEqual(2)
