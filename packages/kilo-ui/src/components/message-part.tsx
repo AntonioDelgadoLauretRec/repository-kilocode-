@@ -760,6 +760,7 @@ export function UserMessageDisplay(props: {
   onDelete?: () => void
   onFork?: () => void
   onRevert?: () => void
+  revertDisabled?: boolean
   onImageClick?: (url: string, filename?: string) => boolean
 }) {
   const data = useData()
@@ -979,6 +980,7 @@ export function UserMessageDisplay(props: {
                     icon="arrow-left"
                     size="normal"
                     variant="ghost"
+                    disabled={props.revertDisabled}
                     onMouseDown={(e) => e.preventDefault()}
                     onClick={(event) => {
                       event.stopPropagation()
