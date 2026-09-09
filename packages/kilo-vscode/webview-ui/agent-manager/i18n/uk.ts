@@ -55,6 +55,8 @@ export const dict = {
   "agentManager.project.add": "Додати проєкт",
   "agentManager.project.remove": "Видалити з Agent Manager",
   "agentManager.project.missing": "Репозиторій не знайдено",
+  "agentManager.project.restricted":
+    "Поточна робоча область VS Code є домашньою папкою або коренем файлової системи. Відкрийте певну папку проєкту у VS Code, щоб використовувати Agent Manager.",
   "agentManager.notGitRepo": "Не є git-репозиторієм",
 
   "agentManager.updateBase.title": "Оновити з базової гілки",

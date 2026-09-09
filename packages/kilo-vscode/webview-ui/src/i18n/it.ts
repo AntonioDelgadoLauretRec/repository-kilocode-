@@ -54,6 +54,9 @@ export const anacondaDesktopDict = {
 } as const
 
 export const dict = {
+  "session.goal.complete": "Completato (segnalato dal modello)",
+  "session.goal.blocked": "Bloccato",
+  "session.goal.restart": "Riavvia obiettivo",
   ...anacondaDesktopDict,
   ...cloudProviderDict,
   "task.swarm.title": "Bacheca",
@@ -728,7 +731,17 @@ export const dict = {
   "settings.notifications.enable.title": "Abilita le notifiche sonore",
   "settings.notifications.enable.description":
     "Riproduci suoni quando le sessioni si concludono, si verifica un errore o è richiesto il tuo intervento",
+  "settings.notifications.workbench.title": "Abilita le notifiche di VS Code",
+  "settings.notifications.workbench.description":
+    "Mostra notifiche di VS Code quando Kilo completa un'attività o richiede il tuo intervento",
+  "settings.notifications.os.title": "Abilita le notifiche del sistema operativo",
+  "settings.notifications.os.description":
+    "Mostra avvisi di notifica nativi del sistema operativo quando Kilo completa un'attività o richiede il tuo intervento mentre VS Code non è attivo.",
   "settings.notifications.testSound": "Prova",
+  "settings.notifications.testOS": "Prova",
+  "settings.notifications.testOS.testing": "Invio della notifica di prova…",
+  "settings.notifications.testOS.success": "Notifica di prova inviata.",
+  "settings.notifications.testOS.error": "Invio della notifica di prova non riuscito",
   "settings.notifications.sound.default": "Predefinito",
   "settings.notifications.sound.system": "Sistema",
   "settings.notifications.sound.description":
@@ -1182,6 +1195,14 @@ export const dict = {
   "session.outcome.interrupted": "Turno interrotto.",
   "session.outcome.error": "Turno fallito.",
   "session.outcome.finish": "Motivo tecnico di fine: {{reason}}",
+  "session.goal.label": "Obiettivo",
+  "prompt.goal.set": "Imposta obiettivo",
+  "prompt.goal.start": "Avvia obiettivo",
+  "session.goal.active": "Attivo",
+  "session.goal.paused": "In pausa",
+  "session.goal.pause": "Pausa",
+  "session.goal.resume": "Riprendi",
+  "session.goal.clear": "Cancella obiettivo",
   "session.costAlert.header": "Avviso costo sessione",
   "session.costAlert.continue": "Continua",
   "session.costAlert.question":

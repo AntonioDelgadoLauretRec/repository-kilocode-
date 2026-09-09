@@ -60,6 +60,9 @@ export const anacondaDesktopDict = {
 } as const
 
 export const dict = {
+  "session.goal.complete": "Abgeschlossen (vom Modell gemeldet)",
+  "session.goal.blocked": "Blockiert",
+  "session.goal.restart": "Ziel neu starten",
   ...anacondaDesktopDict,
   ...cloudProviderDict,
   "task.swarm.title": "Board",
@@ -770,6 +773,14 @@ export const dict = {
   "session.outcome.interrupted": "Zug unterbrochen",
   "session.outcome.error": "Zug fehlgeschlagen",
   "session.outcome.finish": "Abschlussgrund: {{reason}}",
+  "session.goal.label": "Ziel",
+  "prompt.goal.set": "Ziel festlegen",
+  "prompt.goal.start": "Ziel starten",
+  "session.goal.active": "Aktiv",
+  "session.goal.paused": "Pausiert",
+  "session.goal.pause": "Pausieren",
+  "session.goal.resume": "Fortsetzen",
+  "session.goal.clear": "Ziel löschen",
   "session.costAlert.header": "Sitzungskostenwarnung",
   "session.costAlert.continue": "Fortfahren",
   "session.costAlert.question":
@@ -874,7 +885,17 @@ export const dict = {
   "settings.notifications.enable.title": "Tonbenachrichtigungen aktivieren",
   "settings.notifications.enable.description":
     "Töne wiedergeben, wenn Sitzungen abgeschlossen werden, ein Fehler auftritt oder Ihre Eingabe erforderlich ist",
+  "settings.notifications.workbench.title": "VS Code-Benachrichtigungen aktivieren",
+  "settings.notifications.workbench.description":
+    "VS Code-Benachrichtigungen anzeigen, wenn Kilo eine Aufgabe abschließt oder Ihre Eingabe erforderlich ist",
+  "settings.notifications.os.title": "Betriebssystem-Benachrichtigungen aktivieren",
+  "settings.notifications.os.description":
+    "Systemeigene Betriebssystem-Benachrichtigungen anzeigen, wenn Kilo eine Aufgabe abschließt oder Ihre Eingabe erforderlich ist, während VS Code nicht aktiv ist.",
   "settings.notifications.testSound": "Testen",
+  "settings.notifications.testOS": "Testen",
+  "settings.notifications.testOS.testing": "Testbenachrichtigung wird gesendet…",
+  "settings.notifications.testOS.success": "Testbenachrichtigung gesendet.",
+  "settings.notifications.testOS.error": "Testbenachrichtigung fehlgeschlagen",
   "settings.notifications.sound.default": "Standard",
   "settings.notifications.sound.system": "System",
   "settings.notifications.sound.description":

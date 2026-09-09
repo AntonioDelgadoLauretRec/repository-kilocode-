@@ -54,6 +54,9 @@ export const anacondaDesktopDict = {
 } as const
 
 export const dict = {
+  "session.goal.complete": "Завершено (за повідомленням моделі)",
+  "session.goal.blocked": "Заблоковано",
+  "session.goal.restart": "Перезапустити ціль",
   ...anacondaDesktopDict,
   ...cloudProviderDict,
   "task.swarm.title": "Дошка",
@@ -746,6 +749,14 @@ export const dict = {
   "session.outcome.interrupted": "Хід перервано",
   "session.outcome.error": "Хід не вдався",
   "session.outcome.finish": "Причина завершення: {{reason}}",
+  "session.goal.label": "Мета",
+  "prompt.goal.set": "Задати мету",
+  "prompt.goal.start": "Почати роботу над метою",
+  "session.goal.active": "Активна",
+  "session.goal.paused": "Призупинена",
+  "session.goal.pause": "Пауза",
+  "session.goal.resume": "Продовжити",
+  "session.goal.clear": "Очистити мету",
   "session.costAlert.header": "Сповіщення про вартість сесії",
   "session.costAlert.continue": "Продовжити",
   "session.costAlert.question":
@@ -846,7 +857,17 @@ export const dict = {
   "settings.notifications.enable.title": "Увімкнути звукові сповіщення",
   "settings.notifications.enable.description":
     "Відтворювати звуки, коли сеанси завершуються, виникає помилка або потрібна ваша відповідь",
+  "settings.notifications.workbench.title": "Увімкнути сповіщення VS Code",
+  "settings.notifications.workbench.description":
+    "Показувати сповіщення VS Code, коли Kilo завершує завдання або потрібна ваша відповідь",
+  "settings.notifications.os.title": "Увімкнути сповіщення операційної системи",
+  "settings.notifications.os.description":
+    "Показувати нативні сповіщення операційної системи, коли Kilo завершує завдання або потрібна ваша відповідь, а VS Code неактивний.",
   "settings.notifications.testSound": "Тест",
+  "settings.notifications.testOS": "Тест",
+  "settings.notifications.testOS.testing": "Надсилання тестового сповіщення…",
+  "settings.notifications.testOS.success": "Тестове сповіщення надіслано.",
+  "settings.notifications.testOS.error": "Не вдалося надіслати тестове сповіщення",
   "settings.notifications.sound.default": "За замовчуванням",
   "settings.notifications.sound.system": "Системний",
   "settings.notifications.sound.description":

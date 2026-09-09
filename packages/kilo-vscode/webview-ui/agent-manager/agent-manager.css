@@ -1522,6 +1522,10 @@ html[data-theme="kilo-vscode"]
   color: currentColor;
 }
 
+.am-subagent-panel .am-tab-icon:has([data-component="agent-avatar"]) {
+  overflow: visible;
+}
+
 .am-tab-icon[data-run-status="success"] {
   color: var(--vscode-testing-iconPassed, #34d399);
 }
@@ -1774,6 +1778,11 @@ body.am-wt-dragging-active * {
   align-items: center;
   justify-content: center;
   gap: 16px;
+}
+
+.am-restricted-state {
+  margin: 24px;
+  text-align: center;
 }
 
 .am-empty-state-icon {
