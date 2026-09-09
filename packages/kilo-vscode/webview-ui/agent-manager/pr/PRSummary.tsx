@@ -12,6 +12,7 @@ import { sendReviewComments } from "../../diff-viewer/review-annotations"
 import { checkFeedback } from "./pr-check-feedback"
 import { SEND_LIMIT } from "./pr-comment-payload"
 import { commentState } from "./pr-comment-state"
+import { isConversationComment } from "./pr-types"
 import { type JumpTarget, actionableConversation, sendConversation, sendThreads, unsentThreads } from "./pr-actions"
 
 interface PRSummaryProps {
@@ -116,7 +117,8 @@ export function PRSummary(props: PRSummaryProps) {
   }
 
   const conversation = (): Row | undefined => {
-    const value = props.pr.conversation ?? []
+    // Commits and lifecycle events are history, not feedback the agent can fix.
+    const value = (props.pr.conversation ?? []).filter(isConversationComment)
     if (value.length === 0) return
     const terminal = props.activeTerminalId
     const ids = actionableConversation(value, state())
