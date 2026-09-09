@@ -256,6 +256,7 @@ export const PRPanel: Component<PRPanelProps> = (props) => {
             onJump={jumpTo}
           />
           <PROverview pr={props.pr} worktree={props.worktree} />
+          <div class="am-pr-panel-divider" />
           <PRFiles
             projectId={props.projectId}
             worktreeId={props.worktreeId}
