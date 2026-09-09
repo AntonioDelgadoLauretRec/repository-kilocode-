@@ -33,8 +33,9 @@ import { ThinkingSelectorBase } from "../components/shared/ThinkingSelector"
 import { DeferredPopover } from "../components/shared/DeferredPopover"
 import { ProjectSelect } from "../../agent-manager/ProjectSelect"
 import { PRComments } from "../../agent-manager/pr/PRComments"
+import { PRConversation } from "../../agent-manager/pr/PRConversation"
+import type { PRComment, PRTimelineItem } from "../../agent-manager/pr/pr-types"
 import { PRPanel } from "../../agent-manager/pr/PRPanel"
-import type { PRComment } from "../../agent-manager/pr/pr-types"
 import { For, createSignal, onCleanup, onMount, type JSX } from "solid-js"
 import type {
   AgentProjectSnapshot,
@@ -2098,6 +2099,82 @@ export const PRPanelComments200: Story = {
           prUrl="https://github.com/org/repo/pull/8594"
           onOpenFile={() => {}}
           onOpenDiff={() => {}}
+          onOpenUrl={() => {}}
+        />
+      </div>
+    </StoryProviders>
+  ),
+}
+
+const prConversation: PRTimelineItem[] = [
+  {
+    kind: "commit",
+    id: "commit-1",
+    sha: "a".repeat(40),
+    short: "a9f21c3",
+    message: "Guard the missing gh fallback",
+    author: "octocat",
+    createdAt: Date.now() - 50 * 60 * 1000,
+    url: "https://github.com/org/repo/commit/a9f21c3",
+  },
+  {
+    kind: "commit",
+    id: "commit-2",
+    sha: "b".repeat(40),
+    short: "b7d4e12",
+    message: "Add a regression test for the cached status",
+    author: "octocat",
+    createdAt: Date.now() - 45 * 60 * 1000,
+    url: "https://github.com/org/repo/commit/b7d4e12",
+  },
+  {
+    kind: "event",
+    event: "force_pushed",
+    id: "force-push-1",
+    actor: "octocat",
+    detail: "a9f21c3 to b7d4e12",
+    createdAt: Date.now() - 40 * 60 * 1000,
+  },
+  {
+    kind: "review",
+    id: "review-1",
+    author: "hubot",
+    body: "",
+    state: "approved",
+    createdAt: Date.now() - 30 * 60 * 1000,
+  },
+  {
+    id: "conversation-1",
+    kind: "issue",
+    author: "octocat",
+    body: "Thanks, this also covers the empty response case.",
+    createdAt: Date.now() - 20 * 60 * 1000,
+  },
+  {
+    kind: "event",
+    event: "merged",
+    id: "merged-1",
+    actor: "hubot",
+    detail: "main",
+    createdAt: Date.now() - 10 * 60 * 1000,
+  },
+]
+
+export const PRPanelConversation: Story = {
+  name: "PR panel — conversation timeline",
+  render: () => (
+    <StoryProviders noPadding>
+      <div style={{ background: "var(--vscode-editor-background)" }}>
+        <PRConversation
+          prNumber={8594}
+          prUrl="https://github.com/org/repo/pull/8594"
+          worktreeId="wt-a1"
+          description={
+            "Replaces the separate comments and reviews queries with the GitHub timeline.\n\nCommits, force pushes, merges, and reviews now read in the order they happened."
+          }
+          author="octocat"
+          createdAt={Date.now() - 60 * 60 * 1000}
+          items={prConversation}
           onOpenUrl={() => {}}
         />
       </div>

@@ -1846,7 +1846,6 @@ export class AgentManagerProvider implements Disposable {
       (...args) => this.log(...args),
     )
   }
-
   public postMessage(message: unknown): void {
     this.panel?.postMessage(message)
   }

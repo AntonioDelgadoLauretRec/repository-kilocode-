@@ -372,8 +372,26 @@ describe("PRStatusPoller unresolved threads", () => {
       )
       if (active && !after)
         Object.assign(data.data.repository.pullRequest, {
-          comments: { nodes: [{ id: "conversation", body: "General comment" }] },
-          reviews: { nodes: [{ id: "review", body: "Review summary", state: "CHANGES_REQUESTED" }] },
+          timelineItems: {
+            pageInfo: { hasPreviousPage: true },
+            nodes: [
+              {
+                __typename: "IssueComment",
+                id: "conversation",
+                author: { login: "alice" },
+                body: "General comment",
+                createdAt: "2026-09-01T10:00:00Z",
+              },
+              {
+                __typename: "PullRequestReview",
+                id: "review",
+                author: { login: "bob" },
+                body: "Review summary",
+                state: "CHANGES_REQUESTED",
+                submittedAt: "2026-09-01T11:00:00Z",
+              },
+            ],
+          },
         })
       return { stdout: JSON.stringify(data), stderr: "" }
     }
@@ -391,8 +409,9 @@ describe("PRStatusPoller unresolved threads", () => {
       expect(query.includes("comments(first: 10)")).toBe(active)
       expect(query.includes("latest: comments(last: 10)")).toBe(active)
       expect(query.includes("body")).toBe(active)
-      expect(query.includes("comments(last: 50)")).toBe(active && !args.includes("cursor=next"))
-      expect(query.includes("reviews(last: 50)")).toBe(active && !args.includes("cursor=next"))
+      expect(query.includes("timelineItems(last: 100")).toBe(active && !args.includes("cursor=next"))
+      expect(query.includes("PULL_REQUEST_COMMIT")).toBe(active && !args.includes("cursor=next"))
+      expect(query.includes("pageInfo { hasPreviousPage }")).toBe(active && !args.includes("cursor=next"))
       expect(query.includes("viewerDidAuthor viewerCanUpdate viewerCanDelete")).toBe(active)
     }
     if (active) {
@@ -403,6 +422,7 @@ describe("PRStatusPoller unresolved threads", () => {
         { id: "conversation", body: "General comment" },
         { id: "review", body: "Review summary", state: "changes_requested" },
       ])
+      expect(status?.conversationHasEarlier).toBe(true)
     }
     if (!active) {
       expect(status?.comments).toBeUndefined()

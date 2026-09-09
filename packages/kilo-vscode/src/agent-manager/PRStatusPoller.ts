@@ -1,7 +1,7 @@
 import type { ExecFileOptionsWithStringEncoding } from "child_process"
 import { existsSync } from "fs"
 import type { Worktree } from "./WorktreeStateManager"
-import type { PRStatus, PRCheck, PRReviewer, PRConversationComment } from "./types"
+import type { PRStatus, PRCheck, PRReviewer, PRTimelineItem } from "./types"
 import { execWithShellEnv } from "./shell-env"
 import { execGhRead } from "./gh"
 import { classifyPRError } from "./git-import"
@@ -12,18 +12,11 @@ import {
   signature,
   formatCheckDuration,
   parseComments,
-  parseConversation,
   parseReviewers,
   summarize,
 } from "./pr/am-pr-utils"
-import type {
-  PRResult,
-  GhThread,
-  GhReviewRequest,
-  GhReview,
-  GhConversationComment,
-  GhReviewWithBody,
-} from "./pr/am-pr-types"
+import { TIMELINE_QUERY, parseTimeline } from "./pr/timeline"
+import type { PRResult, GhThread, GhReviewRequest, GhReview, GhTimelineItem } from "./pr/am-pr-types"
 import { withContext } from "./pr/pr-comment-context"
 import { oid } from "../shared/pr-comment-preview"
 
@@ -298,6 +291,8 @@ export class PRStatusPoller {
         headRefOid: pr.headRefOid,
         title: pr.title,
         body: pr.body,
+        author: pr.author,
+        createdAt: pr.createdAt,
         url: pr.url,
         state: pr.state,
         review: pr.review,
@@ -345,7 +340,7 @@ export class PRStatusPoller {
   }
 
   private static readonly BASE_JSON_FIELDS =
-    "id,number,title,body,url,state,isDraft,reviewDecision,additions,deletions,changedFiles,headRefName,baseRefOid,headRefOid"
+    "id,number,title,body,url,state,isDraft,reviewDecision,additions,deletions,changedFiles,headRefName,baseRefOid,headRefOid,author,createdAt"
   private static readonly PR_JSON_FIELDS = `${PRStatusPoller.BASE_JSON_FIELDS},statusCheckRollup,reviewRequests,reviews`
 
   /** Return a cached PR lookup if still fresh, otherwise fetch and cache.
@@ -512,7 +507,13 @@ export class PRStatusPoller {
   ): Promise<
     | Pick<
         PRStatus,
-        "comments" | "unresolvedThreads" | "conversation" | "baseRefOid" | "headRefOid" | "viewerDidAuthor"
+        | "comments"
+        | "unresolvedThreads"
+        | "conversation"
+        | "conversationHasEarlier"
+        | "baseRefOid"
+        | "headRefOid"
+        | "viewerDidAuthor"
       >
     | undefined
   > {
@@ -548,36 +549,16 @@ export class PRStatusPoller {
              }
            }`
         : ""
-      let extra = full
-        ? `comments(last: 50) {
-             nodes {
-               id
-               author { login avatarUrl __typename }
-               body
-               createdAt
-               url
-                reactionGroups { content reactors { totalCount } viewerHasReacted }
-                viewerDidAuthor viewerCanUpdate viewerCanDelete
-             }
-           }
-           reviews(last: 50) {
-             nodes {
-               id
-               author { login avatarUrl __typename }
-               body
-               state
-               submittedAt
-               url
-               reactionGroups { content reactors { totalCount } viewerHasReacted }
-             }
-           }`
-        : ""
+      // Keep the timeline in the first review-thread request. This avoids a
+      // second GitHub round trip while leaving non-active worktree polls cheap.
+      let extra = full ? TIMELINE_QUERY : ""
       const nodes: GhThread[] = []
       const cursors = new Set<string>()
       const ids = new Set<string>()
       let total: number | undefined
       let cursor: string | undefined
-      let conversation: PRConversationComment[] | undefined
+      let conversation: PRTimelineItem[] | undefined
+      let conversationHasEarlier: boolean | undefined
       while (true) {
         const query = `query($owner: String!, $repo: String!, $number: Int!, $cursor: String) {
           repository(owner: $owner, name: $repo) {
@@ -626,7 +607,9 @@ export class PRStatusPoller {
         }
         nodes.push(...page.nodes)
         if (extra) {
-          conversation = parseConversationPayload(stdout)
+          const parsed = parseConversationPayload(stdout)
+          conversation = parsed.items
+          conversationHasEarlier = parsed.hasEarlier
           extra = ""
         }
         if (nodes.length > total) throw new Error("Incomplete PR review threads")
@@ -647,6 +630,7 @@ export class PRStatusPoller {
             unresolvedThreads: unresolved,
             comments: { total, unresolved, comments },
             conversation,
+            conversationHasEarlier,
           }
         }
         cursor = advance(page.pageInfo.endCursor, cursors)
@@ -716,11 +700,11 @@ async function settled<T>(thunks: (() => Promise<T>)[], concurrency: number): Pr
   return results
 }
 
-function parseConversationPayload(stdout: string): PRConversationComment[] | undefined {
-  const pr = JSON.parse(stdout)?.data?.repository?.pullRequest
-  if (!pr) return undefined
-  return parseConversation(
-    (pr.comments?.nodes ?? []) as GhConversationComment[],
-    (pr.reviews?.nodes ?? []) as GhReviewWithBody[],
-  )
+function parseConversationPayload(stdout: string): { items?: PRTimelineItem[]; hasEarlier: boolean } {
+  const page = JSON.parse(stdout)?.data?.repository?.pullRequest?.timelineItems
+  if (!page || !Array.isArray(page.nodes)) return { hasEarlier: false }
+  return {
+    items: parseTimeline(page.nodes as Array<GhTimelineItem | null>),
+    hasEarlier: page.pageInfo?.hasPreviousPage === true,
+  }
 }

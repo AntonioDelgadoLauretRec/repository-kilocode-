@@ -1082,7 +1082,7 @@ assert.equal(commentState(target.worktreeId).open, true)
 assert.equal(jumps, 1)
 
 // Conversation comments render at the bottom of the PR panel
-assert.match(second.textContent ?? "", /PR Comments/)
+assert.match(second.textContent ?? "", /Conversation/)
 assert.match(second.textContent ?? "", /lead-reviewer/)
 assert.match(second.textContent ?? "", /Consider simplifying the signature serializer/)
 assert.match(second.textContent ?? "", /Approved/)
