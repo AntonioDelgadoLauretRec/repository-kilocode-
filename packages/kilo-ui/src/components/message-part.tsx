@@ -35,7 +35,7 @@ import { useDialog } from "../context/dialog"
 import { useClipboard } from "../context/clipboard"
 import { type UiI18n, useI18n } from "../context/i18n"
 import { BasicTool, useToolApprovalLine } from "./basic-tool"
-import { BoardMessage, BoardRoute } from "./board-message"
+import { BoardMessage, BoardParticipantStack, BoardRoute } from "./board-message"
 import { AgentAvatar, taskStatus } from "./agent-avatar"
 import { Accordion } from "./accordion"
 import { StickyAccordionHeader } from "./sticky-accordion-header"
@@ -1193,6 +1193,23 @@ function McpTool(props: ToolProps) {
     )
     return items.length === rows.length ? items : undefined
   })
+  const participants = createMemo(() => {
+    const seen = new Set<string>()
+    const ids: string[] = []
+    for (const item of messages() ?? []) {
+      for (const id of [item.from, item.to]) {
+        if (!id || id === "ALL" || seen.has(id)) continue
+        seen.add(id)
+        ids.push(id)
+      }
+    }
+    const main = ids.indexOf("main")
+    if (main > 0) {
+      ids.splice(main, 1)
+      ids.unshift("main")
+    }
+    return ids
+  })
   const trigger = () => {
     if (props.tool === "board_post")
       return (
@@ -1248,10 +1265,19 @@ function McpTool(props: ToolProps) {
   return (
     <Show
       when={!props.hideDetails}
-      fallback={<BasicTool hideDetails icon={board() ? "task" : "mcp"} status={props.status} trigger={trigger()} />}
+      fallback={
+        <BasicTool
+          hideDetails
+          icon={board() ? "task" : "mcp"}
+          iconNode={props.tool === "board_read" ? <BoardParticipantStack ids={participants()} /> : undefined}
+          status={props.status}
+          trigger={trigger()}
+        />
+      }
     >
       <BasicTool
         icon={board() ? "task" : "mcp"}
+        iconNode={props.tool === "board_read" ? <BoardParticipantStack ids={participants()} /> : undefined}
         defer={board()}
         status={props.status}
         tool={props.tool}

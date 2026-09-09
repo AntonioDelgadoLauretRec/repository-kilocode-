@@ -36,6 +36,7 @@ const outputs = labels.map((label) =>
   JSON.stringify({
     messages: [
       { from: "worker", to: "main", fromLabel: `Worker ${label}`, toLabel: "Coordinator", body: `**${label}** body` },
+      { from: "reviewer", to: "worker", fromLabel: "Reviewer", toLabel: `Worker ${label}`, body: "Secondary body" },
     ],
     hasMore: false,
   }),
@@ -109,6 +110,10 @@ const update = async (index: number) => {
 }
 const visible = (label: string) => {
   assert.equal(trigger().getAttribute("aria-expanded"), "true")
+  const stack = root.querySelector('[data-component="board-participant-stack"]')
+  assert(stack)
+  assert.equal(stack.querySelectorAll('[data-component="icon"]').length, 1)
+  assert.equal(stack.querySelectorAll('[data-component="agent-avatar"]').length, 2)
   assert.equal(root.querySelector('[data-slot="board-message-body"] strong')?.textContent, label)
   assert.equal(root.querySelector(".board-route-sender")?.textContent, `Worker ${label}`)
   assert.equal(root.querySelector(".board-route-recipient")?.textContent, "Coordinator")
@@ -129,7 +134,7 @@ try {
   trigger().click()
   await settle()
   visible("latest")
-  assert.deepEqual(parsed, ["**latest** body"])
+  assert.deepEqual(parsed, ["**latest** body", "Secondary body"])
 
   trigger().click()
   await settle()

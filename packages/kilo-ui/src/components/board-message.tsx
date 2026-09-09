@@ -1,4 +1,4 @@
-import { Show } from "solid-js"
+import { For, Show } from "solid-js"
 import { useI18n } from "../context/i18n"
 import { Icon } from "./icon"
 import { AgentAvatar } from "./agent-avatar"
@@ -11,6 +11,16 @@ function Member(props: { id: string }) {
     <Show when={props.id !== "main"} fallback={<Icon class="board-route-parent" name="task" size="small" />}>
       <AgentAvatar id={props.id} />
     </Show>
+  )
+}
+
+export function BoardParticipantStack(props: { ids: string[] }) {
+  return (
+    <span data-component="board-participant-stack" aria-hidden="true">
+      <Show when={props.ids.length > 0} fallback={<Icon name="task" size="small" />}>
+        <For each={props.ids}>{(id) => <Member id={id} />}</For>
+      </Show>
+    </span>
   )
 }
 

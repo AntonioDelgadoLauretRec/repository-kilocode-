@@ -1,6 +1,7 @@
 /** @jsxImportSource solid-js */
 import type { Meta, StoryObj } from "storybook-solidjs-vite"
 import { UserMessageDisplay, AssistantParts } from "../components/message-part"
+import { AgentAvatarPalette } from "../components/agent-avatar"
 import { DataProvider } from "@opencode-ai/ui/context/data"
 import { DiffComponentProvider } from "@kilocode/kilo-ui/context/diff"
 import { CodeComponentProvider } from "@kilocode/kilo-ui/context/code"
@@ -274,6 +275,43 @@ const mockDataContextGroup = createMockData([completedToolPart, grepCompleted, g
 const mockDataEdit = createMockData([editCompletedPart])
 const mockDataWrite = createMockData([writeCompletedPart])
 
+const boardReadPart: ToolPart = {
+  id: "part-board-read-001",
+  sessionID: SESSION_ID,
+  messageID: ASST_MSG_ID,
+  type: "tool",
+  callID: "call-board-read-001",
+  tool: "board_read",
+  state: {
+    status: "completed",
+    input: {},
+    output: JSON.stringify({
+      messages: [
+        {
+          from: "main",
+          to: "worker",
+          fromLabel: "Coordinator",
+          toLabel: "Worker",
+          body: "**First message**",
+        },
+        {
+          from: "worker",
+          to: "reviewer",
+          fromLabel: "Worker",
+          toLabel: "Reviewer",
+          body: "**Second message**",
+        },
+      ],
+      hasMore: false,
+    }),
+    title: "Read agent messages 2",
+    metadata: {},
+    time: { start: now - 4000, end: now - 3500 },
+  },
+}
+
+const mockDataBoardRead = createMockData([boardReadPart])
+
 function AllProviders(props: { children: any; data?: MockData; onOpenDiff?: () => void }) {
   return (
     <DataProvider data={props.data ?? mockData} directory="/project" onOpenDiff={props.onOpenDiff}>
@@ -407,6 +445,16 @@ export const WithBashToolExpanded: Story = {
     const header = canvasElement.querySelector("[data-slot='shell-rolling-header-clip']") as HTMLElement | null
     if (header) header.click()
   },
+}
+
+export const WithBoardRead: Story = {
+  render: () => (
+    <AllProviders data={mockDataBoardRead}>
+      <AgentAvatarPalette ids={["worker", "reviewer"]}>
+        <AssistantParts messages={[mockAssistantMessage]} />
+      </AgentAvatarPalette>
+    </AllProviders>
+  ),
 }
 
 // --- Three context-group tools + text — exercises ContextToolGroupHeader collapse ---
