@@ -1070,6 +1070,12 @@
           "scope": "application",
           "description": "Prefix for automatically named Agent Manager branches, for example 'marius/' or 'feature/'. Explicit branch names are unchanged."
         },
+        "kilo-code.new.experimental.multiProject": {
+          "type": "boolean",
+          "default": false,
+          "scope": "application",
+          "description": "Allow Agent Manager to manage sessions and worktrees across multiple repositories as projects. The current workspace repository is always the default project; additional projects can be added and persist across restarts."
+        },
         "kilo-code.new.experimental.browserAutomation": {
           "type": "boolean",
           "default": false,
@@ -1133,6 +1139,16 @@
           "type": "boolean",
           "default": false,
           "description": "Play sounds when sessions complete, error, or need input"
+        },
+        "kilo-code.new.attention.notifications": {
+          "type": "boolean",
+          "default": false,
+          "description": "Show VS Code notifications when Kilo completes a task or needs input. Notifications are suppressed while a Kilo panel is active."
+        },
+        "kilo-code.new.attention.OSNotifications": {
+          "type": "boolean",
+          "default": false,
+          "description": "Show native OS notification alerts when Kilo completes a task or needs input while VS Code is not active."
         },
         "kilo-code.new.attention.sound": {
           "type": "string",

@@ -56,7 +56,7 @@ export const anacondaDesktopDict = {
 export const dict = {
   "session.goal.complete": "Završeno (prema modelu)",
   "session.goal.blocked": "Blokirano",
-  "session.goal.restart": "Ponovo pokreni cilj (troši kredite modela)",
+  "session.goal.restart": "Ponovo pokreni cilj",
   ...anacondaDesktopDict,
   ...cloudProviderDict,
   "task.swarm.title": "Ploča",
@@ -868,7 +868,17 @@ export const dict = {
   "settings.notifications.enable.title": "Omogući zvučne obavijesti",
   "settings.notifications.enable.description":
     "Reproduciraj zvukove kada se sesije završe, naiđu na grešku ili trebaju vaš unos",
+  "settings.notifications.workbench.title": "Omogući VS Code obavijesti",
+  "settings.notifications.workbench.description":
+    "Prikaži VS Code obavijesti kada Kilo završi zadatak ili treba vaš unos",
+  "settings.notifications.os.title": "Omogući obavijesti operativnog sistema",
+  "settings.notifications.os.description":
+    "Prikaži izvorna obavještenja operativnog sistema kada Kilo završi zadatak ili treba vaš unos dok VS Code nije aktivan.",
   "settings.notifications.testSound": "Testiraj",
+  "settings.notifications.testOS": "Testiraj",
+  "settings.notifications.testOS.testing": "Slanje testnog obavještenja…",
+  "settings.notifications.testOS.success": "Testno obavještenje je poslano.",
+  "settings.notifications.testOS.error": "Slanje testnog obavještenja nije uspjelo",
   "settings.notifications.sound.default": "Zadano",
   "settings.notifications.sound.system": "Sistem",
   "settings.notifications.sound.description":
@@ -913,6 +923,9 @@ export const dict = {
   "settings.sandboxing.writablePaths.title": "Dodatne upisive putanje",
   "settings.sandboxing.writablePaths.description":
     "Dodatne putanje sistema datoteka u koje sandbox dozvoljava upis (npr. /tmp, /var/log). Spajaju se sa zadanim upisivim putanjama kada je sandbox aktivan.",
+  "settings.experimental.multiProject.title": "Višeprojektni Agent Manager",
+  "settings.experimental.multiProject.description":
+    "Omogući upravljanje sesijama i worktree-ima kroz više repozitorija u Agent Manager-u. Trenutni workspace repozitorij je uvijek zadani projekat.",
   "settings.experimental.taskModelSelection.title": "Odabir modela podagenta za Task",
   "settings.experimental.taskModelSelection.description":
     "Omogućava izričit odabir modela, provajdera i napora zaključivanja za Task podagente.",

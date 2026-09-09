@@ -57,7 +57,7 @@ export const anacondaDesktopDict = {
 export const dict = {
   "session.goal.complete": "完成（模型回報）",
   "session.goal.blocked": "受阻",
-  "session.goal.restart": "重新開始目標（消耗模型額度）",
+  "session.goal.restart": "重新開始目標",
   ...anacondaDesktopDict,
   ...cloudProviderDict,
   "task.swarm.title": "看板",
@@ -792,7 +792,16 @@ export const dict = {
   "settings.notifications.sounds": "聲音",
   "settings.notifications.enable.title": "啟用聲音通知",
   "settings.notifications.enable.description": "在工作階段完成、遇到錯誤或需要你輸入時播放聲音",
+  "settings.notifications.workbench.title": "啟用 VS Code 通知",
+  "settings.notifications.workbench.description": "在 Kilo 完成工作或需要你輸入時顯示 VS Code 通知",
+  "settings.notifications.os.title": "啟用作業系統通知",
+  "settings.notifications.os.description":
+    "在 VS Code 未處於使用中狀態時，若 Kilo 完成工作或需要你輸入，則顯示原生作業系統通知提醒。",
   "settings.notifications.testSound": "測試",
+  "settings.notifications.testOS": "測試",
+  "settings.notifications.testOS.testing": "正在傳送測試通知…",
+  "settings.notifications.testOS.success": "測試通知已傳送。",
+  "settings.notifications.testOS.error": "測試通知傳送失敗",
   "settings.notifications.sound.default": "預設",
   "settings.notifications.sound.system": "系統",
   "settings.notifications.sound.description":
@@ -836,6 +845,9 @@ export const dict = {
   "settings.sandboxing.writablePaths.title": "額外可寫路徑",
   "settings.sandboxing.writablePaths.description":
     "沙盒允許寫入的額外檔案系統路徑（例如 /tmp、/var/log）。沙盒啟用後，這些路徑會與預設可寫路徑合併。",
+  "settings.experimental.multiProject.title": "多專案 Agent Manager",
+  "settings.experimental.multiProject.description":
+    "在 Agent Manager 中啟用跨多個儲存庫的工作階段和工作樹管理。當前工作區儲存庫始終是預設專案。",
   "settings.experimental.taskModelSelection.title": "Task 子代理模型選擇",
   "settings.experimental.taskModelSelection.description": "允許為 Task 子代理選擇指定的模型、提供者和推理工作量。",
   "settings.experimental.mcpTimeout.title": "MCP 逾時（毫秒）",

@@ -60,7 +60,7 @@ type Keys = keyof typeof en
 export const dict = {
   "session.goal.complete": "완료 (모델 보고)",
   "session.goal.blocked": "차단됨",
-  "session.goal.restart": "목표 다시 시작 (모델 크레딧 사용)",
+  "session.goal.restart": "목표 다시 시작",
   ...anacondaDesktopDict,
   ...cloudProviderDict,
   "task.swarm.title": "보드",
@@ -858,7 +858,17 @@ export const dict = {
   "settings.notifications.enable.title": "소리 알림 활성화",
   "settings.notifications.enable.description":
     "세션이 완료되거나 오류가 발생하거나 사용자 입력이 필요할 때 소리를 재생합니다",
+  "settings.notifications.workbench.title": "VS Code 알림 활성화",
+  "settings.notifications.workbench.description":
+    "Kilo가 작업을 완료하거나 사용자 입력이 필요할 때 VS Code 알림을 표시합니다",
+  "settings.notifications.os.title": "OS 알림 활성화",
+  "settings.notifications.os.description":
+    "VS Code가 활성화되어 있지 않을 때 Kilo가 작업을 완료하거나 사용자 입력이 필요하면 기본 운영 체제 알림을 표시합니다.",
   "settings.notifications.testSound": "테스트",
+  "settings.notifications.testOS": "테스트",
+  "settings.notifications.testOS.testing": "테스트 알림을 보내는 중…",
+  "settings.notifications.testOS.success": "테스트 알림을 보냈습니다.",
+  "settings.notifications.testOS.error": "테스트 알림을 보내지 못했습니다",
   "settings.notifications.sound.default": "기본값",
   "settings.notifications.sound.system": "시스템",
   "settings.notifications.sound.description":
@@ -903,6 +913,9 @@ export const dict = {
   "settings.sandboxing.writablePaths.title": "추가 쓰기 가능 경로",
   "settings.sandboxing.writablePaths.description":
     "샌드박스에서 쓰기를 허용하는 추가 파일시스템 경로(예: /tmp, /var/log). 샌드박스가 활성화되면 기본 쓰기 가능 경로와 병합됩니다.",
+  "settings.experimental.multiProject.title": "멀티 프로젝트 Agent Manager",
+  "settings.experimental.multiProject.description":
+    "Agent Manager에서 여러 저장소에 걸친 세션과 워크트리 관리를 활성화합니다. 현재 워크스페이스 저장소는 항상 기본 프로젝트입니다.",
   "settings.experimental.taskModelSelection.title": "Task 하위 에이전트 모델 선택",
   "settings.experimental.taskModelSelection.description":
     "Task 하위 에이전트에 대해 모델, 제공자 및 추론 수준을 명시적으로 선택합니다.",

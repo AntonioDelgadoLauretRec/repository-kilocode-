@@ -56,7 +56,7 @@ export const anacondaDesktopDict = {
 export const dict = {
   "session.goal.complete": "Concluído (informado pelo modelo)",
   "session.goal.blocked": "Bloqueado",
-  "session.goal.restart": "Reiniciar objetivo (consome créditos)",
+  "session.goal.restart": "Reiniciar objetivo",
   ...anacondaDesktopDict,
   ...cloudProviderDict,
   "task.swarm.title": "Quadro",
@@ -873,7 +873,17 @@ export const dict = {
   "settings.notifications.enable.title": "Ativar notificações sonoras",
   "settings.notifications.enable.description":
     "Reproduzir sons quando as sessões forem concluídas, ocorrer um erro ou sua interação for necessária",
+  "settings.notifications.workbench.title": "Ativar notificações do VS Code",
+  "settings.notifications.workbench.description":
+    "Mostrar notificações do VS Code quando o Kilo concluir uma tarefa ou precisar da sua interação",
+  "settings.notifications.os.title": "Ativar notificações do sistema operacional",
+  "settings.notifications.os.description":
+    "Mostrar alertas nativos de notificação do sistema operacional quando o Kilo concluir uma tarefa ou precisar da sua interação enquanto o VS Code não estiver ativo.",
   "settings.notifications.testSound": "Testar",
+  "settings.notifications.testOS": "Testar",
+  "settings.notifications.testOS.testing": "Enviando notificação de teste…",
+  "settings.notifications.testOS.success": "Notificação de teste enviada.",
+  "settings.notifications.testOS.error": "Falha ao enviar a notificação de teste",
   "settings.notifications.sound.default": "Padrão",
   "settings.notifications.sound.system": "Sistema",
   "settings.notifications.sound.description":
@@ -919,6 +929,9 @@ export const dict = {
   "settings.sandboxing.writablePaths.title": "Caminhos graváveis adicionais",
   "settings.sandboxing.writablePaths.description":
     "Caminhos adicionais do sistema de arquivos onde o sandbox permite gravação (por exemplo, /tmp, /var/log). Eles são mesclados com os caminhos graváveis padrão quando o sandbox está ativo.",
+  "settings.experimental.multiProject.title": "Agent Manager Multi-Projeto",
+  "settings.experimental.multiProject.description":
+    "Ativar gerenciamento de sessões e worktrees em múltiplos repositórios no Agent Manager. O repositório do workspace atual é sempre o projeto padrão.",
   "settings.experimental.taskModelSelection.title": "Seleção de modelo de subagente do Task",
   "settings.experimental.taskModelSelection.description":
     "Permite selecionar explicitamente o modelo, o provedor e o esforço de raciocínio dos subagentes do Task.",
