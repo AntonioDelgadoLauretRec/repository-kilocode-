@@ -2903,28 +2903,51 @@ body.am-wt-dragging-active * {
 
 .am-split-button[data-variant="primary"] {
   gap: 0;
-  overflow: hidden;
-  border-radius: var(--radius-md);
-  background: var(--button-primary-base);
+  align-items: stretch;
+  border-radius: 2px;
+  background: var(--surface-brand-base);
+  color: #ffffff;
 }
 
 .am-split-button[data-variant="primary"] > [data-component="button"] {
-  border-radius: var(--radius-md) 0 0 var(--radius-md);
+  min-height: 26px;
+  border: 0;
+  border-radius: 2px 0 0 2px;
+  background: transparent;
+  color: inherit;
 }
 
 .am-split-button[data-variant="primary"] > .am-split-arrow {
-  width: 24px;
-  height: 24px;
-  border-left: 1px solid color-mix(in srgb, var(--icon-invert-base) 35%, transparent);
-  border-radius: 0 var(--radius-md) var(--radius-md) 0;
-  background: var(--button-primary-base);
-  color: var(--icon-invert-base);
+  width: 26px;
+  height: auto;
+  min-height: 26px;
+  border-left: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 0 2px 2px 0;
+  background: transparent;
+  color: inherit;
   opacity: 1;
 }
 
-.am-split-button[data-variant="primary"] > .am-split-arrow:hover,
+.am-split-button[data-variant="primary"] > .am-split-arrow [data-slot="icon-svg"] {
+  color: inherit;
+}
+
+.am-split-button[data-variant="primary"] > [data-component="button"]:hover:not(:disabled),
+.am-split-button[data-variant="primary"] > .am-split-arrow:hover:not(:disabled),
 .am-split-button[data-variant="primary"] > .am-split-arrow[data-expanded] {
-  background: var(--icon-strong-hover);
+  background: var(--surface-brand-hover);
+}
+
+.am-split-button[data-variant="primary"][data-disabled] {
+  opacity: 0.5;
+}
+
+.am-split-button[data-variant="primary"] > [data-component="button"]:disabled,
+.am-split-button[data-variant="primary"] > .am-split-arrow:disabled {
+  background: transparent;
+  color: inherit;
+  opacity: 1;
+  cursor: not-allowed;
 }
 
 .am-split-arrow {

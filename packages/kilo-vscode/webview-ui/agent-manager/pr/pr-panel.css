@@ -954,10 +954,14 @@
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 8px;
-  padding: 8px 10px;
+  gap: 10px;
+  padding: 10px 12px;
   border-top: 1px solid var(--vscode-panel-border);
-  background: color-mix(in srgb, var(--vscode-editor-background) 85%, var(--vscode-foreground));
+  background: color-mix(in srgb, var(--vscode-editor-background) 92%, var(--vscode-foreground));
+}
+
+.am-pr-merge-footer .am-split-button {
+  flex-shrink: 0;
 }
 
 .am-pr-merge-controls {

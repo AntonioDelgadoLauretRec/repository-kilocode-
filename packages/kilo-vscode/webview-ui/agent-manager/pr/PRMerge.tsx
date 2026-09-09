@@ -25,6 +25,14 @@ function label(method: PRMergeMethod, t: (key: string) => string): string {
   return t("agentManager.pr.merge.method.squash")
 }
 
+function autoEligible(value: PRStatus["merge"], current: string): boolean {
+  return (
+    value?.autoAllowed === true &&
+    value.mergeable === "mergeable" &&
+    (current === "clean" || current === "blocked" || current === "unstable" || current === "has_hooks")
+  )
+}
+
 export function PRMerge(props: Props) {
   const { t } = useLanguage()
   const vscode = useVSCode()
@@ -43,15 +51,8 @@ export function PRMerge(props: Props) {
     return value && methods().includes(value) ? value : (merge()?.method ?? methods().at(0) ?? "squash")
   }
   const state = () => merge()?.state ?? "unknown"
-  const auto = () => {
-    const value = merge()
-    const current = state()
-    return (
-      value?.autoAllowed === true &&
-      value.mergeable === "mergeable" &&
-      (current === "clean" || current === "blocked" || current === "unstable" || current === "has_hooks")
-    )
-  }
+  const auto = () => autoEligible(merge(), state())
+  const blocked = () => pending() || (state() !== "clean" && !auto())
   const target = () => ({
     projectId: props.projectId,
     worktreeId: props.worktreeId,
@@ -183,12 +184,12 @@ export function PRMerge(props: Props) {
               <Show
                 when={merge()?.auto}
                 fallback={
-                  <div class="am-split-button" data-variant="primary">
+                  <div class="am-split-button" data-variant="primary" data-disabled={blocked() ? "" : undefined}>
                     <Button
                       variant="primary"
                       size="small"
                       class="am-pr-merge-action"
-                      disabled={pending() || (state() !== "clean" && !auto())}
+                      disabled={blocked()}
                       onClick={() => (state() === "clean" ? confirm() : mergePR(true))}
                     >
                       {state() === "clean"
@@ -198,7 +199,7 @@ export function PRMerge(props: Props) {
                     <DropdownMenu gutter={4} placement="bottom-end">
                       <DropdownMenu.Trigger
                         class="am-split-arrow"
-                        disabled={pending()}
+                        disabled={blocked()}
                         aria-label={t("agentManager.pr.merge.chooseMethod")}
                       >
                         <Icon name="chevron-down" size="small" />
@@ -232,7 +233,7 @@ export function PRMerge(props: Props) {
                 }
               >
                 <div class="am-pr-merge-controls">
-                  <Button variant="secondary" disabled={pending()} onClick={disableAuto}>
+                  <Button variant="secondary" size="small" disabled={pending()} onClick={disableAuto}>
                     {t("agentManager.pr.merge.disableAuto")}
                   </Button>
                 </div>
@@ -261,12 +262,12 @@ export function PRMerge(props: Props) {
               </Show>
             </div>
             <Show when={merge()?.mergeable === "conflicting"}>
-              <Button variant="secondary" size="small" disabled={pending()} onClick={fix}>
+              <Button variant="primary" size="small" disabled={pending()} onClick={fix}>
                 {t("agentManager.pr.merge.fix")}
               </Button>
             </Show>
             <Show when={merge()?.mergeable !== "conflicting" && state() === "behind"}>
-              <Button variant="secondary" size="small" disabled={pending()} onClick={update}>
+              <Button variant="primary" size="small" disabled={pending()} onClick={update}>
                 {t("agentManager.pr.merge.update")}
               </Button>
             </Show>
