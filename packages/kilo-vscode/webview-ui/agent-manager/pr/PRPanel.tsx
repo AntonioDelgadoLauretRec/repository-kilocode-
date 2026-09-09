@@ -190,7 +190,7 @@ export const PRPanel: Component<PRPanelProps> = (props) => {
         number: number
         url: string
         value: NonNullable<PRStatus["conversation"]>
-        total?: number
+        hasEarlier?: boolean
       }
     | undefined
   >((prev) => {
