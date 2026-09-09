@@ -205,7 +205,6 @@ export class AgentManagerProvider implements Disposable {
       log: (...args) => this.log(...args),
       output: (msg) => this.outputChannel.appendLine(msg),
       activate: (ctx) => this.activateProject(ctx),
-      empty: () => this.pushEmptyState(),
       expand: (ctx) => this.initExpanded(ctx),
       ready: (ctx) => initContextState(ctx, (...args) => this.log(...args)),
       push: () => this.pushProjects(),
@@ -359,7 +358,6 @@ export class AgentManagerProvider implements Disposable {
       worktreeDirectories: () => this.getWorktreeDirectories(),
       workspaceRoot: () => this.getRoot(),
       projectId: () => this.contexts.active()?.id,
-      sessionProject: () => this.sessionProject(),
     })
     this.attachPanel(panel)
     if (!preserveFocus) focusPanelPrompt(panel, this.waitForPanelReady(panel), this.waitForPanelActive(panel))
@@ -775,8 +773,9 @@ export class AgentManagerProvider implements Disposable {
     }
     if (m.type === "agentManager.setSessionsCollapsed") {
       this.state?.setSessionsCollapsed(m.collapsed)
-      // Project bodies render collapsed from pushed state, so the mutation
-      // must round-trip.
+      // Multi-project bodies render collapsed purely from pushed state, so the
+      // mutation must round-trip; legacy mode is covered by its optimistic
+      // signal and the push is a no-op update.
       this.pushState()
       return null
     }
@@ -1033,7 +1032,7 @@ export class AgentManagerProvider implements Disposable {
     this.pushState()
     this.postToWebview({
       type: "agentManager.worktreeSetup",
-      projectId: this.context?.id,
+      projectId: this.host.multiProject() ? this.context?.id : undefined,
       status: "ready",
       message: "Worktree ready",
       sessionId,
@@ -1261,13 +1260,12 @@ export class AgentManagerProvider implements Disposable {
   // Repo info
 
   private async sendRepoInfo(): Promise<void> {
-    const ctx = this.context
     const manager = this.getWorktreeManager()
     if (!manager) return
     try {
       const branch = await manager.currentBranch()
       const defaultBranch = await manager.defaultBranch()
-      this.postToWebview({ type: "agentManager.repoInfo", branch, defaultBranch, projectId: ctx?.id })
+      this.postToWebview({ type: "agentManager.repoInfo", branch, defaultBranch, projectId: this.context?.id })
     } catch (error) {
       this.log(`Failed to get current branch: ${error}`)
     }
@@ -1537,6 +1535,7 @@ export class AgentManagerProvider implements Disposable {
    */
   private runKey(worktreeId: string): string {
     if (worktreeId !== "local") return worktreeId
+    if (!this.host.multiProject()) return worktreeId
     const ctx = this.context
     if (!ctx) return worktreeId
     return `${ctx.id}:local`
@@ -1554,7 +1553,10 @@ export class AgentManagerProvider implements Disposable {
     const ids = new Set((ctx.peekState()?.getWorktrees() ?? []).map((wt) => wt.id))
     const localKey = `${ctx.id}:local`
     const runStatuses = state.runStatuses
-      .filter((status) => ids.has(status.worktreeId) || status.worktreeId === localKey)
+      .filter(
+        (status) =>
+          ids.has(status.worktreeId) || status.worktreeId === localKey || (status.worktreeId === "local" && ctx.pinned),
+      )
       .map((status) => (status.worktreeId === localKey ? { ...status, worktreeId: "local" } : status))
     return { ...state, runStatuses }
   }
@@ -1579,6 +1581,8 @@ export class AgentManagerProvider implements Disposable {
   private messageProject(m: AgentManagerInMessage): ProjectContext | undefined {
     const pid = (m as { projectId?: unknown }).projectId
     if (typeof pid !== "string") return this.contexts.active()
+    // Re-check trust and enablement on every project-stamped message: a context
+    // instance can be cached before trust is confirmed, and get() checks neither.
     return this.contexts.usable(pid)
   }
 
@@ -1613,6 +1617,7 @@ export class AgentManagerProvider implements Disposable {
     void this.activity.sync()
     this.postToWebview({
       type: "agentManager.projects",
+      multiProject: this.host.multiProject(),
       projects,
     })
     if (this.panel)
@@ -1770,10 +1775,6 @@ export class AgentManagerProvider implements Disposable {
   public workspaceRoot = () => this.getRoot()
 
   public projectId = () => this.contexts.active()?.id
-
-  public sessionProject(): string | undefined {
-    return this.projectScope.current()?.id ?? this.contexts.active()?.id
-  }
   /**
    * Continue a sidebar session in a new worktree.
    * Captures git state, creates worktree, applies state, forks session.

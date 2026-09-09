@@ -323,6 +323,11 @@ export interface OpenCloudSessionMessage {
   sessionId: string
 }
 
+export interface OpenSessionMessage {
+  type: "openSession"
+  sessionID: string
+}
+
 export interface SelectKiloModelMessage {
   type: "selectKiloModel"
   modelID?: string
@@ -695,6 +700,7 @@ export interface ClaudeCompatSettingLoadedMessage {
 
 export interface ExtensionSettings {
   maxCost?: number
+  multiProject?: boolean
   [key: string]: unknown
 }
 
@@ -759,8 +765,17 @@ export interface NotificationSettingsLoadedMessage {
   type: "notificationSettingsLoaded"
   settings: {
     attentionEnabled: boolean
+    attentionNotifications: boolean
+    attentionOSNotifications: boolean
     attentionSound: string
+    osNotificationsAvailable: boolean
   }
+}
+
+export interface OSNotificationTestResultMessage {
+  type: "osNotificationTestResult"
+  ok: boolean
+  error?: string
 }
 
 export interface TimelineSettingLoadedMessage {
@@ -898,6 +913,7 @@ export interface AgentProjectSnapshot {
 // Project catalog push from extension to webview
 export interface AgentManagerProjectsMessage {
   type: "agentManager.projects"
+  multiProject: boolean
   projects: AgentProjectSnapshot[]
 }
 
@@ -1629,6 +1645,7 @@ export type ExtensionMessage =
   | ConfigBindingExpiredMessage
   | GlobalConfigLoadedMessage
   | NotificationSettingsLoadedMessage
+  | OSNotificationTestResultMessage
   | TimelineSettingLoadedMessage
   | ThroughputSettingLoadedMessage
   | AutoApprovalReasonSettingLoadedMessage
@@ -1667,6 +1684,7 @@ export type ExtensionMessage =
   | CloudSessionImportedMessage
   | CloudSessionImportFailedMessage
   | OpenCloudSessionMessage
+  | OpenSessionMessage
   | SelectKiloModelMessage
   | AgentManagerBranchesMessage
   | AgentManagerImportResultMessage

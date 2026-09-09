@@ -62,7 +62,7 @@ export const anacondaDesktopDict = {
 export const dict = {
   "session.goal.complete": "Abgeschlossen (vom Modell gemeldet)",
   "session.goal.blocked": "Blockiert",
-  "session.goal.restart": "Ziel neu starten (verbraucht Modellguthaben)",
+  "session.goal.restart": "Ziel neu starten",
   ...anacondaDesktopDict,
   ...cloudProviderDict,
   "task.swarm.title": "Board",
@@ -885,7 +885,17 @@ export const dict = {
   "settings.notifications.enable.title": "Tonbenachrichtigungen aktivieren",
   "settings.notifications.enable.description":
     "Töne wiedergeben, wenn Sitzungen abgeschlossen werden, ein Fehler auftritt oder Ihre Eingabe erforderlich ist",
+  "settings.notifications.workbench.title": "VS Code-Benachrichtigungen aktivieren",
+  "settings.notifications.workbench.description":
+    "VS Code-Benachrichtigungen anzeigen, wenn Kilo eine Aufgabe abschließt oder Ihre Eingabe erforderlich ist",
+  "settings.notifications.os.title": "Betriebssystem-Benachrichtigungen aktivieren",
+  "settings.notifications.os.description":
+    "Systemeigene Betriebssystem-Benachrichtigungen anzeigen, wenn Kilo eine Aufgabe abschließt oder Ihre Eingabe erforderlich ist, während VS Code nicht aktiv ist.",
   "settings.notifications.testSound": "Testen",
+  "settings.notifications.testOS": "Testen",
+  "settings.notifications.testOS.testing": "Testbenachrichtigung wird gesendet…",
+  "settings.notifications.testOS.success": "Testbenachrichtigung gesendet.",
+  "settings.notifications.testOS.error": "Testbenachrichtigung fehlgeschlagen",
   "settings.notifications.sound.default": "Standard",
   "settings.notifications.sound.system": "System",
   "settings.notifications.sound.description":
@@ -932,6 +942,9 @@ export const dict = {
   "settings.sandboxing.writablePaths.title": "Zusätzliche schreibbare Pfade",
   "settings.sandboxing.writablePaths.description":
     "Zusätzliche Dateisystempfade, in die die Sandbox Schreibvorgänge erlaubt (z. B. /tmp, /var/log). Diese werden mit den Standard-Schreibpfaden zusammengeführt, wenn die Sandbox aktiv ist.",
+  "settings.experimental.multiProject.title": "Multi-Projekt Agent Manager",
+  "settings.experimental.multiProject.description":
+    "Aktivieren Sie die Verwaltung von Sitzungen und Worktrees über mehrere Repositories im Agent Manager. Das aktuelle Workspace-Repository ist immer das Standardprojekt.",
   "settings.experimental.taskModelSelection.title": "Task-Subagent-Modellauswahl",
   "settings.experimental.taskModelSelection.description":
     "Erlaubt die explizite Auswahl von Modell, Anbieter und Schlussfolgerungsaufwand für Task-Subagenten.",

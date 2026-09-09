@@ -56,7 +56,7 @@ export const anacondaDesktopDict = {
 export const dict = {
   "session.goal.complete": "Tamamlandı (model bildirdi)",
   "session.goal.blocked": "Engellendi",
-  "session.goal.restart": "Hedefi yeniden başlat (model kredisi kullanır)",
+  "session.goal.restart": "Hedefi yeniden başlat",
   ...anacondaDesktopDict,
   ...cloudProviderDict,
   "task.swarm.title": "Pano",
@@ -856,7 +856,17 @@ export const dict = {
   "settings.notifications.enable.title": "Sesli bildirimleri etkinleştir",
   "settings.notifications.enable.description":
     "Oturumlar tamamlandığında, bir hatayla karşılaşıldığında veya sizden giriş beklendiğinde ses çal",
+  "settings.notifications.workbench.title": "VS Code bildirimlerini etkinleştir",
+  "settings.notifications.workbench.description":
+    "Kilo bir görevi tamamladığında veya sizden giriş beklendiğinde VS Code bildirimlerini göster",
+  "settings.notifications.os.title": "İşletim sistemi bildirimlerini etkinleştir",
+  "settings.notifications.os.description":
+    "VS Code etkin değilken Kilo bir görevi tamamladığında veya sizden giriş beklendiğinde yerel işletim sistemi bildirim uyarılarını göster.",
   "settings.notifications.testSound": "Test et",
+  "settings.notifications.testOS": "Test et",
+  "settings.notifications.testOS.testing": "Test bildirimi gönderiliyor…",
+  "settings.notifications.testOS.success": "Test bildirimi gönderildi.",
+  "settings.notifications.testOS.error": "Test bildirimi gönderilemedi",
   "settings.notifications.sound.default": "Varsayılan",
   "settings.notifications.sound.system": "Sistem",
   "settings.notifications.sound.description":
@@ -902,6 +912,9 @@ export const dict = {
   "settings.sandboxing.writablePaths.title": "Ek Yazılabilir Yollar",
   "settings.sandboxing.writablePaths.description":
     "Sandığın yazılmasına izin veren ek dosya sistemi yolları (ör. /tmp, /var/log). Sandık etkinken varsayılan yazılabilir yollarla birleştirilir.",
+  "settings.experimental.multiProject.title": "Çoklu Proje Agent Manager",
+  "settings.experimental.multiProject.description":
+    "Agent Manager'da birden fazla depo genelinde oturum ve worktree yönetimini etkinleştirin. Mevcut çalışma alanı deposu her zaman varsayılan projedir.",
   "settings.experimental.taskModelSelection.title": "Task Alt Aracı Modeli Seçimi",
   "settings.experimental.taskModelSelection.description":
     "Task alt aracıları için model, sağlayıcı ve akıl yürütme çabasını açıkça seçmeye izin verin.",

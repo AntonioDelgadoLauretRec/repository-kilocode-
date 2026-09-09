@@ -619,6 +619,10 @@ export interface TestNotificationMessage {
   sound: string
 }
 
+export interface TestOSNotificationMessage {
+  type: "testOSNotification"
+}
+
 export interface ResetAllSettingsRequest {
   type: "resetAllSettings"
 }
@@ -744,7 +748,6 @@ export interface CloseSessionRequest {
 /** Persist a non-worktree session to agent-manager.json (worktreeId = null). */
 export interface PersistSessionRequest {
   type: "agentManager.persistSession"
-  projectId?: string
   sessionId: string
   draftID?: string
 }
@@ -1659,6 +1662,7 @@ export type WebviewMessage =
   | OpenSettingsTabRequest
   | RequestNotificationSettingsMessage
   | TestNotificationMessage
+  | TestOSNotificationMessage
   | ResetAllSettingsRequest
   | ResetReadNotificationsRequest
   | SettingsTabChangedMessage

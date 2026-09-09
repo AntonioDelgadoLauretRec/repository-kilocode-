@@ -55,7 +55,7 @@ export const anacondaDesktopDict = {
 export const dict = {
   "session.goal.complete": "مكتمل (حسب تقرير النموذج)",
   "session.goal.blocked": "محظور",
-  "session.goal.restart": "إعادة بدء الهدف (تستهلك أرصدة النموذج)",
+  "session.goal.restart": "إعادة بدء الهدف",
   ...anacondaDesktopDict,
   ...cloudProviderDict,
   "task.swarm.title": "اللوحة",
@@ -845,7 +845,16 @@ export const dict = {
   "settings.notifications.sounds": "أصوات",
   "settings.notifications.enable.title": "تمكين الإشعارات الصوتية",
   "settings.notifications.enable.description": "تشغيل أصوات عند اكتمال الجلسات أو حدوث خطأ أو الحاجة إلى ردّك",
+  "settings.notifications.workbench.title": "تفعيل إشعارات VS Code",
+  "settings.notifications.workbench.description": "عرض إشعارات VS Code عند اكتمال مهمة Kilo أو الحاجة إلى ردّك",
+  "settings.notifications.os.title": "تفعيل إشعارات نظام التشغيل",
+  "settings.notifications.os.description":
+    "عرض تنبيهات إشعارات نظام التشغيل الأصلية عند اكتمال مهمة Kilo أو الحاجة إلى ردّك بينما يكون VS Code غير نشط.",
   "settings.notifications.testSound": "اختبار",
+  "settings.notifications.testOS": "اختبار",
+  "settings.notifications.testOS.testing": "جارٍ إرسال إشعار تجريبي…",
+  "settings.notifications.testOS.success": "تم إرسال إشعار الاختبار.",
+  "settings.notifications.testOS.error": "فشل إرسال إشعار الاختبار",
   "settings.notifications.sound.default": "افتراضي",
   "settings.notifications.sound.system": "النظام",
   "settings.notifications.sound.description":
@@ -890,6 +899,9 @@ export const dict = {
   "settings.sandboxing.writablePaths.title": "مسارات قابلة للكتابة إضافية",
   "settings.sandboxing.writablePaths.description":
     "مسارات نظام ملفات إضافية يسمح صندوق الرمل بالكتابة إليها (مثل /tmp، /var/log). يتم دمجها مع مسارات الكتابة الافتراضية عندما يكون صندوق الرمل نشطًا.",
+  "settings.experimental.multiProject.title": "إدارة متعددة المشاريع",
+  "settings.experimental.multiProject.description":
+    "تفعيل إدارة الجلسات وأشجار العمل عبر مستودعات متعددة في Agent Manager. المستودع الحالي هو دائمًا المشروع الافتراضي.",
   "settings.experimental.taskModelSelection.title": "اختيار نموذج الوكيل الفرعي لـ Task",
   "settings.experimental.taskModelSelection.description":
     "السماح باختيار النموذج والمزوّد ومستوى الاستدلال صراحةً للوكلاء الفرعيين في Task.",
