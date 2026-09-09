@@ -1,7 +1,7 @@
-import { Show } from "solid-js"
+import { createMemo, For, Show } from "solid-js"
 import { useI18n } from "../context/i18n"
 import { Icon } from "./icon"
-import { AgentAvatar } from "./agent-avatar"
+import { AgentAvatar, useAgentAvatarIds } from "./agent-avatar"
 import { Markdown } from "./markdown"
 import { Tooltip } from "./tooltip"
 
@@ -14,13 +14,29 @@ function Member(props: { id: string }) {
   )
 }
 
+export function BoardParticipantStack(props: { ids: string[] }) {
+  return (
+    <span data-component="board-participant-stack" aria-hidden="true">
+      <Show when={props.ids.length > 0} fallback={<Icon name="task" size="small" />}>
+        <For each={props.ids}>{(id) => <Member id={id} />}</For>
+      </Show>
+    </span>
+  )
+}
+
 type Route = { from?: unknown; to?: unknown; fromLabel?: unknown; toLabel?: unknown }
 
 export function BoardRoute(props: Route) {
   const i18n = useI18n()
+  const ids = useAgentAvatarIds()
   const text = (value: unknown) => (typeof value === "string" ? value : "")
   const from = () => text(props.from)
   const to = () => text(props.to)
+  const broadcast = createMemo(() => {
+    const values = ids().filter((id) => id !== "main" && id !== from())
+    if (from() !== "main" && values.length > 0) values.unshift("main")
+    return values
+  })
   const label = (id: string, value: unknown) => {
     if (id === "ALL") return i18n.t("ui.messagePart.board.all")
     const title = text(value)
@@ -56,8 +72,17 @@ export function BoardRoute(props: Route) {
       <Icon name="arrow-right" size="small" />
       <span data-slot="board-route-recipient-icon" data-broadcast={to() === "ALL"}>
         <Show when={to() === "ALL"} fallback={<Member id={to()} />}>
-          <Icon name="task" size="small" />
-          <Icon name="task" size="small" />
+          <Show
+            when={broadcast().length > 0}
+            fallback={
+              <>
+                <Icon name="task" size="small" />
+                <Icon name="task" size="small" />
+              </>
+            }
+          >
+            <BoardParticipantStack ids={broadcast()} />
+          </Show>
         </Show>
       </span>
       <Tooltip
