@@ -56,7 +56,7 @@ export const anacondaDesktopDict = {
 export const dict = {
   "session.goal.complete": "Завершено (за повідомленням моделі)",
   "session.goal.blocked": "Заблоковано",
-  "session.goal.restart": "Перезапустити ціль (витрачає кредити моделі)",
+  "session.goal.restart": "Перезапустити ціль",
   ...anacondaDesktopDict,
   ...cloudProviderDict,
   "task.swarm.title": "Дошка",

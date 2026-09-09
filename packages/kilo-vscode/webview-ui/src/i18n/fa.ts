@@ -56,7 +56,7 @@ export const anacondaDesktopDict = {
 export const dict = {
   "session.goal.complete": "تکمیل‌شده (گزارش مدل)",
   "session.goal.blocked": "مسدود",
-  "session.goal.restart": "شروع مجدد هدف (مصرف اعتبار مدل)",
+  "session.goal.restart": "شروع مجدد هدف",
   ...anacondaDesktopDict,
   ...cloudProviderDict,
   "task.swarm.title": "برد",

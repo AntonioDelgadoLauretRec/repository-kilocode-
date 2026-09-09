@@ -303,7 +303,7 @@ export namespace Goal {
               : args === "clear"
                 ? "Goal cleared."
                 : starting
-                  ? "Goal active. Work uses model credits. The working model reports completion or blockers with goal_report; completion is not independently verified. No progress or errors pause the goal. Use Stop or /goal pause to pause."
+                  ? "Goal active. The working model reports completion or blockers with goal_report; completion is not independently verified. No progress or errors pause the goal. Use Stop or /goal pause to pause."
                   : "Goal paused. Use /goal resume to continue."
             const user = prepared ? (yield* prepared).info : undefined
             if (user && user.role !== "user") return yield* Effect.die(new Error("Expected a user message"))
