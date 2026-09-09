@@ -1,5 +1,6 @@
 import { Component, createSignal, createMemo, createEffect, Switch, Match, Show, onMount, onCleanup } from "solid-js"
 import { DataProvider } from "@kilocode/kilo-ui/context/data"
+import { BoardNavigationProvider } from "../../../kilo-ui/src/context/board-navigation"
 import Settings from "./components/settings/Settings"
 import ProfileView from "./components/profile/ProfileView"
 import { useVSCode } from "./context/vscode"
@@ -12,6 +13,7 @@ import { ProviderShell } from "./context/provider-shell"
 import { ChatView } from "./components/chat"
 import { SidebarEmptyState } from "./components/chat/SidebarEmptyState"
 import { SidebarTopBar } from "./components/chat/SidebarTopBar"
+import { openSubagent } from "./components/chat/open-subagent"
 import { registerExpandedTaskTool } from "./components/chat/TaskToolExpanded"
 import { registerVscodeToolOverrides } from "./components/chat/VscodeToolOverrides"
 import { useWorktreeMode } from "./context/worktree-mode"
@@ -129,6 +131,15 @@ export const DataBridge: Component<{ children: any }> = (props) => {
     session.rejectQuestion(input.requestID)
   }
 
+  const openAgent = (id: string, title?: string) =>
+    openSubagent({
+      sessionID: id,
+      title,
+      parentSessionID: session.currentSessionID(),
+      worktree: !!worktree,
+      post: vscode.postMessage,
+    })
+
   const open = (filePath: string, line?: number, column?: number, sessionID?: string) => {
     const event = new CustomEvent("kilo:open-file", {
       cancelable: true,
@@ -224,7 +235,7 @@ export const DataBridge: Component<{ children: any }> = (props) => {
       onValidateFiles={validateFiles}
       onNavigateToSession={(id) => session.selectSession(id)}
     >
-      {props.children}
+      <BoardNavigationProvider open={openAgent}>{props.children}</BoardNavigationProvider>
     </DataProvider>
   )
 }

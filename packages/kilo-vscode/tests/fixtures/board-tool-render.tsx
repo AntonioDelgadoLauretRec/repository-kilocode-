@@ -31,6 +31,7 @@ const { render } = await import("solid-js/web")
 const { Part } = await import("@kilocode/kilo-ui/message-part")
 const { AgentAvatarPalette } = await import("@kilocode/kilo-ui/agent-avatar")
 const { BoardRoute } = await import("@kilocode/kilo-ui/board-message")
+const { BoardNavigationProvider } = await import("../../../kilo-ui/src/context/board-navigation")
 const { MarkedProvider, createMarkedParser } = await import("@kilocode/kilo-ui/context/marked")
 
 const labels = ["initial", "hidden", "latest", "reopened", "search", "search-updated"]
@@ -88,6 +89,9 @@ const broadcastRoot = document.createElement("div")
 document.body.append(broadcastRoot)
 const workerBroadcastRoot = document.createElement("div")
 document.body.append(workerBroadcastRoot)
+const directRoot = document.createElement("div")
+document.body.append(directRoot)
+const opened: Array<{ id: string; title?: string }> = []
 const dispose = render(
   () => (
     <MarkedProvider
@@ -116,6 +120,14 @@ const disposeWorkerBroadcast = render(
     </AgentAvatarPalette>
   ),
   workerBroadcastRoot,
+)
+const disposeDirect = render(
+  () => (
+    <BoardNavigationProvider open={(id, title) => opened.push({ id, title })}>
+      <BoardRoute from="main" to="worker" fromLabel="Coordinator" toLabel="Worker" />
+    </BoardNavigationProvider>
+  ),
+  directRoot,
 )
 const settle = async () => {
   await Promise.resolve()
@@ -152,6 +164,12 @@ try {
   assert(workerRecipient)
   assert.equal(workerRecipient.querySelectorAll('[data-component="board-participant-stack"]').length, 0)
   assert.equal(workerRecipient.querySelectorAll('[data-component="icon"]').length, 2)
+  const avatar = directRoot.querySelector<HTMLElement>('[data-slot="board-route-avatar"]')
+  assert(avatar)
+  assert.equal(avatar.getAttribute("role"), "button")
+  avatar.click()
+  await settle()
+  assert.deepEqual(opened, [{ id: "worker", title: "Worker" }])
   for (const index of [0, 1, 2]) {
     if (index) await update(index)
     assert.equal(trigger().getAttribute("aria-expanded"), "false")
@@ -186,6 +204,7 @@ try {
   dispose()
   disposeBroadcast()
   disposeWorkerBroadcast()
+  disposeDirect()
   JSON.parse = decode
   await window.happyDOM.cancelAsync()
   await window.happyDOM.close()
