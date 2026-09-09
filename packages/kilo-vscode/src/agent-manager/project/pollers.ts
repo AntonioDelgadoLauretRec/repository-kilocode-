@@ -12,6 +12,7 @@
  */
 
 import type { GitOps } from "../GitOps"
+import type { Host } from "../host"
 import { GitStatsPoller, type LocalStats, type WorktreePresenceResult, type WorktreeStats } from "../GitStatsPoller"
 import { PRStatusBridge } from "../pr-status-bridge"
 import type { PRStatus } from "../types"
@@ -46,6 +47,7 @@ interface PollerDeps {
   openExternal: (url: string) => void
   visible: () => boolean
   log: (...args: unknown[]) => void
+  mergeMethods?: Pick<Host, "getPRMergeMethod" | "savePRMergeMethod">
 }
 
 function hot(state: WorktreeStateManager | undefined): Set<string> {
@@ -83,6 +85,9 @@ function createPollerPair(ctx: ProjectContext, deps: PollerDeps): PollerPair {
     log: deps.log,
     semaphore: deps.semaphore,
     projectId: () => ctx.id,
+    conflicts: (cwd, remote, base, head) => deps.git.conflicts(cwd, remote, base, head),
+    getPRMergeMethod: deps.mergeMethods?.getPRMergeMethod,
+    savePRMergeMethod: deps.mergeMethods?.savePRMergeMethod,
   })
   return { stats, pr }
 }
@@ -185,6 +190,7 @@ export function createPollers(opts: {
   openExternal: (url: string) => void
   log: (...args: unknown[]) => void
   hot?: () => Set<string>
+  mergeMethods?: Pick<Host, "getPRMergeMethod" | "savePRMergeMethod">
 }): { stats: GitStatsPoller; pr: PRStatusBridge; projects: ProjectPollers } {
   const stats = new GitStatsPoller({
     getWorktrees: () => opts.state()?.getWorktrees() ?? [],
@@ -216,6 +222,9 @@ export function createPollers(opts: {
     log: opts.log,
     semaphore: opts.semaphore,
     projectId: opts.activeId,
+    conflicts: (cwd, remote, base, head) => opts.git.conflicts(cwd, remote, base, head),
+    getPRMergeMethod: opts.mergeMethods?.getPRMergeMethod,
+    savePRMergeMethod: opts.mergeMethods?.savePRMergeMethod,
   })
   const projects = new ProjectPollers({
     dirtyFiles: opts.dirtyFiles,
@@ -226,6 +235,7 @@ export function createPollers(opts: {
     openExternal: opts.openExternal,
     visible: opts.visible,
     log: opts.log,
+    mergeMethods: opts.mergeMethods,
   })
   return { stats, pr, projects }
 }

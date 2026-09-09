@@ -273,6 +273,7 @@ export class AgentManagerProvider implements Disposable {
       presence: (presence) => this.onWorktreePresence(presence),
       openExternal: (u) => this.host.openExternal(u),
       log: (...args) => this.log(...args),
+      mergeMethods: this.host,
     })
     this.statsPoller = pollers.stats
     this.prBridge = pollers.pr
@@ -452,8 +453,7 @@ export class AgentManagerProvider implements Disposable {
     }
 
     // When the .kilocode → .kilo migration rewrote git worktree refs, nudge
-    // VS Code's git extension to re-discover them. Without this, worktrees
-    // won't appear in Source Control until the next VS Code restart.
+    // VS Code's git extension to re-discover them and avoid stale Source Control.
     if (init.refsFixed > 0) {
       this.log(`Migration fixed ${init.refsFixed} git worktree ref(s), refreshing git`)
       this.host.refreshGit()

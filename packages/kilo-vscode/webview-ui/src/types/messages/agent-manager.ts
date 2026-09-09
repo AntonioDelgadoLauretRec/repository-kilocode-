@@ -66,6 +66,7 @@ import type {
   PRComment,
   PRReviewer,
   PRConversationComment,
+  PRMergeStatus,
 } from "../../../agent-manager/pr/pr-types"
 export type {
   PRState,
@@ -79,6 +80,10 @@ export type {
   PRConversationComment,
   PRReaction,
   PRReactionContent,
+  PRMergeMethod,
+  PRMergeability,
+  PRMergeState,
+  PRMergeStatus,
 } from "../../../agent-manager/pr/pr-types"
 
 export interface PRStatus {
@@ -92,6 +97,7 @@ export interface PRStatus {
   url: string
   state: PRState
   review: ReviewDecision | null
+  merge?: PRMergeStatus
   checks: {
     status: AggregateCheckStatus
     total: number

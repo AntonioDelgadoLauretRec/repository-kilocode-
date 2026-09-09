@@ -1,7 +1,7 @@
 import type { ExecFileOptionsWithStringEncoding } from "child_process"
 import { existsSync } from "fs"
 import type { Worktree } from "./WorktreeStateManager"
-import type { PRStatus, PRCheck, PRReviewer, PRConversationComment } from "./types"
+import type { PRMergeMethod, PRStatus, PRCheck, PRReviewer, PRConversationComment } from "./types"
 import { execWithShellEnv } from "./shell-env"
 import { execGhRead } from "./gh"
 import { classifyPRError } from "./git-import"
@@ -41,6 +41,16 @@ interface PRStatusPollerOptions {
   /** Shared concurrency gate for child process spawning. */
   semaphore?: Semaphore
   getBranch?: (worktree: Worktree) => Promise<string | undefined>
+  getPRMergeMethod?: (repo: string) => PRMergeMethod | undefined
+}
+
+interface RepoInfo {
+  owner: string
+  name: string
+  root: string
+  methods: PRMergeMethod[]
+  autoAllowed: boolean
+  canWrite: boolean
 }
 
 const GH_PROBE_TTL = 300_000 // 5 minutes — gh installation state rarely changes at runtime
@@ -63,7 +73,8 @@ export class PRStatusPoller {
   private ghProbeTime = 0
   private rich = true
   private activeWorktreeId: string | undefined
-  private cachedRepo: { owner: string; name: string; root: string } | undefined
+  private cachedRepo: RepoInfo | undefined
+  private repoRequest: { root: string; promise: Promise<RepoInfo> } | undefined
   private prCache = new Map<string, { result: PRResult | null; expires: number }>()
   private lastFullSync = 0 // timestamp of last full (all-worktree) sync
   private readonly intervalMs: number
@@ -144,6 +155,7 @@ export class PRStatusPoller {
     this.ghProbeTime = 0
     this.rich = true
     this.cachedRepo = undefined
+    this.repoRequest = undefined
     this.prCache.clear()
     this.lastFullSync = 0
   }
@@ -268,21 +280,19 @@ export class PRStatusPoller {
   ): Promise<void> {
     const wt = this.target(worktreeId)
     if (!wt) return
+    return this.fetchTarget(wt, worktreeId, generation, full)
+  }
 
+  private async fetchTarget(wt: Worktree, worktreeId: string, generation: number, full: boolean): Promise<void> {
     let branch: string | undefined
     try {
       branch = this.options.getBranch ? await this.options.getBranch(wt) : wt.branch
       if (this.stale(generation)) return
       const pr = await this.cachedFetchPR(branch ?? wt.branch, wt.path)
       if (this.stale(generation)) return
-      if (!pr) {
-        const hash = `${worktreeId}:${branch ?? wt.branch}:none`
-        if (this.lastHash.get(worktreeId) === hash) return
-        this.lastHash.set(worktreeId, hash)
-        this.options.onStatus(worktreeId, null, undefined, branch)
-        return
-      }
+      if (!pr) return this.empty(worktreeId, branch ?? wt.branch, branch)
 
+      const repo = await this.getRepoInfo(wt.path)
       const [checks, reviewers, threads] = await Promise.all([
         ...this.extras(pr, wt.path),
         this.fetchThreads(pr.number, wt.path, full),
@@ -291,6 +301,7 @@ export class PRStatusPoller {
       if (threads && (threads.baseRefOid !== pr.baseRefOid || threads.headRefOid !== pr.headRefOid))
         this.prCache.delete(this.key(branch ?? wt.branch, wt.path))
 
+      const merge = mergeStatus(pr.merge, repo, this.options.getPRMergeMethod?.(`${repo.owner}/${repo.name}`))
       const status: PRStatus = {
         id: pr.id,
         number: pr.number,
@@ -301,6 +312,7 @@ export class PRStatusPoller {
         url: pr.url,
         state: pr.state,
         review: pr.review,
+        ...(merge ? { merge } : {}),
         checks,
         reviewers,
         ...threads,
@@ -325,6 +337,13 @@ export class PRStatusPoller {
     return [pr.checks ?? this.fetchChecks(pr.number, cwd), pr.reviewers ?? this.fetchReviewers(pr.number, cwd)] as const
   }
 
+  private empty(worktreeId: string, fallback: string, branch: string | undefined): void {
+    const hash = `${worktreeId}:${fallback}:none`
+    if (this.lastHash.get(worktreeId) === hash) return
+    this.lastHash.set(worktreeId, hash)
+    this.options.onStatus(worktreeId, null, undefined, branch)
+  }
+
   private handleError(worktreeId: string, branch: string | undefined, cwd: string, err: unknown): void {
     const msg = err instanceof Error ? err.message : String(err)
     const kind = existsSync(cwd) ? classifyPRError(msg) : "unknown"
@@ -346,7 +365,7 @@ export class PRStatusPoller {
 
   private static readonly BASE_JSON_FIELDS =
     "id,number,title,body,url,state,isDraft,reviewDecision,additions,deletions,changedFiles,headRefName,baseRefOid,headRefOid"
-  private static readonly PR_JSON_FIELDS = `${PRStatusPoller.BASE_JSON_FIELDS},statusCheckRollup,reviewRequests,reviews`
+  private static readonly PR_JSON_FIELDS = `${PRStatusPoller.BASE_JSON_FIELDS},statusCheckRollup,reviewRequests,reviews,mergeable,mergeStateStatus,autoMergeRequest`
 
   /** Return a cached PR lookup if still fresh, otherwise fetch and cache.
    *  Keyed by branch name so multiple worktrees on the same branch share
@@ -451,17 +470,67 @@ export class PRStatusPoller {
     }
   }
 
-  private async getRepoInfo(cwd: string): Promise<{ owner: string; name: string }> {
+  private async getRepoInfo(cwd: string): Promise<RepoInfo> {
     const root = this.options.getWorkspaceRoot() ?? cwd
     if (this.cachedRepo?.root === root) return this.cachedRepo
-    const { stdout } = await this.gh(["repo", "view", "--json", "owner,name"], {
-      cwd,
-      timeout: 10_000,
-    })
-    const data = JSON.parse(stdout)
-    const info = { owner: data.owner.login as string, name: data.name as string, root }
-    this.cachedRepo = info
-    return info
+    if (this.repoRequest?.root === root) return this.repoRequest.promise
+    const promise = this.fetchRepoInfo(cwd, root)
+      .then((info) => {
+        this.cachedRepo = info
+        return info
+      })
+      .catch((err) => {
+        if (this.repoRequest?.promise === promise) this.repoRequest = undefined
+        throw err
+      })
+    this.repoRequest = { root, promise }
+    return promise
+  }
+
+  private async fetchRepoInfo(cwd: string, root: string): Promise<RepoInfo> {
+    const fields = "owner,name,mergeCommitAllowed,squashMergeAllowed,rebaseMergeAllowed,viewerPermission"
+    const stdout = await this.gh(["repo", "view", "--json", fields], { cwd, timeout: 10_000 }).then(
+      (result) => result.stdout,
+      (err) => {
+        const msg = err instanceof Error ? err.message : String(err)
+        if (!/unknown.*field|does(?:n't| not) exist|not accessible/i.test(msg)) throw err
+        return this.gh(["repo", "view", "--json", "owner,name,viewerPermission"], { cwd, timeout: 10_000 }).then(
+          (result) => result.stdout,
+          (fallback) => {
+            const reason = fallback instanceof Error ? fallback.message : String(fallback)
+            if (!/unknown.*field|does(?:n't| not) exist|not accessible/i.test(reason)) throw fallback
+            return this.gh(["repo", "view", "--json", "owner,name"], { cwd, timeout: 10_000 }).then(
+              (result) => result.stdout,
+            )
+          },
+        )
+      },
+    )
+    const data = JSON.parse(stdout) as Record<string, unknown>
+    const owner = typeof data.owner === "string" ? data.owner : (data.owner as { login?: string } | undefined)?.login
+    const name = typeof data.name === "string" ? data.name : undefined
+    if (!owner || !name) throw new Error("GitHub repository identity is missing")
+    const settings = await this.gh(["api", `repos/${owner}/${name}`], { cwd, timeout: 10_000 }).then(
+      (result) => JSON.parse(result.stdout) as { allow_auto_merge?: boolean },
+      (err) => {
+        this.options.log("Failed to read GitHub auto-merge settings:", err)
+        return { allow_auto_merge: undefined }
+      },
+    )
+    const methods = [
+      ...(data.squashMergeAllowed !== false ? (["squash"] as const) : []),
+      ...(data.mergeCommitAllowed !== false ? (["merge"] as const) : []),
+      ...(data.rebaseMergeAllowed !== false ? (["rebase"] as const) : []),
+    ]
+    return {
+      owner,
+      name,
+      root,
+      methods: methods.length > 0 ? [...methods] : ["squash"],
+      autoAllowed: settings.allow_auto_merge === true,
+      canWrite:
+        data.viewerPermission === "WRITE" || data.viewerPermission === "MAINTAIN" || data.viewerPermission === "ADMIN",
+    }
   }
 
   private async fetchReviewers(prNumber: number, cwd: string): Promise<PRReviewer[]> {
@@ -662,6 +731,27 @@ function advance(value: unknown, cursors: Set<string>): string {
   if (typeof value !== "string" || !value || cursors.has(value)) throw new Error("Invalid PR review thread cursor")
   cursors.add(value)
   return value
+}
+
+function preferredMethod(methods: PRMergeMethod[], saved: PRMergeMethod | undefined): PRMergeMethod {
+  if (saved && methods.includes(saved)) return saved
+  return (
+    methods.find((method) => method === "squash") ??
+    methods.find((method) => method === "merge") ??
+    methods.at(0) ??
+    "squash"
+  )
+}
+
+function mergeStatus(merge: PRResult["merge"], repo: RepoInfo, saved: PRMergeMethod | undefined): PRStatus["merge"] {
+  if (!merge) return undefined
+  return {
+    ...merge,
+    methods: repo.methods,
+    method: preferredMethod(repo.methods, saved),
+    autoAllowed: repo.autoAllowed,
+    canWrite: repo.canWrite,
+  }
 }
 
 function threads(json: string) {

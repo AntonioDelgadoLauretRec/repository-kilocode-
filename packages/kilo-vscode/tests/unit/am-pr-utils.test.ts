@@ -183,6 +183,19 @@ describe("parsePRResult", () => {
     expect(parsePRResult(JSON.stringify(raw))?.review).toBe("pending")
   })
 
+  it("parses GitHub mergeability and auto-merge state", () => {
+    const result = parsePRResult(
+      JSON.stringify({
+        number: 1,
+        state: "OPEN",
+        mergeable: "CONFLICTING",
+        mergeStateStatus: "DIRTY",
+        autoMergeRequest: { mergeMethod: "SQUASH" },
+      }),
+    )
+    expect(result?.merge).toEqual({ mergeable: "conflicting", state: "dirty", auto: "squash" })
+  })
+
   it("returns null review for unknown decision", () => {
     const raw = {
       number: 1,

@@ -359,6 +359,8 @@ describe("PRStatusPoller unresolved threads", () => {
     nodes.at(100)?.comments.nodes.push({ id: "reply", body: "Agreed" })
     internal.gh = async (args) => {
       if (args[0] === "repo") return { stdout: JSON.stringify({ owner: { login: "x" }, name: "y" }), stderr: "" }
+      if (args[0] === "api" && args[1] !== "graphql")
+        return { stdout: JSON.stringify({ allow_auto_merge: true }), stderr: "" }
       if (args[0] === "pr") {
         return { stdout: JSON.stringify({ ...pr, statusCheckRollup: [], reviewRequests: [], reviews: [] }), stderr: "" }
       }

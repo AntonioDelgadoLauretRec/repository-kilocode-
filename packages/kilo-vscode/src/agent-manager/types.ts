@@ -62,6 +62,10 @@ import type {
   PRConversationComment,
   PRReaction,
   PRReactionContent,
+  PRMergeMethod,
+  PRMergeability,
+  PRMergeState,
+  PRMergeStatus,
 } from "../../webview-ui/agent-manager/pr/pr-types"
 
 export type {
@@ -77,6 +81,10 @@ export type {
   PRConversationComment,
   PRReaction,
   PRReactionContent,
+  PRMergeMethod,
+  PRMergeability,
+  PRMergeState,
+  PRMergeStatus,
 }
 
 export interface PRStatus {
@@ -90,6 +98,7 @@ export interface PRStatus {
   url: string
   state: PRState
   review: ReviewDecision | null
+  merge?: PRMergeStatus
   checks: {
     status: AggregateCheckStatus
     total: number
