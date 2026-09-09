@@ -273,10 +273,10 @@ export namespace Goal {
             : undefined
           if (starting) yield* admit(true)
           if (intent && !intent.current()) return yield* Effect.interrupt
-          // A new goal replaces an in-flight response after admission and attachment validation.
+          if (GoalState.active(id)) yield* ops.cancel(id, true)
           if (starting) {
             const busy = yield* Effect.exit(state.assertNotBusy(id))
-            if (GoalState.active(id) || Exit.isFailure(busy)) yield* ops.cancel(id, true)
+            if (Exit.isFailure(busy)) yield* ops.cancel(id, true)
           }
           if (intent && !intent.current()) return yield* Effect.interrupt
           if (args === "pause" || args === "clear") yield* pause(id, true)
