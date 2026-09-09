@@ -1089,7 +1089,16 @@
 }
 
 .am-pr-merge-footer .am-split-button {
-  flex-shrink: 0;
+  flex: 1 1 auto;
+  min-width: 0;
+  transition:
+    transform 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.am-pr-merge-footer .am-split-button[data-variant="primary"]:hover:not([data-disabled]) {
+  transform: translateY(-1px);
+  box-shadow: 0 3px 10px color-mix(in srgb, var(--surface-brand-base) 35%, transparent);
 }
 
 .am-pr-merge-controls {
@@ -1120,6 +1129,12 @@
   width: 12px;
   height: 12px;
   margin-right: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .am-pr-merge-footer .am-split-button {
+    transition: none;
+  }
 }
 
 .am-pr-merge-confirm {
