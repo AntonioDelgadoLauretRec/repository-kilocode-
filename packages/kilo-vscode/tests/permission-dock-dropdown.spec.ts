@@ -257,8 +257,7 @@ test.describe("Permission Dock Dropdown — many rules", () => {
     // Approve first 3 rules, deny the 4th.
     // Use dispatchEvent to bypass any overlay/tooltip interception issues.
     const rows = page.locator('[data-slot="permission-rule-row"]')
-    const approveInRow = (n: number) =>
-      rows.nth(n).locator('[data-slot="permission-rule-toggle"][data-tone="success"]')
+    const approveInRow = (n: number) => rows.nth(n).locator('[data-slot="permission-rule-toggle"][data-tone="success"]')
     const denyInRow = (n: number) => rows.nth(n).locator('[data-slot="permission-rule-toggle"][data-tone="danger"]')
 
     await approveInRow(0).dispatchEvent("click")
