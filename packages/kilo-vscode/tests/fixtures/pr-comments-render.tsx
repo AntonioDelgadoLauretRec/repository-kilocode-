@@ -935,7 +935,7 @@ const release = render(
             openKeybind=""
             pr={badge()}
             onOpenComments={() => navigation.open(target)}
-            onOpenPR={() => clicked.push("external")}
+            onOpenPR={() => navigation.open(target)}
             onClick={() => clicked.push("row")}
             onDelete={noop}
             onStartRename={noop}
@@ -965,6 +965,16 @@ const release = render(
   second,
 )
 const indicator = () => second.querySelector<HTMLButtonElement>(".am-pr-badge-comments")
+second.querySelector<HTMLElement>(".am-pr-badge")!.click()
+setProject(target.projectId)
+setSelection(target.worktreeId)
+await window.happyDOM.waitUntilComplete()
+assert.equal(visible(), true)
+assert.deepEqual(clicked, ["select", "refresh"])
+setVisible(false)
+clicked.length = 0
+setProject("project-a")
+setSelection("local")
 assert.equal(indicator(), null)
 setBadge({ ...base, unresolvedThreads: 1 })
 assert.equal(indicator()?.getAttribute("aria-label"), "1 unresolved review thread")
@@ -1153,7 +1163,7 @@ await window.happyDOM.waitUntilComplete()
 assert.equal(second.querySelector(".am-pr-panel-title")?.textContent, "Updated")
 assert.equal(jumps, 2)
 second.querySelector<HTMLElement>(".am-pr-badge-number")!.click()
-assert.equal(clicked.at(-1), "external")
+assert.equal(clicked.at(-1), "refresh")
 assert.ok(!clicked.includes("row"))
 setBadge((prev) => ({ ...prev, unresolvedThreads: 0 }))
 assert.equal(indicator(), null)
