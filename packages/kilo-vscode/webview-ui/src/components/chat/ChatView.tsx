@@ -85,6 +85,11 @@ export const ChatView: Component<ChatViewProps> = (props) => {
   const [transferDetail, setTransferDetail] = createSignal("")
   const [repoBranch, setRepoBranch] = createSignal<string>()
   let worktreeRef: HTMLDivElement | undefined
+  let scroll: (() => void) | undefined
+  const setScroll = (handler: (() => void) | undefined) => {
+    scroll = handler
+  }
+  const scrollToBottom = () => scroll?.()
 
   // Permissions and questions scoped to this session's family (self + subagents).
   // Each ChatView only sees its own session tree — no cross-session leakage.
@@ -381,6 +386,7 @@ export const ChatView: Component<ChatViewProps> = (props) => {
                 onShowHistory={props.onShowHistory}
                 onForkMessage={props.onForkMessage}
                 onEditMessage={edit}
+                onScrollToBottomReady={setScroll}
                 queuedDisabled={editing()?.sessionID === id() && !!editing()}
                 editDisabled={!editable() || !!editing()}
                 questions={standaloneQuestions}
@@ -412,6 +418,7 @@ export const ChatView: Component<ChatViewProps> = (props) => {
                 blocked={dockBlocked()}
                 hasActions={() => !props.readonly && (hasActions(hasMessages()) || !!goal())}
                 actions={(control) => renderActions(hasMessages(), control)}
+                onScrollToBottom={scrollToBottom}
                 readonly={props.readonly}
               />
               <Show when={!props.readonly}>
