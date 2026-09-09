@@ -58,6 +58,9 @@ export class PRStatusPoller {
   private activeWorktreeId: string | undefined
   private cachedRepo: { owner: string; name: string; root: string } | undefined
   private prCache = new Map<string, { result: PRResult | null; expires: number }>()
+  /** Reviewer avatars are stable, so look them up once per login and reuse them. */
+  private readonly avatars = new Map<string, string>()
+  private readonly resolvedAvatars = new Set<string>()
   private lastFullSync = 0 // timestamp of last full (all-worktree) sync
   private readonly intervalMs: number
   private readonly semaphore: Semaphore | undefined
@@ -138,6 +141,8 @@ export class PRStatusPoller {
     this.rich = true
     this.cachedRepo = undefined
     this.prCache.clear()
+    this.avatars.clear()
+    this.resolvedAvatars.clear()
     this.lastFullSync = 0
   }
 
@@ -317,7 +322,28 @@ export class PRStatusPoller {
   }
 
   private extras(pr: PRResult, cwd: string) {
-    return [pr.checks ?? this.fetchChecks(pr.number, cwd), pr.reviewers ?? this.fetchReviewers(pr.number, cwd)] as const
+    return [pr.checks ?? this.fetchChecks(pr.number, cwd), this.reviewers(pr, cwd)] as const
+  }
+
+  /**
+   * `gh pr view --json reviews` returns reviewer logins without avatars, so
+   * merge avatar URLs from the GraphQL query and cache them per login. States
+   * from `gh pr view` stay authoritative.
+   */
+  private async reviewers(pr: PRResult, cwd: string): Promise<PRReviewer[]> {
+    if (pr.reviewers === undefined) return (await this.fetchReviewers(pr.number, cwd)).items
+    const list = pr.reviewers
+    if (list.length === 0 || list.every((item) => item.avatar || this.resolvedAvatars.has(item.login)))
+      return list.map((item) => (item.avatar ? item : { ...item, avatar: this.avatars.get(item.login) }))
+    const fetched = await this.fetchReviewers(pr.number, cwd)
+    if (fetched.ok) {
+      for (const item of list) this.resolvedAvatars.add(item.login)
+      for (const item of fetched.items) {
+        this.resolvedAvatars.add(item.login)
+        if (item.avatar) this.avatars.set(item.login, item.avatar)
+      }
+    }
+    return list.map((item) => (item.avatar ? item : { ...item, avatar: this.avatars.get(item.login) }))
   }
 
   private handleError(worktreeId: string, branch: string | undefined, cwd: string, err: unknown): void {
@@ -459,7 +485,7 @@ export class PRStatusPoller {
     return info
   }
 
-  private async fetchReviewers(prNumber: number, cwd: string): Promise<PRReviewer[]> {
+  private async fetchReviewers(prNumber: number, cwd: string): Promise<{ items: PRReviewer[]; ok: boolean }> {
     try {
       const repo = await this.getRepoInfo(cwd)
       const query = `query($owner: String!, $repo: String!, $number: Int!) {
@@ -490,13 +516,16 @@ export class PRStatusPoller {
         { cwd, timeout: 15_000 },
       )
       const pr = JSON.parse(stdout)?.data?.repository?.pullRequest
-      return parseReviewers(
-        (pr?.reviewRequests?.nodes ?? []) as GhReviewRequest[],
-        (pr?.reviews?.nodes ?? []) as GhReview[],
-      )
+      return {
+        items: parseReviewers(
+          (pr?.reviewRequests?.nodes ?? []) as GhReviewRequest[],
+          (pr?.reviews?.nodes ?? []) as GhReview[],
+        ),
+        ok: true,
+      }
     } catch (err) {
       this.options.log("Failed to fetch PR reviewers:", err)
-      return []
+      return { items: [], ok: false }
     }
   }
 

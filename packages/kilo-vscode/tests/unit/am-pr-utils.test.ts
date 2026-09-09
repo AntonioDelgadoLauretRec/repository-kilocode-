@@ -640,6 +640,13 @@ describe("PR signature", () => {
     expect(signature({ ...pr, title: "A:B", body: "C" })).not.toBe(signature({ ...pr, title: "A", body: "B:C" }))
   })
 
+  it("changes when a reviewer avatar becomes available", () => {
+    const before = signature(pr)
+    expect(signature({ ...pr, reviewers: [{ login: "alice", state: "pending", avatar: "https://avatar" }] })).not.toBe(
+      before,
+    )
+  })
+
   it("changes when either captured PR ref changes", () => {
     const refs = { baseRefOid: "a".repeat(40), headRefOid: "b".repeat(40) }
     const before = signature({ ...pr, ...refs })
