@@ -131,14 +131,16 @@ export const DataBridge: Component<{ children: any }> = (props) => {
     session.rejectQuestion(input.requestID)
   }
 
-  const openAgent = (id: string, title?: string) =>
+  const openAgent = (id: string, title?: string) => {
+    const parent = session.sessions().find((item) => item.id === id)?.parentID ?? session.currentSessionID()
     openSubagent({
       sessionID: id,
       title,
-      parentSessionID: session.currentSessionID(),
+      parentSessionID: parent,
       worktree: !!worktree,
       post: vscode.postMessage,
     })
+  }
 
   const open = (filePath: string, line?: number, column?: number, sessionID?: string) => {
     const event = new CustomEvent("kilo:open-file", {
