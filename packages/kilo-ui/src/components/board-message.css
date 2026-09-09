@@ -41,14 +41,21 @@
     justify-content: center;
     border-radius: 3px;
     cursor: pointer;
+    transition:
+      box-shadow 120ms ease,
+      filter 120ms ease;
 
     &:hover {
-      background: var(--button-ghost-hover, var(--vscode-toolbar-hoverBackground));
+      box-shadow:
+        0 0 0 1px color-mix(in srgb, var(--icon-interactive-base) 60%, transparent),
+        0 0 8px color-mix(in srgb, var(--icon-interactive-base) 45%, transparent);
+      filter: brightness(1.12);
     }
 
     &:focus-visible {
       outline: 1px solid var(--border-focus, var(--vscode-focusBorder, #007fd4));
       outline-offset: 2px;
+      box-shadow: 0 0 8px color-mix(in srgb, var(--icon-interactive-base) 45%, transparent);
     }
   }
 

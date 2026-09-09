@@ -7,8 +7,9 @@ import { Markdown } from "./markdown"
 import { Tooltip } from "./tooltip"
 
 // The parent session keeps the plain spinner grid; only subagents get a glyph.
-function Member(props: { id: string; label?: string; onSessionClick?: BoardSessionNavigation }) {
+function Member(props: { id: string; label?: string; onSessionClick?: BoardSessionNavigation; semantic?: boolean }) {
   const open = () => props.onSessionClick
+  const semantic = () => props.semantic !== false
   const clickable = () => props.id !== "main" && !!open()
   const label = () => props.label || props.id
   const activate = () => open()?.(props.id, props.label)
@@ -32,12 +33,12 @@ function Member(props: { id: string; label?: string; onSessionClick?: BoardSessi
         <span
           data-slot="board-route-avatar"
           data-clickable="true"
-          role="button"
-          tabIndex={0}
-          aria-label={label()}
+          role={semantic() ? "button" : undefined}
+          tabIndex={semantic() ? 0 : undefined}
+          aria-label={semantic() ? label() : undefined}
           title={label()}
           onClick={click}
-          onKeyDown={key}
+          onKeyDown={semantic() ? key : undefined}
         >
           <AgentAvatar id={props.id} />
         </span>
@@ -46,12 +47,17 @@ function Member(props: { id: string; label?: string; onSessionClick?: BoardSessi
   )
 }
 
-export function BoardParticipantStack(props: { ids: string[]; onSessionClick?: BoardSessionNavigation }) {
+export function BoardParticipantStack(props: {
+  ids: string[]
+  onSessionClick?: BoardSessionNavigation
+  semantic?: boolean
+}) {
   const open = () => props.onSessionClick
+  const semantic = () => props.semantic !== false
   return (
-    <span data-component="board-participant-stack" aria-hidden={open() ? undefined : "true"}>
+    <span data-component="board-participant-stack" aria-hidden={semantic() && open() ? undefined : "true"}>
       <Show when={props.ids.length > 0} fallback={<Icon name="task" size="small" />}>
-        <For each={props.ids}>{(id) => <Member id={id} onSessionClick={open()} />}</For>
+        <For each={props.ids}>{(id) => <Member id={id} onSessionClick={open()} semantic={semantic()} />}</For>
       </Show>
     </span>
   )
@@ -63,6 +69,7 @@ type Route = {
   fromLabel?: unknown
   toLabel?: unknown
   onSessionClick?: BoardSessionNavigation
+  semantic?: boolean
 }
 
 export function BoardRoute(props: Route) {
@@ -101,7 +108,7 @@ export function BoardRoute(props: Route) {
       role="group"
       aria-label={i18n.t("ui.messagePart.board.route", { from: sender(), to: recipient() })}
     >
-      <Member id={from()} label={sender()} onSessionClick={open()} />
+      <Member id={from()} label={sender()} onSessionClick={open()} semantic={props.semantic} />
       <Tooltip
         class="board-route-member board-route-sender"
         contentClass="board-route-tooltip"
@@ -111,7 +118,10 @@ export function BoardRoute(props: Route) {
       </Tooltip>
       <Icon name="arrow-right" size="small" />
       <span data-slot="board-route-recipient-icon" data-broadcast={to() === "ALL"}>
-        <Show when={to() === "ALL"} fallback={<Member id={to()} label={recipient()} onSessionClick={open()} />}>
+        <Show
+          when={to() === "ALL"}
+          fallback={<Member id={to()} label={recipient()} onSessionClick={open()} semantic={props.semantic} />}
+        >
           <Show
             when={broadcast().length > 0}
             fallback={
@@ -121,7 +131,7 @@ export function BoardRoute(props: Route) {
               </>
             }
           >
-            <BoardParticipantStack ids={broadcast()} onSessionClick={open()} />
+            <BoardParticipantStack ids={broadcast()} onSessionClick={open()} semantic={props.semantic} />
           </Show>
         </Show>
       </span>
@@ -143,7 +153,7 @@ export function BoardMessage(props: Route & { body: string; route?: boolean }) {
   return (
     <div data-slot="board-message">
       <Show when={props.route !== false}>
-        <BoardRoute {...props} onSessionClick={open()} />
+        <BoardRoute {...props} onSessionClick={open()} semantic />
       </Show>
       <div data-slot="board-message-body">
         <Markdown text={props.body} />

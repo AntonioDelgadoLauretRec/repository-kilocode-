@@ -29,6 +29,7 @@ import {
   QuestionInfo,
 } from "@kilocode/sdk/v2"
 import { useData } from "../context"
+import { useBoardNavigation } from "../context/board-navigation"
 import { checkFile } from "../file-link-validator"
 import { useFileComponent } from "../context/file"
 import { useDialog } from "../context/dialog"
@@ -1170,6 +1171,7 @@ function ToolFileAccordion(props: { path: string; actions?: JSX.Element; childre
 // When hideDetails is true, render as a row (no content), otherwise as a panel with markdown output.
 function McpTool(props: ToolProps) {
   const i18n = useI18n()
+  const navigate = useBoardNavigation()
   const board = () => props.tool === "board_post" || props.tool === "board_read"
   const record = (value: unknown): value is Record<string, unknown> =>
     !!value && typeof value === "object" && !Array.isArray(value)
@@ -1218,6 +1220,8 @@ function McpTool(props: ToolProps) {
           to={props.metadata.to ?? result()?.to ?? props.input.to}
           fromLabel={props.metadata.fromLabel ?? result()?.fromLabel}
           toLabel={props.metadata.toLabel ?? result()?.toLabel}
+          onSessionClick={navigate}
+          semantic={false}
         />
       )
     if (props.tool === "board_read") {
@@ -1269,7 +1273,11 @@ function McpTool(props: ToolProps) {
         <BasicTool
           hideDetails
           icon={board() ? "task" : "mcp"}
-          iconNode={props.tool === "board_read" ? <BoardParticipantStack ids={participants()} /> : undefined}
+          iconNode={
+            props.tool === "board_read" ? (
+              <BoardParticipantStack ids={participants()} onSessionClick={navigate} semantic={false} />
+            ) : undefined
+          }
           status={props.status}
           trigger={trigger()}
         />
@@ -1277,7 +1285,11 @@ function McpTool(props: ToolProps) {
     >
       <BasicTool
         icon={board() ? "task" : "mcp"}
-        iconNode={props.tool === "board_read" ? <BoardParticipantStack ids={participants()} /> : undefined}
+        iconNode={
+          props.tool === "board_read" ? (
+            <BoardParticipantStack ids={participants()} onSessionClick={navigate} semantic={false} />
+          ) : undefined
+        }
         defer={board()}
         status={props.status}
         tool={props.tool}
