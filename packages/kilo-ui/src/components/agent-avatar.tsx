@@ -21,6 +21,11 @@ export function AgentAvatarPalette(props: { ids: string[]; children: JSX.Element
   return <Palette.Provider value={parent ?? value}>{props.children}</Palette.Provider>
 }
 
+export function useAgentAvatarIds() {
+  const shared = useContext(Palette)
+  return createMemo(() => (shared ? [...shared().keys()] : []))
+}
+
 // Corner cells are dropped so the dot grid reads as a circle.
 const GRID = Array.from({ length: 25 }, (_, index) => index).filter((index) => ![0, 4, 20, 24].includes(index))
 

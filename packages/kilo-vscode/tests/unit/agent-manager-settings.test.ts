@@ -85,6 +85,8 @@ describe("Agent Manager application settings", () => {
       }
       expect(provider.configSettings()["agentManager.autoBranchNaming"]).toBe(expected)
       expect(provider.configSettings()["agentManager.branchPrefix"]).toBe(text)
+      expect(provider.configSettings()["agentManager.pushFixes"]).toBe(true)
+      expect(provider.configSettings().multiProject).toBe(false)
       await provider.handleUpdateSetting("agentManager.autoBranchNaming", !expected)
       await provider.handleUpdateSetting("agentManager.branchPrefix", "")
       expect(writes).toEqual([

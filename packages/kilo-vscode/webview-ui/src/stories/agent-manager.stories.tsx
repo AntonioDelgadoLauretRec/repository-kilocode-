@@ -1296,6 +1296,23 @@ const MockTabAdd = () => (
   </div>
 )
 
+const MockDiffToggle = (props: { files: string; additions: string; deletions: string; active?: boolean }) => (
+  <IconButton
+    icon="layers"
+    size="small"
+    variant="ghost"
+    class="am-diff-toggle-btn"
+    aria-label="Toggle diff"
+    aria-pressed={props.active ?? false}
+  >
+    <span class="am-diff-toggle-stats">
+      <span class="am-stat-files">{props.files}</span>
+      <span class="am-stat-additions">{props.additions}</span>
+      <span class="am-stat-deletions">{props.deletions}</span>
+    </span>
+  </IconButton>
+)
+
 export const TabBarMultipleTabs: Story = {
   name: "TabBar — multiple tabs with active",
   render: () => (
@@ -1313,14 +1330,7 @@ export const TabBarMultipleTabs: Story = {
         </div>
         <MockTabAdd />
         <div class="am-tab-actions">
-          <button class="am-diff-toggle-btn am-diff-toggle-has-changes">
-            <Icon name="layers" size="small" />
-            <span class="am-diff-toggle-stats">
-              <span class="am-stat-files">4f</span>
-              <span class="am-stat-additions">+32</span>
-              <span class="am-stat-deletions">−8</span>
-            </span>
-          </button>
+          <MockDiffToggle files="4f" additions="+32" deletions="−8" />
           <IconButton icon="console" size="small" variant="ghost" label="Terminal" />
         </div>
       </div>
@@ -1366,14 +1376,7 @@ export const TabBarSingleTab: Story = {
         </div>
         <MockTabAdd />
         <div class="am-tab-actions">
-          <button class="am-diff-toggle-btn am-diff-toggle-has-changes">
-            <Icon name="layers" size="small" />
-            <span class="am-diff-toggle-stats">
-              <span class="am-stat-files">188f</span>
-              <span class="am-stat-additions">+23625</span>
-              <span class="am-stat-deletions">−359</span>
-            </span>
-          </button>
+          <MockDiffToggle files="188f" additions="+23625" deletions="−359" />
           <IconButton icon="console" size="small" variant="ghost" label="Terminal" />
         </div>
       </div>
@@ -1393,14 +1396,7 @@ const MockFullContextActions = () => (
       <span class="am-tab-actions-separator" />
     </span>
     <TooltipKeybind title="Toggle diff" keybind="" placement="bottom">
-      <button class="am-diff-toggle-btn am-diff-toggle-has-changes" title="Toggle diff">
-        <Icon name="layers" size="small" />
-        <span class="am-diff-toggle-stats">
-          <span class="am-stat-files">4f</span>
-          <span class="am-stat-additions">+32</span>
-          <span class="am-stat-deletions">−8</span>
-        </span>
-      </button>
+      <MockDiffToggle files="4f" additions="+32" deletions="−8" />
     </TooltipKeybind>
     <TooltipKeybind title="Pull request" keybind="" placement="bottom">
       <IconButton icon="pull-request" size="small" variant="ghost" label="Pull request" />
@@ -1424,18 +1420,20 @@ const MockFullContextActions = () => (
         <IconButton size="small" variant="ghost" icon="play" aria-label="Run" />
       </TooltipKeybind>
       <TooltipKeybind title="Run options" keybind="" placement="bottom">
-        <button class="am-split-arrow" aria-label="Run options">
-          <Icon name="chevron-down" size="small" />
-        </button>
+        <IconButton icon="chevron-down" size="small" variant="ghost" aria-label="Run options" class="am-split-arrow" />
       </TooltipKeybind>
     </span>
     <div class="am-split-button">
       <TooltipKeybind title="Open Terminal" keybind="" placement="bottom">
         <IconButton icon="console" size="small" variant="ghost" label="Open Terminal" />
       </TooltipKeybind>
-      <button class="am-split-arrow" aria-label="Choose terminal destination">
-        <Icon name="chevron-down" size="small" />
-      </button>
+      <IconButton
+        icon="chevron-down"
+        size="small"
+        variant="ghost"
+        aria-label="Choose terminal destination"
+        class="am-split-arrow"
+      />
     </div>
   </div>
 )
@@ -2158,6 +2156,55 @@ export const PRPanelOverview: Story = {
           onClose={() => {}}
           onRefresh={() => {}}
           onOpenExternal={() => {}}
+        />
+      </div>
+    </StoryProviders>
+  ),
+}
+
+const summaryPR: PRStatus = {
+  ...basePR,
+  review: "changes_requested",
+  checks: {
+    status: "failure",
+    total: 5,
+    passed: 3,
+    failed: 2,
+    pending: 0,
+    checks: [
+      { name: "Typecheck", status: "failure", url: "https://github.com/org/repo/actions/runs/100/job/200" },
+      { name: "Tests", status: "failure" },
+      { name: "Lint", status: "success" },
+      { name: "Build", status: "success" },
+      { name: "Docs", status: "success" },
+    ],
+  },
+  comments: prComments,
+  conversation: [
+    {
+      id: "IC_1",
+      author: "octocat",
+      body: "Ship it once CI is green.",
+      createdAt: Date.now() - 60_000,
+      isBot: false,
+    },
+  ],
+}
+
+export const PRPanelSummary: Story = {
+  name: "PR panel — header and summary",
+  render: () => (
+    <StoryProviders noPadding>
+      <div style={{ background: "var(--vscode-editor-background)", height: "680px" }}>
+        <PRPanel
+          pr={summaryPR}
+          worktreeId="wt-a1"
+          onClose={() => {}}
+          onRefresh={() => {}}
+          onOpenExternal={() => {}}
+          onOpenFile={() => {}}
+          onOpenDiff={() => {}}
+          onOpenUrl={() => {}}
         />
       </div>
     </StoryProviders>
