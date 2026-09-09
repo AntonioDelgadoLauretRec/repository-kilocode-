@@ -1361,6 +1361,10 @@ export interface ToggleRemoteMessage {
   type: "toggleRemote"
 }
 
+export interface ToggleCaffeinationMessage {
+  type: "toggleCaffeination"
+}
+
 export interface SetRemoteEnabledMessage {
   type: "setRemoteEnabled"
   enabled: boolean
@@ -1790,6 +1794,7 @@ export type WebviewMessage =
   | PersistModelSelectionRequest
   | RequestModelSelectionsMessage
   | ToggleRemoteMessage
+  | ToggleCaffeinationMessage
   | SetRemoteEnabledMessage
   | RequestRemoteStatusMessage
   | ContinueInWorktreeRequest

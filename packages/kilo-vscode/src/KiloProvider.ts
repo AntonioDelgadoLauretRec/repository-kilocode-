@@ -1110,6 +1110,7 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
           board: (msg) => this.handleBoardMessage(msg),
           cancelBackgroundJob: (jobID, sessionID, requestID) => this.cancelBackgroundJob(jobID, sessionID, requestID),
           promoteBackgroundJob: (jobID, sessionID) => this.promoteBackgroundJob(jobID, sessionID),
+          caffeination: () => void vscode.commands.executeCommand("kilo-code.new.toggleCaffeination"),
         })
       ) {
         return
