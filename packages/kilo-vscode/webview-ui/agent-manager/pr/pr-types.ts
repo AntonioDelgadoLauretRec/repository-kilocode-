@@ -1,5 +1,5 @@
-// PR sub-types — source of truth for all PR-related types used in the PR panel.
-// PRStatus lives in src/types/messages/agent-manager.ts for broad consumption.
+// PR types — source of truth for all PR-related types used by the PR panel and
+// the extension/webview message boundary.
 
 export type PRState = "open" | "draft" | "merged" | "closed"
 export type ReviewDecision = "approved" | "changes_requested" | "pending"
@@ -82,6 +82,42 @@ export interface PRReviewer {
   login: string
   avatar?: string
   state: ReviewerState
+}
+
+export interface PRStatus {
+  viewerDidAuthor?: boolean
+  id?: string
+  number: number
+  baseRefOid?: string
+  headRefOid?: string
+  title: string
+  body?: string
+  author?: string
+  createdAt?: string
+  url: string
+  state: PRState
+  review: ReviewDecision | null
+  checks: {
+    status: AggregateCheckStatus
+    total: number
+    passed: number
+    failed: number
+    pending: number
+    checks: PRCheck[]
+  }
+  reviewers: PRReviewer[]
+  unresolvedThreads?: number
+  comments?: {
+    total: number
+    unresolved: number
+    comments: PRComment[]
+  }
+  conversation?: PRTimelineItem[]
+  /** Total timeline items on GitHub; larger than `conversation` when truncated. */
+  conversationTotal?: number
+  additions: number
+  deletions: number
+  files: number
 }
 
 export interface PRConversationComment {

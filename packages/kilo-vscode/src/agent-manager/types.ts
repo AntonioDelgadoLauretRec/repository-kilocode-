@@ -59,6 +59,7 @@ import type {
   PRComment,
   ReviewerState,
   PRReviewer,
+  PRStatus,
   PRConversationComment,
   PRCommitItem,
   PREventItem,
@@ -78,6 +79,7 @@ export type {
   PRComment,
   ReviewerState,
   PRReviewer,
+  PRStatus,
   PRConversationComment,
   PRCommitItem,
   PREventItem,
@@ -85,42 +87,6 @@ export type {
   PRTimelineItem,
   PRReaction,
   PRReactionContent,
-}
-
-export interface PRStatus {
-  viewerDidAuthor?: boolean
-  id?: string
-  number: number
-  baseRefOid?: string
-  headRefOid?: string
-  title: string
-  body?: string
-  author?: string
-  createdAt?: string
-  url: string
-  state: PRState
-  review: ReviewDecision | null
-  checks: {
-    status: AggregateCheckStatus
-    total: number
-    passed: number
-    failed: number
-    pending: number
-    checks: PRCheck[]
-  }
-  reviewers: PRReviewer[]
-  unresolvedThreads?: number
-  comments?: {
-    total: number
-    unresolved: number
-    comments: PRComment[]
-  }
-  conversation?: PRTimelineItem[]
-  /** Total timeline items on GitHub; larger than `conversation` when truncated. */
-  conversationTotal?: number
-  additions: number
-  deletions: number
-  files: number
 }
 
 // ---------------------------------------------------------------------------
