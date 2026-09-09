@@ -2789,6 +2789,56 @@ body.am-wt-dragging-active * {
   border-radius: 0 5px 5px 0;
 }
 
+.am-split-button[data-variant="primary"] {
+  gap: 0;
+  align-items: stretch;
+  border-radius: 2px;
+  background: var(--surface-brand-base);
+  color: #ffffff;
+}
+
+.am-split-button[data-variant="primary"] > [data-component="button"] {
+  min-height: 26px;
+  border: 0;
+  border-radius: 2px 0 0 2px;
+  background: transparent;
+  color: inherit;
+}
+
+.am-split-button[data-variant="primary"] > .am-split-arrow {
+  width: 26px;
+  height: auto;
+  min-height: 26px;
+  border-left: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 0 2px 2px 0;
+  background: transparent;
+  color: inherit;
+  opacity: 1;
+}
+
+.am-split-button[data-variant="primary"] > .am-split-arrow [data-component="icon"],
+.am-split-button[data-variant="primary"] > .am-split-arrow [data-slot="icon-svg"] {
+  color: #ffffff;
+}
+
+.am-split-button[data-variant="primary"] > [data-component="button"]:hover:not(:disabled),
+.am-split-button[data-variant="primary"] > .am-split-arrow:hover:not(:disabled),
+.am-split-button[data-variant="primary"] > .am-split-arrow[data-expanded] {
+  background: var(--surface-brand-hover);
+}
+
+.am-split-button[data-variant="primary"][data-disabled] {
+  opacity: 0.5;
+}
+
+.am-split-button[data-variant="primary"] > [data-component="button"]:disabled,
+.am-split-button[data-variant="primary"] > .am-split-arrow:disabled {
+  background: transparent;
+  color: inherit;
+  opacity: 1;
+  cursor: not-allowed;
+}
+
 .am-split-menu {
   min-width: 250px;
 }

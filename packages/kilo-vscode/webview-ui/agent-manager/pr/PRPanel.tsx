@@ -26,6 +26,7 @@ interface PRPanelProps {
   projectId?: string
   worktreeId: string
   activeTerminalId?: string
+  sessionId?: string
   jump?: number
   onJump?: (id: number) => void
   onClose: () => void
@@ -283,6 +284,8 @@ export const PRPanel: Component<PRPanelProps> = (props) => {
           <PRSummary
             pr={props.pr}
             worktreeId={props.worktreeId}
+            projectId={props.projectId}
+            sessionId={props.sessionId}
             activeTerminalId={props.activeTerminalId}
             onJump={jumpTo}
           />

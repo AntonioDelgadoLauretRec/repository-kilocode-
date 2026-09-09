@@ -19,6 +19,7 @@ import type { AgentManagerSidebarTarget } from "./webview-messages"
 import type { PermissionRequest } from "./permissions"
 import type { AnacondaDesktopExtensionMessage } from "../../../../src/shared/anaconda-desktop-messages"
 import type { BrowserFeedbackData, BrowserReference } from "../../../../src/shared/browser-feedback"
+import type { PRMergeResult } from "../../../../src/shared/pr-comment-actions"
 
 export type { BrowserReference } from "../../../../src/shared/browser-feedback"
 
@@ -1703,6 +1704,7 @@ export type ExtensionMessage =
   | AgentManagerPRStatusMessage
   | AgentManagerPRErrorMessage
   | AgentManagerCommentReactionResultMessage
+  | PRMergeResult
   | AgentManagerTerminalCreatedMessage
   | AgentManagerTerminalRestartedMessage
   | AgentManagerTerminalFontChangedMessage
